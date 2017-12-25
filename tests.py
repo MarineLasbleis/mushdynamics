@@ -2,7 +2,7 @@
 import numpy as np
 import scipy as sc
 import matplotlib.pyplot as plt
-from Sumita96 import *
+from mush import *
 import tdma
 
 TDMAsolver = tdma.TDMAsolver

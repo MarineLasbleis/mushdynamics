@@ -5,7 +5,7 @@ from scipy.sparse.linalg import inv
 import matplotlib.pyplot as plt
 
 from tdma import *
-from Sumita96 import velocity_Sramek
+from mush import velocity_Sramek
 
 
 
