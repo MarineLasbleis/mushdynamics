@@ -8,40 +8,46 @@ import tdma
 TDMAsolver = tdma.TDMAsolver
 
 def test_TDMA():
-	a = np.zeros([9,1])
+	a = np.zeros([10,1])
 	b = np.ones([10,1])
-	c = np.zeros([9,1])
+	c = np.zeros([10,1])
 	d = np.ones([10,1])
 
-	x = TDMAsolver(a, b, c, d)
+	print("inversion ==========")
+	
+	
+	a = np.zeros([10])
+	b = np.ones([10])
+	c = np.zeros([10])
+	d = np.ones([10])
+	x = inversion_matrice(a, b, c, d)
 	#print('Test TDMA is OK if value is 0: {}'.format(np.sum(x-1)))	
 	assert(np.sum(x-1)==0.)
 
-	x = TDMAsolver(a, 2*b, c, d)
+	x = inversion_matrice(a, 2*b, c, d)
 	assert(np.sum(x-0.5)==0.)
 	print("10:0, 2, 0, 1: {}".format(x))
 
-	x = TDMAsolver(a, b, c, 2*d)
+	x = inversion_matrice(a, b, c, 2*d)
 	assert(np.sum(x-2)==0.)
 	print("10:0, 1, 0, 2: {}".format(x))
 
-	x = TDMAsolver(a, a, a, d)
-	print("10:1, 1, 1, 1: {}".format(x))
+	x = inversion_matrice(a, a, 2*a, d)
+	print("10:1, 1, 2, 1: {}".format(x))
 
-	x = TDMAsolver(2*a, a, c, d)
+	x = inversion_matrice(2*a, a, c, d)
 	print("10:2, 1, 0, 1: {}".format(x))
 
-	a = np.zeros([2,1])
-	b = np.ones([3,1])
-	c = np.zeros([2,1])
-	d = np.ones([3,1])
+	a = np.zeros([3])
+	b = np.ones([3])
+	c = np.zeros([3])
+	d = np.ones([3])
 
-	x = TDMAsolver(a, a, a, d)
+	x = inversion_matrice(a, a, a, d)
 	print("3:1, 1, 1, 1: {}".format(x))
 
-	x = TDMAsolver(2*a, a, c, d)
+	x = inversion_matrice(2*a, a, c, d)
 	print("3:2, 1, 0, 1: {}".format(x))
-
 
 def test_fluxlimiterscheme():
 
@@ -227,32 +233,36 @@ def test_velocity():
 				'K0':1., \
 				'eta':1., \
 				'delta':1., \
-				'bc':''}
+				'bc':'',\
+				'psi0':0.4,
+				's': 1}
 
+	def velocity_analytical_check(ax, options):
 
-	psi0 = 0.4
-	N = 1000
-	R = np.linspace(0, 1, N)
-	dr = R[1]-R[0]
-	psi = psi0* np.ones_like(R)
-	#psi[0] = 1.
-	#psi[-1] = 0.
+		psi0 = options["psi0"]
+		N = 1000
+		R = np.linspace(0, 1, N)
+		dr = R[1]-R[0]
+		psi = psi0* np.ones_like(R)
 
-	velocity = velocity_Sramek(1-psi, R, {})
-	velocity_2 = velocity_Sumita(1-psi, R, {})
+		# from the inversion
+		velocity = velocity_Sramek(1-psi, R, options)
+		ax.plot(velocity, R, 'o')
 
-	fig, ax = plt.subplots(1,2, sharey=True)
-	ax[0].plot(psi, R)
-	ax[1].plot(velocity, R, 'o')
-	ax[1].plot(velocity_2, R, 'o')
+		#analytical solution
+		h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
+		analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\
+								(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
+		ax.plot(analytical_solution, R, linewidth=2)
+		return np.sum(velocity-analytical_solution)**2
+		
 
+	fig, ax = plt.subplots()
+	for delta in np.linspace(0.1, 1.5, 10):
 
-	h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
-	analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\
-							(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
-	ax[1].plot(analytical_solution, R, linewidth=2)
-
-	print("error : {}".format(np.sum(velocity-analytical_solution)**2))
+		options["delta"] = delta
+		error = velocity_analytical_check(ax, options)
+		print("error : {}".format(error))
 
 
 if __name__ == "__main__":
@@ -264,6 +274,6 @@ if __name__ == "__main__":
 	#diffusion()
 	test_velocity()
 	plt.show()
-	compaction_column()
+	#compaction_column()
 
 	plt.show()

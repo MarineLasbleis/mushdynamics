@@ -84,6 +84,7 @@ def TDMAsolverold(a, b, c, d):
 def inversion_matrice(a, b, c, d):
 
     N = len(d)
+    #print(a, b, c, d)
     # check sizes of a, b, c, d
     if len(a) == len(b): 
         _a = a[1:]
@@ -98,7 +99,12 @@ def inversion_matrice(a, b, c, d):
     _b, _d = b, d #copy of arrays
     diagonals = [-1,0,1]
     M = diags([[_a], [_b], [_c]], diagonals, [N,N])
-    output = sparse.linalg.spsolve( M,  _d )
+    try: 
+        output = sparse.linalg.spsolve( M,  _d )
+    except Warning as warni:
+        print(warni)
+        output = np.ones_like(_d)
+
 
     return output
 
