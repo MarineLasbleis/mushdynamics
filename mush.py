@@ -11,9 +11,10 @@ from tdma import *
 def Schema():
 	print(" <-1 volume-> \n \
 |-----.-----|-----.-----|-----.-----|\n\
- 0     0     1     1     2     2     3\n \
-->          ->          ->          ->\n \
-V0          V1          V2          V3 \n \
+ 0     0     1     1     2     2    \n \
+ 0   1/2dr  dr   3/2dr  2dr   5/2dr   \n \
+            ->          ->          \n \
+            V1          V2           \n \
      phi0        phi1        phi2   \n \
       DP0         DP1         DP2\n ")
 
