@@ -156,7 +156,7 @@ def velocity_Sramek(variable, radius, options):
 
 	#new_velocity = np.zeros_like(variable)
 	#new_velocity[1:-1] = TDMAsolver(_a[1:-1], _b[1:-1], _c[1:-1], _d[1:-1])
-	new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
+	new_velocity = inversion_matrice(_a[:], _b, _c[:], _d)
 	return new_velocity
 
 
@@ -187,9 +187,9 @@ def velocity_Sumita(variable, radius, options={}):
 	_c[1:] = - K0 *eta /dr**2 * variable[1:]
 	_d[1:] = -K0 * np.sqrt(variable[:-1]*variable[1:])
 	
-	_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,0
+	_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,1
 
-	new_velocity = inversion_matrice(_a, _b, _c, _d)
+	new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
 
 	print(new_velocity)
 
@@ -206,17 +206,18 @@ def update(V, phi, dt, dr, options = {'advection':"upwind", 'Ra':0.}):
 		_b = 1.+_b*dt
 		_c = _c*dt
 		_d = phi-_d*dt
-		_d = boundary_conditions(phi, _a, _b, _c, _d, options)
+		#_d = boundary_conditions(phi, _a, _b, _c, _d, options)
 		# for the boundary conditions, we need to modify d[0] and d[-1]
 		#phi2 = phi[:]
 		phi2 = np.zeros_like(phi)
-		_phi = inversion_matrice(_a[1:-1], _b[1:-1], _c[1:-1], _d[1:-1])
+		#_phi = inversion_matrice(_a[1:-1], _b[1:-1], _c[1:-1], _d[1:-1])
+		_phi = inversion_matrice(_a[1:], _b[:], _c[:-1], _d[:])
 		#phi2 = TDMAsolver(_a, _b, _c, _d)
-		phi2[1:-1] = _phi
-		phi2[0], phi2[-1] = phi[0], phi[-1]
+		phi2[:] = _phi
+		#phi2[0], phi2[-1] = phi[0], phi[-1]
 
 
-		_phi = TDMAsolver(_a, _b, _c, _d)
+		_phi = inversion_matrice(_a, _b, _c, _d)
 		phi2 = _phi
 
 		return phi2
@@ -245,15 +246,16 @@ def compaction_column():
 
 
 	#options = {'advection':"FLS", 'Ra':0., 'K0':0.1, 'eta':1.}
-	options = {'advection':"FLS", \
+	options = {'advection':"upwind", \
 				'Ra':0., \
-				'K0':0.1, \
+				'K0':1, \
 				'eta':1., \
 				'delta':0.1, \
-				'bc':''}
+				'bc':'',
+				's':1}
 
-	psi0 = 0.4
-	N = 100
+	psi0 = 0.5
+	N = 20
 	R = np.linspace(0, 1, N)
 	dr = R[1]-R[0]
 	psi = psi0* np.ones_like(R)
@@ -274,7 +276,7 @@ def compaction_column():
 							(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
 	ax[1].plot(analytical_solution, R, linewidth=2)
 
-	for it in range(1,2):
+	for it in range(1,10):
 		psi = update(velocity, psi, dt, dr, options)
 		#psi = np.where(psi>0, psi, 0)
 		velocity = calcul_velocity(1-psi, R, options)
@@ -301,5 +303,7 @@ if __name__ == '__main__':
 	print('Sumita et al 1996, Geoph. J. Int., equations modified with Sramek (phd thesis)')
 	Schema()
 	compaction_column()
+
+	plt.show()
 
 	

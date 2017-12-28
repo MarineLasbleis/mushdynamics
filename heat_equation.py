@@ -17,7 +17,8 @@ import scipy.sparse as sparse
 import scipy.sparse.linalg
 import numpy as np
 import pylab as pl
-#import include.CreateMovie as movie
+from movie import CreateMovie
+#import movie.CreateMovie as movie
 import matplotlib.pyplot as plt
  
 # Number of internal points
@@ -29,12 +30,12 @@ h = 1/(N+1.0)
 # Create Temporal Step-Size, TFinal, Number of Time-Steps
 k = h/2
 TFinal = 1
-NumOfTimeSteps = 1#int(TFinal/k)
+NumOfTimeSteps = int(TFinal/k)
  
 # Create grid-points on x axis
 x = np.linspace(0,1,N+2)
 x = x[1:-1]
- 
+
 # Initial Conditions
 u = np.transpose(np.mat(10*np.sin(np.pi*x)))
  
@@ -55,21 +56,9 @@ for i in range(NumOfTimeSteps):
 	A = (I -k/2*D2)
 	b = ( I + k/2*D2 )*u
 	u = np.transpose(np.mat(sparse.linalg.spsolve( A,  b ) ))
-
-	print(A)
-	print(np.mat(A))
-	print(b.shape)
-	print(u.shape)
- 
 	# Save Data
 	data.append(u)
  
-
-
-A = sparse.diags([[1,1],[1,1,1],[1,1]],[-1,0,1])
-b = np.array([1,1,1])
-print(np.transpose(np.mat(sparse.linalg.spsolve( A,  b ) )))
-
  
 # Define the Frame Speed and Movie Length
 FPS = 20
@@ -81,4 +70,4 @@ def plotFunction( frame ):
 	plt.axis((0,1,0,10.1))
  
 # Generate the movie
-#movie.CreateMovie(plotFunction, int(MovieLength*FPS), FPS)
+CreateMovie(plotFunction, int(MovieLength*FPS), FPS)
