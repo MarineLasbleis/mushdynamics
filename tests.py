@@ -56,7 +56,7 @@ def advection_point():
 
 	N = 200
 	V0 = 1.
-	V = V0 * np.ones([N])
+	V = V0 * np.ones([N-1])
 	R = np.linspace(-2, 5, N)
 	phi = np.zeros_like(R)
 	phi_sin = np.where(np.abs(R)>1, 0, 1+np.cos(R*np.pi))
@@ -71,7 +71,6 @@ def advection_point():
 #	fig, ax = plt.subplots(2, 1, sharex = True)
 
 	def run(init, axis, scheme, correction_V=False):
-		
 		phi = init
 		time = 0.
 		axis.plot(R, init, 'k', linewidth=2)
@@ -186,15 +185,16 @@ def test_velocity():
 
 		psi0 = options["psi0"]
 		N = 1000
-		R = np.linspace(0, 1, N)
+		R = np.linspace(0, 1, N-1)
 		dr = R[1]-R[0]
-		psi = psi0* np.ones_like(R)
+		psi = psi0* np.ones(N)
 
 		# from the inversion
 		velocity = velocity_Sramek(1-psi, R, options)
 		ax.plot(velocity, R, 'o')
 
 		#analytical solution
+		#R2 = np.linspace(0, 1, N+1)
 		h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
 		analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\
 								(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
@@ -215,8 +215,8 @@ if __name__ == "__main__":
 
 	test_TDMA()
 	Schema()
-	advection_point() 
-	diffusion()
+	#advection_point() 
+	#diffusion()
 	test_velocity()
 	plt.show()
 
