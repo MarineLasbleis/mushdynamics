@@ -153,7 +153,6 @@ def velocity_Sramek(variable, radius, options):
 	_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,0
 	_a[0], _b[0], _c[0], _d[0] = 0,1,0,0
 
-
 	#new_velocity = np.zeros_like(variable)
 	#new_velocity[1:-1] = TDMAsolver(_a[1:-1], _b[1:-1], _c[1:-1], _d[1:-1])
 	new_velocity = inversion_matrice(_a[:], _b, _c[:], _d)

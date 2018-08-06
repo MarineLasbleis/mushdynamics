@@ -5,17 +5,10 @@ import matplotlib.pyplot as plt
 from mush import *
 import tdma
 
-TDMAsolver = tdma.TDMAsolver
+#TDMAsolver = tdma.TDMAsolver
 
 def test_TDMA():
-	a = np.zeros([10,1])
-	b = np.ones([10,1])
-	c = np.zeros([10,1])
-	d = np.ones([10,1])
-
-	print("inversion ==========")
-	
-	
+    	
 	a = np.zeros([10])
 	b = np.ones([10])
 	c = np.zeros([10])
