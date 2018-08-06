@@ -115,8 +115,11 @@ def CrankNicholson(variable, dr, options):
 
 def velocity_Sramek(variable, radius, options):
 	""" Sramek thesis p46, equation 3.22
-	$$ \frac{V}{\delta**2\phi**2} = \frac{d}{dz} [ \frac{(1+4/3\phi)(1-\phi)}{\phi} \frac{d}{dz}V]-s(1-\phi) $$
+	$$ \frac{V}{\delta**2\phi**2} = \frac{d}{dz} [ \frac{(K0+4/3\phi)(1-\phi)}{\phi} \frac{d}{dz}V]-s(1-\phi) $$
 
+	Variable: length N
+	Output: velocity is length N-1
+	a, b, c, d are length N-2, N-1, N-2 and N-1
 	"""
 
 	dr = radius[1]-radius[0]
@@ -142,25 +145,25 @@ def velocity_Sramek(variable, radius, options):
 	print("delta: {}, K0: {}, s: {}".format(delta, K0, s))
 	_inter = (K0+4./3.*variable)*(1.-variable)/variable
 
-	_a, _b, _c, _d = np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable)
+	_a, _b, _c, _d = np.zeros(len(variable)-1),  np.zeros(len(variable)-1), np.zeros(len(variable)-1),  np.zeros(len(variable)-1)
 
-	_a[1:] = _inter[:-1]/dr**2
-	_b[1:] = -1./(delta**2*variable[:-1]*variable[1:]) \
+	_a[:] = _inter[:-1]/dr**2
+	_b[:] = -1./(delta**2*variable[:-1]*variable[1:]) \
 					-  _inter[:-1]/dr**2\
 					-  _inter[1:] /dr**2
-	_c[1:] = _inter[1:]/dr**2
-	_d[1:] = s*(1-np.sqrt(variable[:-1]*variable[1:])) #if buoyancy/density variations, add terms here! s is 1 or -1.
+	_c[:] = _inter[1:]/dr**2
+	_d[:] = s*(1-np.sqrt(variable[:-1]*variable[1:])) #if buoyancy/density variations, add terms here! s is 1 or -1.
 
-	_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,0
+	_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,0  #for V=0 at the boundaries
 	_a[0], _b[0], _c[0], _d[0] = 0,1,0,0
 
 	#new_velocity = np.zeros_like(variable)
 	#new_velocity[1:-1] = TDMAsolver(_a[1:-1], _b[1:-1], _c[1:-1], _d[1:-1])
-	new_velocity = inversion_matrice(_a[:], _b, _c[:], _d)
+	new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
 	return new_velocity
 
 
-def velocity_Sumita(variable, radius, options={}):  
+def velocity_Sumita(variable, radius, options={}):
 	### NOT WORKING
 
 	# spherical symmetry
@@ -174,7 +177,7 @@ def velocity_Sumita(variable, radius, options={}):
 		K0=1000.
 		print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
 
-	try: 
+	try:
 		eta = options["eta"]
 	except KeyError:
 		eta = 1.
@@ -186,19 +189,19 @@ def velocity_Sumita(variable, radius, options={}):
 		psi0=1./2.
 		print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
 
-	try: 
+	try:
 		eta0 = options["eta0"]
 	except KeyError:
 		eta0 = 1.
 		print("eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
 
-	try: 
+	try:
 		K = options["K"]
 	except KeyError:
 		K = 1.
 		print("K was not defined, please consider defining it for later. Default value is {}".format(K))
 
-	try: 
+	try:
 		grain = options["grain"]
 	except KeyError:
 		grain = 1e-3
@@ -212,7 +215,7 @@ def velocity_Sumita(variable, radius, options={}):
 			- (1./dr**2) * (((1.-variable[1:])**2/psi0) * (4./(3.*variable[1:])) * (eta/eta0)+((1-variable[0:-1])**2/psi0) * (4./(3.* variable[0:-1])) * (eta/eta0))
 	_c[1:] = - (1./(dr**2) * ((1.-variable[0:-1])**2/psi0) * (4./(3.* variable[0:-1])) * (eta/eta0))
 	_d[1:] = - np.sqrt(((1-variable[1:])*(1-variable[0:-1]))/psi0)
-	
+
 	_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,1 # porosity at top == 1
 	_a[0], _b[0], _c[0], _d[0] = 0,1,0,0 # porosity at bottom ==0
 
@@ -228,7 +231,7 @@ def update(V, phi, dt, dr, options = {'advection':"upwind", 'Ra':0.}):
 		a_adv, b_adv, c_adv, d_adv = fluxlimiterscheme(V, phi, dr, options)
 		a_diff, b_diff, c_diff, d_diff = CrankNicholson(phi, dr, options)
 		_a, _b, _c, _d = a_adv+a_diff, b_adv+b_diff, c_adv+c_diff, d_adv+d_diff
-	
+
 		_a = _a*dt
 		_b = 1.+_b*dt
 		_c = _c*dt
@@ -252,7 +255,7 @@ def update(V, phi, dt, dr, options = {'advection':"upwind", 'Ra':0.}):
 
 def boundary_conditions(variable, a, b, c, d, options):
 
-	try: 
+	try:
 		BC = options["bc"]
 	except KeyError:
 		BC = "dirichlet"
@@ -261,7 +264,7 @@ def boundary_conditions(variable, a, b, c, d, options):
 		d[0]  = d[0] -a[0] *variable[0]
 		d[-1] = d[-1]-c[-1]*variable[-1] #Dirichlet
 		#print("==========Dirichlet.")
-	else: 
+	else:
 		#print("==========not-Dirichlet.")
 		d[0] = variable[0]
 		d[-1] = variable[-1]
@@ -270,7 +273,6 @@ def boundary_conditions(variable, a, b, c, d, options):
 
 
 def compaction_column():
-
 
 	#options = {'advection':"FLS", 'Ra':0., 'K0':0.1, 'eta':1.}
 	options = {'advection':"upwind", \
