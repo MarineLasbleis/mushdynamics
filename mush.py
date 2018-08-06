@@ -1,5 +1,5 @@
 """ Reproduction of calculations from Sumita et 1996 on compaction and implications for Earth's inner core """
-
+#modifications/tests par MK
 
 
 import numpy as np
@@ -43,7 +43,8 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 	"""
 
 	# detect size of the system and initialize variables:
-	lambdap, lambdam, vp, vm = np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable)
+	#lambdap, lambdam, vp, vm = np.zeros(len(variable)+1), np.zeros(len(variable)+1), np.zeros(len(variable)+1), np.zeros(len(variable)+1)
+	lambdap, lambdam, vp, vm = np.zeros_like(velocity), np.zeros_like(velocity), np.zeros_like(velocity), np.zeros_like(velocity)
 	_a, _b, _c, _d = np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable)
 
 	try: 
@@ -54,14 +55,14 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 	if option == 'upwind':
 		pass #lambdap and lambdam == zeros. 
 	elif option == "centered":
-		lambdam[:] = np.ones_like(variable)
-		lambdap[:] = np.ones_like(variable)
+		lambdam[:] = np.ones(len(variable)+1)
+		lambdap[:] = np.ones(len(variable)+1)
 	elif option == "FLS":
-		Rp=(variable[1:-2]-variable[0:-3])/(variable[2:-1]-variable[1:-2])
-		Rm=(variable[3:]-variable[2:-1])  /(variable[2:-1]-variable[1:-2])
+		Rp=(variable[1:]-variable[:-1])/(variable[2:+1]-variable[1:])
+		Rm=(variable[3:]-variable[2:+1])  /(variable[2:+1]-variable[1:])
 		#minmod
-		lambdap[1:-2]=np.fmax(0.,np.minimum(1.,Rp))
-		lambdam[1:-2]=np.fmax(0.,np.minimum(1.,Rm))
+		lambdap[1:]=np.fmax(0.,np.minimum(1.,Rp))
+		lambdam[1:]=np.fmax(0.,np.minimum(1.,Rm))
 	else: 
 		print("Problem with the choosen scheme for advection. Default is upwind.")
 
@@ -171,7 +172,7 @@ def velocity_Sumita(variable, radius, options={}):
 	try:
 		K0 = options['K0']
 	except KeyError:
-		K0=0.
+		K0=1000.
 		print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
 
 	try: 
@@ -180,18 +181,45 @@ def velocity_Sumita(variable, radius, options={}):
 		eta = 1.
 		print("eta was not defined, please consider defining it for later. Default value is {}".format(eta))
 
+	try:
+		psi0 = options["psi0"]
+	except KeyError:
+		psi0=1./2.
+		print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
+
+	try: 
+		eta0 = options["eta0"]
+	except KeyError:
+		eta0 = 1.
+		print("eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
+
+	try: 
+		K = options["K"]
+	except KeyError:
+		K = 1.
+		print("K was not defined, please consider defining it for later. Default value is {}".format(K))
+
+	try: 
+		grain = options["grain"]
+	except KeyError:
+		grain = 1e-3
+		print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
+
+
 	_a, _b, _c, _d = np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable)
 
-	_a[1:] = - K0 *eta /dr**2 * variable[:-1]
-	_b[1:] = 1 + K0*eta/dr**2 * (variable[1:]+variable[:-1])
-	_c[1:] = - K0 *eta /dr**2 * variable[1:]
-	_d[1:] = -K0 * np.sqrt(variable[:-1]*variable[1:])
+	_a[1:] = - ((1./dr**2) * ((1.-variable[1:])**2/psi0) * (4./(3.*variable[1:])) * (eta/eta0))
+	_b[1:] = ((1.-variable[0:-1]*variable[1:])/(variable[1:]*variable[0:-1])**(3./2.)) * ((K*K0)/grain**2) \
+			- (1./dr**2) * (((1.-variable[1:])**2/psi0) * (4./(3.*variable[1:])) * (eta/eta0)+((1-variable[0:-1])**2/psi0) * (4./(3.* variable[0:-1])) * (eta/eta0))
+	_c[1:] = - (1./(dr**2) * ((1.-variable[0:-1])**2/psi0) * (4./(3.* variable[0:-1])) * (eta/eta0))
+	_d[1:] = - np.sqrt(((1-variable[1:])*(1-variable[0:-1]))/psi0)
 	
-	_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,1
+	_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,1 # porosity at top == 1
+	_a[0], _b[0], _c[0], _d[0] = 0,1,0,0 # porosity at bottom ==0
 
 	new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
 
-	print(new_velocity)
+	# print(a, b, c, d)
 
 	return new_velocity
 
