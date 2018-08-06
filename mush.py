@@ -10,13 +10,13 @@ from tdma import *
 
 def Schema():
 	print(" <-1 volume-> \n \
-|-----.-----|-----.-----|-----.-----|\n\
- 0     0     1     1     2     2    \n \
- 0   1/2dr  dr   3/2dr  2dr   5/2dr   \n \
-            ->          ->          \n \
-            V1          V2           \n \
-     phi0        phi1        phi2   \n \
-      DP0         DP1         DP2\n ")
+.-----|-----.-----|       ...      .-----|-----.-----|-----.        ...       -----.-----|-----.  \n\
+0     0     1     1                                                                N-1  N-1    N  \n\
+0   1/2dr  dr   3/2dr              |           |           |                       |           |  \n\
+      ->          ->               |     ->    |     ->    |                       |     ->    |  \n\
+	  V1          V2               |    V_i-1  |    V_i    |                       |    V_N-1  |  \n\
+phi0        phi1                  phi_i-1     phi_i      phi_i+1                phi_N-1      phi_N\n\
+      DP0         DP1                  DP_i-1                                           DP_N-1    \n ")
 
 
 Nr = 10 #number of points in space
@@ -25,17 +25,17 @@ Nt = 10 #number of points in time
 
 
 
-def fluxlimiterscheme(velocity, variable, dr, options={}): 
-	""" output the coefficients for the advection scheme using the flux limiter scheme. 
+def fluxlimiterscheme(velocity, variable, dr, options={}):
+	""" output the coefficients for the advection scheme using the flux limiter scheme.
 
 	Coefficients for the scheme are lambda+, lambda-, v+ and v-
 	(p and m are used instead of + and m)
 
 	The code return the coefficients for the tridiagonal matrix a, b, c
 
-	The scheme is used to solve the equation 
+	The scheme is used to solve the equation
 	D/Dt variable = D/Dr (variable * V)
-	where D/Dr means partial derivative 
+	where D/Dr means partial derivative
 
 	Equation 3.54 in Sramek thesis gives:
 	DF/Dx (at the point i) ~ 1/dx *(a_1 variable_i-1 + b_i variable_i +c_i variable_i+1)
@@ -47,13 +47,13 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 	lambdap, lambdam, vp, vm = np.zeros_like(velocity), np.zeros_like(velocity), np.zeros_like(velocity), np.zeros_like(velocity)
 	_a, _b, _c, _d = np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable)
 
-	try: 
+	try:
 		option = options['advection']
 	except KeyError:
 		option = 'upwind'
 
 	if option == 'upwind':
-		pass #lambdap and lambdam == zeros. 
+		pass #lambdap and lambdam == zeros.
 	elif option == "centered":
 		lambdam[:] = np.ones(len(variable)+1)
 		lambdap[:] = np.ones(len(variable)+1)
@@ -63,10 +63,10 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 		#minmod
 		lambdap[1:]=np.fmax(0.,np.minimum(1.,Rp))
 		lambdam[1:]=np.fmax(0.,np.minimum(1.,Rm))
-	else: 
+	else:
 		print("Problem with the choosen scheme for advection. Default is upwind.")
 
-	if len(velocity) == 1: 
+	if len(velocity) == 1:
 		vp[:-1] = velocity
 		vm[:] = 0.
 		vp[-1] = 0.
@@ -98,7 +98,7 @@ def CrankNicholson(variable, dr, options):
 	"""
 
 	# TODO : find another name for Ra (not the good name, as it is actually 1/Ra)
-	try: 
+	try:
 		Ra = options["Ra"]
 	except KeyError:
 		Ra = 0.  # Default value is 0.
@@ -106,14 +106,14 @@ def CrankNicholson(variable, dr, options):
 	_a, _b, _c, _d = np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable)
 	diff = Ra/(dr**2)
 	_a[:-1] = - diff/2.
-	_b[:-1] = diff 
+	_b[:-1] = diff
 	_c[:-1] = - diff/2.
 	_d[1:-1] = (variable[:-2] - 2*variable[1:-1] + variable[2:])/2.
 
 	return _a, _b, _c, _d
 
 
-def velocity_Sramek(variable, radius, options):  
+def velocity_Sramek(variable, radius, options):
 	""" Sramek thesis p46, equation 3.22
 	$$ \frac{V}{\delta**2\phi**2} = \frac{d}{dz} [ \frac{(1+4/3\phi)(1-\phi)}{\phi} \frac{d}{dz}V]-s(1-\phi) $$
 
@@ -126,14 +126,14 @@ def velocity_Sramek(variable, radius, options):
 	except KeyError:
 		s=1.
 		print("s (sign of density difference) was not defined, please consider defining it for later. Default value is {}".format(s))
-	
+
 	try:
 		K0 = options['K0']
 	except KeyError:
 		K0=1.
 		print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
 
-	try: 
+	try:
 		delta = options["delta"]
 	except KeyError:
 		delta = 1.
