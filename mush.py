@@ -9,14 +9,14 @@ import matplotlib.pyplot as plt
 from tdma import *
 
 def Schema():
-	print(" <-1 volume-> \n \
-.-----|-----.-----|       ...      .-----|-----.-----|-----.        ...       -----.-----|-----.  \n\
-0     0     1     1                                                                N-1  N-1    N  \n\
-0   1/2dr  dr   3/2dr              |           |           |                       |           |  \n\
-      ->          ->               |     ->    |     ->    |                       |     ->    |  \n\
-	  V1          V2               |    V_i-1  |    V_i    |                       |    V_N-1  |  \n\
-phi0        phi1                  phi_i-1     phi_i      phi_i+1                phi_N-1      phi_N\n\
-      DP0         DP1                  DP_i-1                                           DP_N-1    \n ")
+	print(" <-1 volume-> \n\
+||-----.-----|-----.-----|       ...      .-----|-----.-----|-----.        ...       -----.-----|-----.-----||  \n\
+       0     0     1     1                                                                N-1  N-1    N          \n\
+ 0   1/2dr  dr   3/2dr              |           |           |                       |           |                \n\
+             ->          ->               |     ->    |     ->    |                       |     ->    |            \n\
+ V0          V1          V2               |    V_i-1  |    V_i    |                       |    V_N-1  |     V_N   \n\
+      phi0        phi1                  phi_i-1     phi_i      phi_i+1                phi_N-1      phi_N         \n\
+            DP0         DP1                  DP_i-1                                           DP_N-1           \n")
 
 
 Nr = 10 #number of points in space
@@ -55,8 +55,8 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 	if option == 'upwind':
 		pass #lambdap and lambdam == zeros.
 	elif option == "centered":
-		lambdam[:] = np.ones(len(variable)+1)
-		lambdap[:] = np.ones(len(variable)+1)
+		lambdam[:] = np.ones(len(velocity))
+		lambdap[:] = np.ones(len(velocity))
 	elif option == "FLS":
 		Rp=(variable[1:]-variable[:-1])/(variable[2:+1]-variable[1:])
 		Rm=(variable[3:]-variable[2:+1])  /(variable[2:+1]-variable[1:])
@@ -76,14 +76,16 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 		vp[-1] = 0.
 		vm[-1] = 0.
 
-	_a[1:] = -vp[:-1]*(1-lambdap[:-1]/2.) - vm[:-1]*lambdam[:-1]/2.
-	_b[1:] =  vp[1:]*(1-lambdap[1:]/2.) + vm[1:]*lambdam[1:]/2. \
+	_a[1:-1] = -vp[:-1]*(1-lambdap[:-1]/2.) - vm[:-1]*lambdam[:-1]/2.
+
+	_b[1:-1] =  vp[1:]*(1-lambdap[1:]/2.) + vm[1:]*lambdam[1:]/2. \
 				- vm[:-1]*(1-lambdam[:-1]/2.) - vp[:-1]*lambdap[:-1]/2.
-	_c[1:] =  vm[1:]*(1-lambdam[1:]/2.) + vp[1:]*lambdap[1:]/2.
+	_c[1:-1] =  vm[1:]*(1-lambdam[1:]/2.) + vp[1:]*lambdap[1:]/2.
 
 	_d[1:-1] = _a[1:-1]*variable[:-2]+_b[1:-1]*variable[1:-1]+_c[1:-1]*variable[2:]
 
-	_a[0], _b[0], _c[0] = 0., 1., 0.
+	_a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2., vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 # boundary condition
+	# TO BE FINISHED
 
 	return _a/(2*dr), _b/(2*dr), _c/(2*dr), _d/(2*dr)
 
@@ -119,7 +121,8 @@ def velocity_Sramek(variable, radius, options):
 
 	Variable: length N
 	Output: velocity is length N-1
-	a, b, c, d are length N-2, N-1, N-2 and N-1
+	a, b, c, d are length N-1, N-1, N-1 and N-1
+	and a, c are injected as length N-2 for calculating the tridiagonal matrix.
 	"""
 
 	dr = radius[1]-radius[0]
@@ -154,8 +157,15 @@ def velocity_Sramek(variable, radius, options):
 	_c[:] = _inter[1:]/dr**2
 	_d[:] = s*(1-np.sqrt(variable[:-1]*variable[1:])) #if buoyancy/density variations, add terms here! s is 1 or -1.
 
-	_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,0  #for V=0 at the boundaries
-	_a[0], _b[0], _c[0], _d[0] = 0,1,0,0
+	# boundary conditions: V is solved between 0 and N-1,
+	# and boundary conditions are forced for V_-1=0 and V_N=0
+	# for line 0: V_-1 a_0+ V_0b_0 + V_1 c_0 = d_0,
+	# for line N-1: V_N-2 a_N-1+ V_N-1b_N-1 + V_N c_N-1 = d_N-1,
+	# so it ends up... Doing nothing should be OK.
+	#_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,0  #for V=0 at the boundaries
+	#_a[0], _b[0], _c[0], _d[0] = 0,1,0,0
+	# (would be OK if we wanted to force boundary conditions on 0 and N-1, but we want to calculate the values there)
+	# if we wanted V_N = U for example, then d[-1] = d[-1] - U*c[-1]
 
 	#new_velocity = np.zeros_like(variable)
 	#new_velocity[1:-1] = TDMAsolver(_a[1:-1], _b[1:-1], _c[1:-1], _d[1:-1])
