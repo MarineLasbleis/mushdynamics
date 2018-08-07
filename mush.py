@@ -236,22 +236,14 @@ def velocity_Sumita(variable, radius, options={}):
 
 	_a, _b, _c, _d = np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1)
 
-	_a[:] = - ((1./dr**2) * ((1.-variable[1:])**2/psi0) * (4./(3.*variable[1:])) * (eta/eta0))
-	_b[:] = ((1.-variable[0:-1]*variable[1:])/(variable[1:]*variable[0:-1])**(3./2.)) * ((K*K0)/grain**2) \
-			- (1./dr**2) * (((1.-variable[1:])**2/psi0) * (4./(3.*variable[1:])) * (eta/eta0)+((1-variable[0:-1])**2/psi0) * (4./(3.* variable[0:-1])) * (eta/eta0))
-<<<<<<< HEAD
-	_c[:] = - (1./(dr**2) * ((1.-variable[0:-1])**2/psi0) * (4./(3.* variable[0:-1])) * (eta/eta0))
+	_a[:] = - ((1./dr**2) * ((1.-variable[0:-1])**2/psi0) * (4./(3.*variable[0:-1])) * (eta/eta0))
+	_b[:] = ((1.-variable[1:]*variable[0:-1])/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2) \
+			+ (1./dr**2) * (((1.-variable[0:-1])**2/psi0) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1-variable[1:])**2/psi0) * (4./(3.* variable[1:])) * (eta/eta0))
+	_c[:] = - (1./(dr**2) * ((1.-variable[1:])**2/psi0) * (4./(3.* variable[1:])) * (eta/eta0))
 	_d[:] = - np.sqrt(((1-variable[1:])*(1-variable[0:-1]))/psi0)
 	
 	#_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,1 # porosity at top == 1
 	#_a[0], _b[0], _c[0], _d[0] = 0,1,0,0 # porosity at bottom ==0
-=======
-	_c[1:] = - (1./(dr**2) * ((1.-variable[0:-1])**2/psi0) * (4./(3.* variable[0:-1])) * (eta/eta0))
-	_d[1:] = - np.sqrt(((1-variable[1:])*(1-variable[0:-1]))/psi0)
-
-	_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,1 # porosity at top == 1
-	_a[0], _b[0], _c[0], _d[0] = 0,1,0,0 # porosity at bottom ==0
->>>>>>> 5c61e536d86e7d2db48eb080df131f1e86ce328e
 
 	new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
 
