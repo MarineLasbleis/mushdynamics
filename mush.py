@@ -58,11 +58,12 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 		lambdam[:] = np.ones(len(velocity))
 		lambdap[:] = np.ones(len(velocity))
 	elif option == "FLS":
-		Rp=(variable[1:]-variable[:-1])/(variable[2:+1]-variable[1:])
-		Rm=(variable[3:]-variable[2:+1])  /(variable[2:+1]-variable[1:])
+		Rp=(variable[1:-2]-variable[0:-3])/(variable[2:-1]-variable[1:-2])
+		Rm=(variable[3:]-variable[2:-1])  /(variable[2:-1]-variable[1:-2])
 		#minmod
-		lambdap[1:]=np.fmax(0.,np.minimum(1.,Rp))
-		lambdam[1:]=np.fmax(0.,np.minimum(1.,Rm))
+		lambdap[1:-1]=np.fmax(0.,np.minimum(1.,Rp))
+		lambdam[1:-1]=np.fmax(0.,np.minimum(1.,Rm))
+		# at the points [0], [-1]: lamba =0.
 	else:
 		print("Problem with the choosen scheme for advection. Default is upwind.")
 
@@ -77,15 +78,30 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 		vm[-1] = 0.
 
 	_a[1:-1] = -vp[:-1]*(1-lambdap[:-1]/2.) - vm[:-1]*lambdam[:-1]/2.
-
 	_b[1:-1] =  vp[1:]*(1-lambdap[1:]/2.) + vm[1:]*lambdam[1:]/2. \
 				- vm[:-1]*(1-lambdam[:-1]/2.) - vp[:-1]*lambdap[:-1]/2.
 	_c[1:-1] =  vm[1:]*(1-lambdam[1:]/2.) + vp[1:]*lambdap[1:]/2.
-
 	_d[1:-1] = _a[1:-1]*variable[:-2]+_b[1:-1]*variable[1:-1]+_c[1:-1]*variable[2:]
 
-	_a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2., vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 # boundary condition
-	# TO BE FINISHED
+	# boundary conditions:
+	# velocity fixed at U0 and UN
+	# porosity fixed at phi0 and phiN (phi0 and phiN correspond to phi_-1 and phi_N+1, the 2 that are not in the array phi)
+	# default is all 0.
+	U0, UN = 0., 0.
+	U0p, U0m = 0.5*(U0+np.abs(U0)), 0.5*(U0-np.abs(U0))
+	UNp, UNm = 0.5*(UN+np.abs(UN)), 0.5*(UN-np.abs(UN))
+	_lambda = 0. # lambda fixed at 0 (upwind)
+	phi0, phiN = 0., 0.
+	_a[0] = -U0p
+	_b[0] =  vp[0] - U0m
+	_c[0] =  vm[0]
+	_d[0] = _a[0]*phi0+_b[0]*variable[0]+_c[0]*variable[1]
+	# values in -1
+	_a[-1] = -vp[-1]
+	_b[-1] =  UNp - vm[-1]
+	_c[-1] =  UNm
+	_d[-1] = _a[-1]*variable[-2]+_b[-1]*variable[-1]+_c[-1]*phiN
+	#_a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2., vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 # boundary condition
 
 	return _a/(2*dr), _b/(2*dr), _c/(2*dr), _d/(2*dr)
 

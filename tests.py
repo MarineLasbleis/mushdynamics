@@ -215,7 +215,7 @@ if __name__ == "__main__":
 
 	test_TDMA()
 	Schema()
-	#advection_point() 
+	advection_point() 
 	#diffusion()
 	test_velocity()
 	plt.show()
