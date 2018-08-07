@@ -68,14 +68,11 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 		print("Problem with the choosen scheme for advection. Default is upwind.")
 
 	if len(velocity) == 1:
-		vp[:-1] = velocity
+		vp[:] = velocity
 		vm[:] = 0.
-		vp[-1] = 0.
 	else:
-		vp[:-1] = 0.5*(velocity[:-1]+np.abs(velocity[:-1]))
-		vm[:-1] = 0.5*(velocity[:-1]-np.abs(velocity[:-1]))
-		vp[-1] = 0.
-		vm[-1] = 0.
+		vp[:] = 0.5*(velocity[:]+np.abs(velocity[:]))
+		vm[:] = 0.5*(velocity[:]-np.abs(velocity[:]))
 
 	_a[1:-1] = -vp[:-1]*(1-lambdap[:-1]/2.) - vm[:-1]*lambdam[:-1]/2.
 	_b[1:-1] =  vp[1:]*(1-lambdap[1:]/2.) + vm[1:]*lambdam[1:]/2. \
@@ -111,7 +108,8 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 	_d[-1] = _a[-1]*variable[-2]+_b[-1]*variable[-1]+_c[-1]*phiN
 	_d[-1] = _d[-1] - phiN*_d[-1]
 
-	print(_a[0], _b[0], _c[0], _d[0])
+	print(vp[-1], vm[-1], velocity[-1])
+	print(_a[-1], _b[-1], _c[-1], _d[-1])
 	#_a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2., vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 # boundary condition
 
 	return _a/(2*dr), _b/(2*dr), _c/(2*dr), _d/(2*dr)
@@ -334,43 +332,55 @@ def compaction_column():
 				'UN': 0.}
 
 	psi0 = 0.5
-	N = 10
-	R = np.linspace(0, 1, N)
+	N = 100
+	R = np.linspace(0, 1, N+1)
 	dr = R[1]-R[0]
-	psi = psi0* np.ones_like(R)
+	psi = psi0* np.ones(N)
 	#psi[0] = 1.
 	#psi[-1] = 0.
 
-	calcul_velocity = velocity_Sramek
+	calcul_velocity = velocity_Sumita
 	velocity = calcul_velocity(1-psi, R, options)
 	v_m = np.amax(np.abs(velocity))
 	dt = 0.5*dr/(v_m)
 
 	fig, ax = plt.subplots(1,2, sharey=True)
-	ax[0].plot(psi, R)
-	ax[1].plot(velocity, R[:-1], 'o')
+	ax[0].plot(psi, R[:-1]+dr/2.)
+	ax[1].plot(velocity, R[1:-1], 'o')
 
-	h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
-	analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\
-							(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
+	analytical_solution = analytic_Sumita(psi0, R)
+	#h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
+	#analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\
+	#						(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
 	ax[1].plot(analytical_solution, R, linewidth=2)
 
-	for it in range(0,1):
+	for it in range(0,100):
 		psi = update(velocity, psi, dt, dr, options)
-		#psi = np.where(psi>0, psi, 0)
+		# psi = np.where(psi>0, psi, 0)
 		velocity = calcul_velocity(1-psi, R, options)
 		v_m = np.amax(np.abs(velocity))
-		dt = 0.1*dr/(v_m)
+		dt = 0.01*dr/(v_m)
 		print("dt : {}".format(dt))
 		if it%1==0:
 			print(dt)
-			ax[0].plot(psi, R)
-			ax[1].plot(velocity, R[:-1])
+			ax[0].plot(psi, R[:-1]+dr/2.)
+			ax[1].plot(velocity, R[1:-1])
 
 
 	ax[0].set_xlim([0,1])
 
 
+def analytic_Sumita(phi0, R):
+	"""Solution analytique pour resolution Sumita."""
+	x1 = np.sqrt((1+phi0)/(1-phi0))/phi0 * np.sqrt(3./4.)
+	x2 = -x1
+	c3 = -(phi0**3/((1+phi0)))
+	c2 = (c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
+	c1 = -c2-c3
+	return c1*np.exp(x1*R) + c2*np.exp(x2*R) + c3
+		# print("analytical_solution = {}".format(analytical_solution))
+		# ax.plot(analytical_solution, R, linewidth=2)
+		#return np.sum(velocity-analytical_solution[1:-1])**2
 
 
 
@@ -385,5 +395,3 @@ if __name__ == '__main__':
 	compaction_column()
 
 	plt.show()
-
-	
