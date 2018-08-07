@@ -108,8 +108,6 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 	_d[-1] = _a[-1]*variable[-2]+_b[-1]*variable[-1]+_c[-1]*phiN
 	_d[-1] = _d[-1] - phiN*_d[-1]
 
-	print(vp[-1], vm[-1], velocity[-1])
-	print(_a[-1], _b[-1], _c[-1], _d[-1])
 	#_a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2., vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 # boundary condition
 
 	return _a/(2*dr), _b/(2*dr), _c/(2*dr), _d/(2*dr)
@@ -253,12 +251,24 @@ def velocity_Sumita(variable, radius, options={}):
 
 	_a, _b, _c, _d = np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1)
 
+	for i, value in enumerate(_a):
+		#print(i)
+		if variable[i] < 1e-6:
+			_a[i], _b[i], _c[i], _d[i] = 0., 1., 0., 0.
+		elif variable[i]==1.:
+			_a[i], _b[i], _c[i], _d[i] = 0., 1., 0., 0.
+		else:
+			_a[i] = - ((1./(dr**2.)) * ((1.-variable[i])**2.) * (4./(3.*variable[i])) * (eta/eta0))
+			_b[i] = ((1.-variable[i+1]*variable[i])/(variable[i]*variable[i+1])**(3./2.)) * ((K*K0)/grain**2.) \
+						+ (1./dr**2.) * (((1.-variable[i])**2.) * (4./(3.*variable[i])) * (eta/eta0)+((1.-variable[i+1])**2.) * (4./(3.* variable[i+1])) * (eta/eta0))
+			_c[i] = - ((1./(dr**2.)) * ((1.-variable[i+1])**2.) * (4./(3.* variable[i+1])) * (eta/eta0))
+			_d[i] = - np.sqrt(((1.-variable[i+1])*(1.-variable[i])))
 
-	_a[:] = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
-	_b[:] = ((1.-variable[1:]*variable[0:-1])/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
-			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	_c[:] = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	_d[:] = - np.sqrt(((1.-variable[1:])*(1.-variable[0:-1])))
+	#_a[:] = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
+	#_b[:] = ((1.-variable[1:]*variable[0:-1])/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+	#		+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	#_c[:] = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	#_d[:] = - np.sqrt(((1.-variable[1:])*(1.-variable[0:-1])))
 	
 	#_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,1 # porosity at top == 1
 	#_a[0], _b[0], _c[0], _d[0] = 0,1,0,0 # porosity at bottom ==0
@@ -323,7 +333,7 @@ def compaction_column():
 				'Ra':0., \
 				'K0':1, \
 				'eta':1., \
-				'delta':0.1, \
+				'delta':2., \
 				'bc':'',
 				's':1,
 				'phi0':1.,
@@ -331,18 +341,18 @@ def compaction_column():
 				'U0': 0.,
 				'UN': 0.}
 
-	psi0 = 0.5
-	N = 100
+	psi0 = 0.3
+	N = 1000
 	R = np.linspace(0, 1, N+1)
 	dr = R[1]-R[0]
 	psi = psi0* np.ones(N)
 	#psi[0] = 1.
 	#psi[-1] = 0.
 
-	calcul_velocity = velocity_Sumita
+	calcul_velocity = velocity_Sramek
 	velocity = calcul_velocity(1-psi, R, options)
 	v_m = np.amax(np.abs(velocity))
-	dt = 0.5*dr/(v_m)
+	dt = min(0.5*dr/(v_m), 0.5)
 
 	fig, ax = plt.subplots(1,2, sharey=True)
 	ax[0].plot(psi, R[:-1]+dr/2.)
@@ -354,15 +364,15 @@ def compaction_column():
 	#						(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
 	ax[1].plot(analytical_solution, R, linewidth=2)
 
-	for it in range(0,100):
+	for it in range(0,20000):
 		psi = update(velocity, psi, dt, dr, options)
 		# psi = np.where(psi>0, psi, 0)
 		velocity = calcul_velocity(1-psi, R, options)
 		v_m = np.amax(np.abs(velocity))
-		dt = 0.01*dr/(v_m)
-		print("dt : {}".format(dt))
-		if it%1==0:
-			print(dt)
+		dt = min(0.5, 0.01*dr/(v_m))
+		#print("dt : {}".format(dt))
+		if it%1000==0:
+			print(it, dt)
 			ax[0].plot(psi, R[:-1]+dr/2.)
 			ax[1].plot(velocity, R[1:-1])
 
