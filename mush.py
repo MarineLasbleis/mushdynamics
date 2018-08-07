@@ -87,20 +87,31 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 	# velocity fixed at U0 and UN
 	# porosity fixed at phi0 and phiN (phi0 and phiN correspond to phi_-1 and phi_N+1, the 2 that are not in the array phi)
 	# default is all 0.
-	U0, UN = 0., 0.
+	try:
+		U0, UN = options["U0"], options["UN"]
+	except KeyError:
+		U0, UN = 0., 0.
+	try:
+		phi0, phiN = options["phi0"], options["phiN"]
+	except KeyError:
+		phi0, phiN = 0., 0.
+
 	U0p, U0m = 0.5*(U0+np.abs(U0)), 0.5*(U0-np.abs(U0))
 	UNp, UNm = 0.5*(UN+np.abs(UN)), 0.5*(UN-np.abs(UN))
 	_lambda = 0. # lambda fixed at 0 (upwind)
-	phi0, phiN = 0., 0.
 	_a[0] = -U0p
 	_b[0] =  vp[0] - U0m
 	_c[0] =  vm[0]
 	_d[0] = _a[0]*phi0+_b[0]*variable[0]+_c[0]*variable[1]
+	_d[0] = _d[0] - phi0*_a[0]
 	# values in -1
 	_a[-1] = -vp[-1]
 	_b[-1] =  UNp - vm[-1]
 	_c[-1] =  UNm
 	_d[-1] = _a[-1]*variable[-2]+_b[-1]*variable[-1]+_c[-1]*phiN
+	_d[-1] = _d[-1] - phiN*_d[-1]
+
+	print(_a[0], _b[0], _c[0], _d[0])
 	#_a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2., vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 # boundary condition
 
 	return _a/(2*dr), _b/(2*dr), _c/(2*dr), _d/(2*dr)
@@ -166,12 +177,20 @@ def velocity_Sramek(variable, radius, options):
 
 	_a, _b, _c, _d = np.zeros(len(variable)-1),  np.zeros(len(variable)-1), np.zeros(len(variable)-1),  np.zeros(len(variable)-1)
 
-	_a[:] = _inter[:-1]/dr**2
-	_b[:] = -1./(delta**2*variable[:-1]*variable[1:]) \
-					-  _inter[:-1]/dr**2\
-					-  _inter[1:] /dr**2
-	_c[:] = _inter[1:]/dr**2
-	_d[:] = s*(1-np.sqrt(variable[:-1]*variable[1:])) #if buoyancy/density variations, add terms here! s is 1 or -1.
+	#_a[:] = _inter[:-1]/dr**2
+	#_b[:] = -1./(delta**2*variable[:-1]*variable[1:]) \
+#					-  _inter[:-1]/dr**2\
+	#				-  _inter[1:] /dr**2
+	#_c[:] = _inter[1:]/dr**2
+	#_d[:] = s*(1-np.sqrt(variable[:-1]*variable[1:])) #if buoyancy/density variations, add terms here! s is 1 or -1.
+
+	_a[:] = _inter[:-1]/dr**2*variable[:-1]*variable[1:]
+	_b[:] = -1./(delta**2) \
+					-  _inter[:-1]/dr**2*variable[:-1]*variable[1:]\
+					-  _inter[1:] /dr**2*variable[:-1]*variable[1:]
+	_c[:] = _inter[1:]/dr**2*variable[:-1]*variable[1:]
+	_d[:] = s*(1-np.sqrt(variable[:-1]*variable[1:]))*variable[:-1]*variable[1:] #if buoyancy/density variations, add terms here! s is 1 or -1.
+
 
 	# boundary conditions: V is solved between 0 and N-1,
 	# and boundary conditions are forced for V_-1=0 and V_N=0
@@ -236,6 +255,7 @@ def velocity_Sumita(variable, radius, options={}):
 
 	_a, _b, _c, _d = np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1)
 
+
 	_a[:] = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
 	_b[:] = ((1.-variable[1:]*variable[0:-1])/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
 			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
@@ -273,8 +293,8 @@ def update(V, phi, dt, dr, options = {'advection':"upwind", 'Ra':0.}):
 		#phi2[0], phi2[-1] = phi[0], phi[-1]
 
 
-		_phi = inversion_matrice(_a, _b, _c, _d)
-		phi2 = _phi
+		#_phi = inversion_matrice(_a[1:], _b, _c[:-1], _d)
+		#phi2 = _phi
 
 		return phi2
 
@@ -307,10 +327,14 @@ def compaction_column():
 				'eta':1., \
 				'delta':0.1, \
 				'bc':'',
-				's':1}
+				's':1,
+				'phi0':1.,
+				'phiN': 0.,
+				'U0': 0.,
+				'UN': 0.}
 
 	psi0 = 0.5
-	N = 100
+	N = 10
 	R = np.linspace(0, 1, N)
 	dr = R[1]-R[0]
 	psi = psi0* np.ones_like(R)
@@ -331,13 +355,13 @@ def compaction_column():
 							(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
 	ax[1].plot(analytical_solution, R, linewidth=2)
 
-	for it in range(1,100):
+	for it in range(0,1):
 		psi = update(velocity, psi, dt, dr, options)
 		#psi = np.where(psi>0, psi, 0)
 		velocity = calcul_velocity(1-psi, R, options)
 		v_m = np.amax(np.abs(velocity))
-		dt = 0.5*dr/(v_m)
-		#print("dt : {}".format(dt))
+		dt = 0.1*dr/(v_m)
+		print("dt : {}".format(dt))
 		if it%1==0:
 			print(dt)
 			ax[0].plot(psi, R)
