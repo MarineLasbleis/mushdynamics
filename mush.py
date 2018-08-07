@@ -200,7 +200,7 @@ def velocity_Sumita(variable, radius, options={}):
 	try:
 		K0 = options['K0']
 	except KeyError:
-		K0=1000.
+		K0=1.
 		print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
 
 	try:
@@ -230,17 +230,17 @@ def velocity_Sumita(variable, radius, options={}):
 	try:
 		grain = options["grain"]
 	except KeyError:
-		grain = 1e-3
+		grain = 1
 		print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
 
 
 	_a, _b, _c, _d = np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1)
 
-	_a[:] = - ((1./dr**2) * ((1.-variable[0:-1])**2/psi0) * (4./(3.*variable[0:-1])) * (eta/eta0))
-	_b[:] = ((1.-variable[1:]*variable[0:-1])/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2) \
-			+ (1./dr**2) * (((1.-variable[0:-1])**2/psi0) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1-variable[1:])**2/psi0) * (4./(3.* variable[1:])) * (eta/eta0))
-	_c[:] = - (1./(dr**2) * ((1.-variable[1:])**2/psi0) * (4./(3.* variable[1:])) * (eta/eta0))
-	_d[:] = - np.sqrt(((1-variable[1:])*(1-variable[0:-1]))/psi0)
+	_a[:] = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
+	_b[:] = ((1.-variable[1:]*variable[0:-1])/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	_c[:] = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	_d[:] = - np.sqrt(((1.-variable[1:])*(1.-variable[0:-1])))
 	
 	#_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,1 # porosity at top == 1
 	#_a[0], _b[0], _c[0], _d[0] = 0,1,0,0 # porosity at bottom ==0

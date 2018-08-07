@@ -17,7 +17,7 @@ def test_velocity():
 				'eta':1., \
 				'delta':1., \
 				'bc':'',\
-				'psi0':0.5,
+				'psi0':0.1,
 				's': 1,
 				'grain':1}
 
@@ -32,23 +32,19 @@ def test_velocity():
 
 		# from the inversion
 		velocity = velocity_Sumita(1-psi, R, options)		
-		print("velocity = {}".format(velocity))
+		#print("velocity = {}".format(velocity))
 		ax.plot(velocity, R[1:-1], 'r')
 		
 		#analytical solution
-		x1=np.sqrt(1+phi0)/phi0
-		x2=-np.sqrt(1+phi0)/phi0
-		c3=-(phi0**3/((1-phi0)*(1+phi0)))
+		x1=np.sqrt((1+phi0)/(1-phi0))/phi0 * np.sqrt(3./4.)
+		x2=-x1
+		c3=-(phi0**3/((1+phi0)))
 		c2=(c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
 		c1=-c2-c3
 		analytical_solution= c1*np.exp(x1*R) + c2*np.exp(x2*R) + c3
 		#print("analytical_solution = {}".format(analytical_solution))
 		ax.plot(analytical_solution, R, linewidth=2)
-		#return np.sum(velocity-analytical_solution)**2
-
-		print(len(velocity))
-		print(len(analytical_solution))
-		
+		return np.sum(velocity-analytical_solution[1:-1])**2
 
 	_fig, ax = plt.subplots()
 
