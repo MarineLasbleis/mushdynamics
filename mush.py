@@ -161,7 +161,7 @@ def velocity_Sramek(variable, radius, options):
 		delta = 1.
 		print("Delta (compaction length) was not defined, please consider defining it for later. Default value is {}".format(delta))
 
-	print("delta: {}, K0: {}, s: {}".format(delta, K0, s))
+	# print("delta: {}, K0: {}, s: {}".format(delta, K0, s))
 	_inter = (K0+4./3.*variable)*(1.-variable)/variable
 
 	_a, _b, _c, _d = np.zeros(len(variable)-1),  np.zeros(len(variable)-1), np.zeros(len(variable)-1),  np.zeros(len(variable)-1)
@@ -310,7 +310,7 @@ def compaction_column():
 				's':1}
 
 	psi0 = 0.5
-	N = 20
+	N = 100
 	R = np.linspace(0, 1, N)
 	dr = R[1]-R[0]
 	psi = psi0* np.ones_like(R)
@@ -324,23 +324,24 @@ def compaction_column():
 
 	fig, ax = plt.subplots(1,2, sharey=True)
 	ax[0].plot(psi, R)
-	ax[1].plot(velocity, R, 'o')
+	ax[1].plot(velocity, R[:-1], 'o')
 
 	h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
 	analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\
 							(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
 	ax[1].plot(analytical_solution, R, linewidth=2)
 
-	for it in range(1,10):
+	for it in range(1,100):
 		psi = update(velocity, psi, dt, dr, options)
 		#psi = np.where(psi>0, psi, 0)
 		velocity = calcul_velocity(1-psi, R, options)
 		v_m = np.amax(np.abs(velocity))
 		dt = 0.5*dr/(v_m)
-		print("dt : {}".format(dt))
-		if it%1==0 :
+		#print("dt : {}".format(dt))
+		if it%1==0:
+			print(dt)
 			ax[0].plot(psi, R)
-			ax[1].plot(velocity, R)
+			ax[1].plot(velocity, R[:-1])
 
 
 	ax[0].set_xlim([0,1])
