@@ -65,7 +65,7 @@ def advection_point():
 	#phi[30:60] = 2.
 
 	dr = R[1]-R[0]
-	dt = 0.5*dr/V0
+	dt = np.abs(0.5*dr/V0)
 
 	fig, ax = plt.subplots(3, 4)
 #	fig, ax = plt.subplots(2, 1, sharex = True)

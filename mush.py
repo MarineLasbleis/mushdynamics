@@ -78,7 +78,7 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 	_b[1:-1] =  vp[1:]*(1-lambdap[1:]/2.) + vm[1:]*lambdam[1:]/2. \
 				- vm[:-1]*(1-lambdam[:-1]/2.) - vp[:-1]*lambdap[:-1]/2.
 	_c[1:-1] =  vm[1:]*(1-lambdam[1:]/2.) + vp[1:]*lambdap[1:]/2.
-	_d[1:-1] = _a[1:-1]*variable[:-2]+_b[1:-1]*variable[1:-1]+_c[1:-1]*variable[2:]
+	_d[1:-1] = (_a[1:-1]*variable[:-2]+_b[1:-1]*variable[1:-1]+_c[1:-1]*variable[2:])
 
 	# boundary conditions:
 	# velocity fixed at U0 and UN
@@ -96,17 +96,23 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 	U0p, U0m = 0.5*(U0+np.abs(U0)), 0.5*(U0-np.abs(U0))
 	UNp, UNm = 0.5*(UN+np.abs(UN)), 0.5*(UN-np.abs(UN))
 	_lambda = 0. # lambda fixed at 0 (upwind)
-	_a[0] = -U0p
-	_b[0] =  vp[0] - U0m
-	_c[0] =  vm[0]
-	_d[0] = _a[0]*phi0+_b[0]*variable[0]+_c[0]*variable[1]
+	_a[0] = -U0p*(1/2.) - vm[0]/2.
+	_b[0] =  vp[0]*(1/2.) + vm[0]/2. \
+				- U0m*(1/2.) - U0p/2.
+	_c[0] =  vm[0]*(1/2.) + vp[0]/2.
+	_d[0] = (_a[0]*phi0+_b[0]*variable[0]+_c[0]*variable[1])
 	_d[0] = _d[0] - phi0*_a[0]
+	#_a[0] = -U0p
+	#_b[0] =  vp[0] - U0m
+	#_c[0] =  vm[0]
+	#_d[0] = _a[0]*phi0+_b[0]*variable[0]+_c[0]*variable[1]
+	#_d[0] = _d[0] - phi0*_a[0]
 	# values in -1
 	_a[-1] = -vp[-1]
 	_b[-1] =  UNp - vm[-1]
 	_c[-1] =  UNm
 	_d[-1] = _a[-1]*variable[-2]+_b[-1]*variable[-1]+_c[-1]*phiN
-	_d[-1] = _d[-1] - phiN*_d[-1]
+	_d[-1] = _d[-1] - phiN*_c[-1]
 
 	#_a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2., vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 # boundary condition
 
@@ -204,7 +210,7 @@ def velocity_Sramek(variable, radius, options):
 	return new_velocity
 
 
-def velocity_Sumita(variable, radius, options={}):
+def velocity_Sumita(variable, radius, options={}, verbose=False):
 	### NOT WORKING
 
 	# spherical symmetry
@@ -216,53 +222,54 @@ def velocity_Sumita(variable, radius, options={}):
 		K0 = options['K0']
 	except KeyError:
 		K0=1.
-		print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
+		if verbose: print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
 
 	try:
 		eta = options["eta"]
 	except KeyError:
 		eta = 1.
-		print("eta was not defined, please consider defining it for later. Default value is {}".format(eta))
+		if verbose: print("eta was not defined, please consider defining it for later. Default value is {}".format(eta))
 
 	try:
 		psi0 = options["psi0"]
 	except KeyError:
 		psi0=1./2.
-		print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
+		if verbose: print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
 
 	try:
 		eta0 = options["eta0"]
 	except KeyError:
 		eta0 = 1.
-		print("eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
+		if verbose: print("eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
 
 	try:
 		K = options["K"]
 	except KeyError:
 		K = 1.
-		print("K was not defined, please consider defining it for later. Default value is {}".format(K))
+		if verbose: print("K was not defined, please consider defining it for later. Default value is {}".format(K))
 
 	try:
 		grain = options["grain"]
 	except KeyError:
 		grain = 1
-		print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
+		if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
 
 
 	_a, _b, _c, _d = np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1)
 
+	sign = +1 # sign of the density difference
 	for i, value in enumerate(_a):
 		#print(i)
 		if variable[i] < 1e-6:
 			_a[i], _b[i], _c[i], _d[i] = 0., 1., 0., 0.
-		elif variable[i]==1.:
+		elif variable[i]>1.-1e-6:
 			_a[i], _b[i], _c[i], _d[i] = 0., 1., 0., 0.
 		else:
 			_a[i] = - ((1./(dr**2.)) * ((1.-variable[i])**2.) * (4./(3.*variable[i])) * (eta/eta0))
-			_b[i] = ((1.-variable[i+1]*variable[i])/(variable[i]*variable[i+1])**(3./2.)) * ((K*K0)/grain**2.) \
+			_b[i] = ((1.-np.sqrt(variable[i+1]*variable[i]))**2/(variable[i]*variable[i+1])**(3./2.)) * ((K*K0)/grain**2.) \
 						+ (1./dr**2.) * (((1.-variable[i])**2.) * (4./(3.*variable[i])) * (eta/eta0)+((1.-variable[i+1])**2.) * (4./(3.* variable[i+1])) * (eta/eta0))
 			_c[i] = - ((1./(dr**2.)) * ((1.-variable[i+1])**2.) * (4./(3.* variable[i+1])) * (eta/eta0))
-			_d[i] = - np.sqrt(((1.-variable[i+1])*(1.-variable[i])))
+			_d[i] = sign * (1-np.sqrt(variable[i+1]*variable[i])) 
 
 	#_a[:] = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
 	#_b[:] = ((1.-variable[1:]*variable[0:-1])/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
@@ -282,9 +289,10 @@ def velocity_Sumita(variable, radius, options={}):
 
 def update(V, phi, dt, dr, options = {'advection':"upwind", 'Ra':0.}):
 
-		a_adv, b_adv, c_adv, d_adv = fluxlimiterscheme(V, phi, dr, options)
-		a_diff, b_diff, c_diff, d_diff = CrankNicholson(phi, dr, options)
-		_a, _b, _c, _d = a_adv+a_diff, b_adv+b_diff, c_adv+c_diff, d_adv+d_diff
+		# a_adv, b_adv, c_adv, d_adv = fluxlimiterscheme(V, phi, dr, options)
+		# a_diff, b_diff, c_diff, d_diff = CrankNicholson(phi, dr, options)
+		# _a, _b, _c, _d = a_adv+a_diff, b_adv+b_diff, c_adv+c_diff, d_adv+d_diff
+		_a, _b, _c, _d =fluxlimiterscheme(V, phi, dr, options)
 
 		_a = _a*dt
 		_b = 1.+_b*dt
@@ -341,8 +349,8 @@ def compaction_column():
 				'U0': 0.,
 				'UN': 0.}
 
-	psi0 = 0.3
-	N = 1000
+	psi0 = 0.6
+	N = 2000
 	R = np.linspace(0, 1, N+1)
 	dr = R[1]-R[0]
 	psi = psi0* np.ones(N)
@@ -355,7 +363,7 @@ def compaction_column():
 	dt = min(0.5*dr/(v_m), 0.5)
 
 	fig, ax = plt.subplots(1,2, sharey=True)
-	ax[0].plot(psi, R[:-1]+dr/2.)
+	ax[0].plot(1-psi, R[:-1]+dr/2.)
 	ax[1].plot(velocity, R[1:-1], 'o')
 
 	analytical_solution = analytic_Sumita(psi0, R)
@@ -364,16 +372,16 @@ def compaction_column():
 	#						(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
 	ax[1].plot(analytical_solution, R, linewidth=2)
 
-	for it in range(0,20000):
+	for it in range(0,10000):
 		psi = update(velocity, psi, dt, dr, options)
 		# psi = np.where(psi>0, psi, 0)
 		velocity = calcul_velocity(1-psi, R, options)
 		v_m = np.amax(np.abs(velocity))
-		dt = min(0.5, 0.01*dr/(v_m))
+		dt = min(0.5, 0.1*dr/(v_m))
 		#print("dt : {}".format(dt))
-		if it%1000==0:
+		if it%400==0:
 			print(it, dt)
-			ax[0].plot(psi, R[:-1]+dr/2.)
+			ax[0].plot(1-psi, R[:-1]+dr/2.)
 			ax[1].plot(velocity, R[1:-1])
 
 
