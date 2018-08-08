@@ -1,5 +1,5 @@
 """ Reproduction of calculations from Sumita et 1996 on compaction and implications for Earth's inner core """
-#modifications/tests par MK
+
 
 
 import numpy as np
@@ -19,9 +19,8 @@ def Schema():
             DP0         DP1                  DP_i-1                                           DP_N-1           \n")
 
 
-Nr = 10 #number of points in space
-Nt = 10 #number of points in time
-
+#Nr = 10 #number of points in space
+#Nt = 10 #number of points in time
 
 
 
@@ -95,18 +94,12 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 
 	U0p, U0m = 0.5*(U0+np.abs(U0)), 0.5*(U0-np.abs(U0))
 	UNp, UNm = 0.5*(UN+np.abs(UN)), 0.5*(UN-np.abs(UN))
-	_lambda = 0. # lambda fixed at 0 (upwind)
 	_a[0] = -U0p*(1/2.) - vm[0]/2.
 	_b[0] =  vp[0]*(1/2.) + vm[0]/2. \
 				- U0m*(1/2.) - U0p/2.
 	_c[0] =  vm[0]*(1/2.) + vp[0]/2.
 	_d[0] = (_a[0]*phi0+_b[0]*variable[0]+_c[0]*variable[1])
 	_d[0] = _d[0] - phi0*_a[0]
-	#_a[0] = -U0p
-	#_b[0] =  vp[0] - U0m
-	#_c[0] =  vm[0]
-	#_d[0] = _a[0]*phi0+_b[0]*variable[0]+_c[0]*variable[1]
-	#_d[0] = _d[0] - phi0*_a[0]
 	# values in -1
 	_a[-1] = -vp[-1]
 	_b[-1] =  UNp - vm[-1]
@@ -120,7 +113,7 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 
 
 def sourceterm():
-	pass #for now, we can pass this! But useful for later. Will go into the "d". 
+	pass #for now, we can pass this! But useful for later. Will go into the "d".
 
 def CrankNicholson(variable, dr, options):
 	""" Calculate the coefficients for the diffusion
@@ -153,7 +146,6 @@ def velocity_Sramek(variable, radius, options):
 	a, b, c, d are length N-1, N-1, N-1 and N-1
 	and a, c are injected as length N-2 for calculating the tridiagonal matrix.
 	"""
-
 	dr = radius[1]-radius[0]
 
 	try:
@@ -174,24 +166,14 @@ def velocity_Sramek(variable, radius, options):
 		delta = 1.
 		print("Delta (compaction length) was not defined, please consider defining it for later. Default value is {}".format(delta))
 
-	# print("delta: {}, K0: {}, s: {}".format(delta, K0, s))
 	_inter = (K0+4./3.*variable)*(1.-variable)/variable
 
-	_a, _b, _c, _d = np.zeros(len(variable)-1),  np.zeros(len(variable)-1), np.zeros(len(variable)-1),  np.zeros(len(variable)-1)
-
-	#_a[:] = _inter[:-1]/dr**2
-	#_b[:] = -1./(delta**2*variable[:-1]*variable[1:]) \
-#					-  _inter[:-1]/dr**2\
-	#				-  _inter[1:] /dr**2
-	#_c[:] = _inter[1:]/dr**2
-	#_d[:] = s*(1-np.sqrt(variable[:-1]*variable[1:])) #if buoyancy/density variations, add terms here! s is 1 or -1.
-
-	_a[:] = _inter[:-1]/dr**2*variable[:-1]*variable[1:]
-	_b[:] = -1./(delta**2) \
+	_a = _inter[:-1]/dr**2*variable[:-1]*variable[1:]
+	_b = -1./(delta**2) \
 					-  _inter[:-1]/dr**2*variable[:-1]*variable[1:]\
 					-  _inter[1:] /dr**2*variable[:-1]*variable[1:]
-	_c[:] = _inter[1:]/dr**2*variable[:-1]*variable[1:]
-	_d[:] = s*(1-np.sqrt(variable[:-1]*variable[1:]))*variable[:-1]*variable[1:] #if buoyancy/density variations, add terms here! s is 1 or -1.
+	_c = _inter[1:]/dr**2*variable[:-1]*variable[1:]
+	_d = s*(1-np.sqrt(variable[:-1]*variable[1:]))*variable[:-1]*variable[1:] #if buoyancy/density variations, add terms here! s is 1 or -1.
 
 
 	# boundary conditions: V is solved between 0 and N-1,
@@ -204,8 +186,6 @@ def velocity_Sramek(variable, radius, options):
 	# (would be OK if we wanted to force boundary conditions on 0 and N-1, but we want to calculate the values there)
 	# if we wanted V_N = U for example, then d[-1] = d[-1] - U*c[-1]
 
-	#new_velocity = np.zeros_like(variable)
-	#new_velocity[1:-1] = TDMAsolver(_a[1:-1], _b[1:-1], _c[1:-1], _d[1:-1])
 	new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
 	return new_velocity
 
@@ -221,7 +201,7 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
 	try:
 		K0 = options['K0']
 	except KeyError:
-		K0=1.
+		K0 = 1.
 		if verbose: print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
 
 	try:
@@ -254,36 +234,21 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
 		grain = 1
 		if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
 
-
-	_a, _b, _c, _d = np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1), np.zeros(len(variable)-1)
-
 	sign = +1 # sign of the density difference
-	for i, value in enumerate(_a):
-		#print(i)
-		if variable[i] < 1e-6:
-			_a[i], _b[i], _c[i], _d[i] = 0., 1., 0., 0.
-		elif variable[i]>1.-1e-6:
-			_a[i], _b[i], _c[i], _d[i] = 0., 1., 0., 0.
-		else:
-			_a[i] = - ((1./(dr**2.)) * ((1.-variable[i])**2.) * (4./(3.*variable[i])) * (eta/eta0))
-			_b[i] = ((1.-np.sqrt(variable[i+1]*variable[i]))**2/(variable[i]*variable[i+1])**(3./2.)) * ((K*K0)/grain**2.) \
-						+ (1./dr**2.) * (((1.-variable[i])**2.) * (4./(3.*variable[i])) * (eta/eta0)+((1.-variable[i+1])**2.) * (4./(3.* variable[i+1])) * (eta/eta0))
-			_c[i] = - ((1./(dr**2.)) * ((1.-variable[i+1])**2.) * (4./(3.* variable[i+1])) * (eta/eta0))
-			_d[i] = sign * (1-np.sqrt(variable[i+1]*variable[i])) 
 
-	#_a[:] = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
-	#_b[:] = ((1.-variable[1:]*variable[0:-1])/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
-	#		+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	#_c[:] = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	#_d[:] = - np.sqrt(((1.-variable[1:])*(1.-variable[0:-1])))
-	
-	#_a[-1], _b[-1], _c[-1], _d[-1] = 0,1,0,1 # porosity at top == 1
-	#_a[0], _b[0], _c[0], _d[0] = 0,1,0,0 # porosity at bottom ==0
+	_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
+	_b = ((1.-variable[1:]*variable[0:-1])/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	_d = sign * np.sqrt(((1.-variable[1:])*(1.-variable[0:-1])))
+
+	too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
+	_a = np.where(too_large, 0., _a)
+	_b = np.where(too_large, 1. , _b)
+	_c = np.where(too_large, 0. , _c)
+	_d = np.where(too_large, 0. , _d)
 
 	new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
-
-	# print(a, b, c, d)
-
 	return new_velocity
 
 
@@ -298,25 +263,14 @@ def update(V, phi, dt, dr, options = {'advection':"upwind", 'Ra':0.}):
 		_b = 1.+_b*dt
 		_c = _c*dt
 		_d = phi-_d*dt
-		#_d = boundary_conditions(phi, _a, _b, _c, _d, options)
-		# for the boundary conditions, we need to modify d[0] and d[-1]
-		#phi2 = phi[:]
 		phi2 = np.zeros_like(phi)
-		#_phi = inversion_matrice(_a[1:-1], _b[1:-1], _c[1:-1], _d[1:-1])
 		_phi = inversion_matrice(_a[1:], _b[:], _c[:-1], _d[:])
-		#phi2 = TDMAsolver(_a, _b, _c, _d)
 		phi2[:] = _phi
-		#phi2[0], phi2[-1] = phi[0], phi[-1]
-
-
-		#_phi = inversion_matrice(_a[1:], _b, _c[:-1], _d)
-		#phi2 = _phi
-
 		return phi2
 
 
 def boundary_conditions(variable, a, b, c, d, options):
-
+	# NOT USED
 	try:
 		BC = options["bc"]
 	except KeyError:
@@ -344,7 +298,7 @@ def compaction_column():
 				'delta':2., \
 				'bc':'',
 				's':1,
-				'phi0':1.,
+				'phi0':.8,
 				'phiN': 0.,
 				'U0': 0.,
 				'UN': 0.}
@@ -357,7 +311,7 @@ def compaction_column():
 	#psi[0] = 1.
 	#psi[-1] = 0.
 
-	calcul_velocity = velocity_Sramek
+	calcul_velocity = velocity_Sumita
 	velocity = calcul_velocity(1-psi, R, options)
 	v_m = np.amax(np.abs(velocity))
 	dt = min(0.5*dr/(v_m), 0.5)
@@ -372,14 +326,14 @@ def compaction_column():
 	#						(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
 	ax[1].plot(analytical_solution, R, linewidth=2)
 
-	for it in range(0,10000):
+	for it in range(0,20000):
 		psi = update(velocity, psi, dt, dr, options)
 		# psi = np.where(psi>0, psi, 0)
 		velocity = calcul_velocity(1-psi, R, options)
 		v_m = np.amax(np.abs(velocity))
 		dt = min(0.5, 0.1*dr/(v_m))
 		#print("dt : {}".format(dt))
-		if it%400==0:
+		if it%1000==0:
 			print(it, dt)
 			ax[0].plot(1-psi, R[:-1]+dr/2.)
 			ax[1].plot(velocity, R[1:-1])
