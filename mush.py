@@ -241,10 +241,10 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
 		if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
 
 	_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
-	_b = ((1.-variable[1:]*variable[0:-1])/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+	_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
 			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
 	_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	_d = sign * np.sqrt(((1.-variable[1:])*(1.-variable[0:-1])))
+	_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
 
 	too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
 	_a = np.where(too_large, 0., _a)
@@ -302,10 +302,11 @@ def compaction_column():
 				'delta':2., \
 				'bc':'',
 				's':1,
-				'phi0':.8,
+				'phi0': .8,
 				'phiN': 0.,
 				'U0': 0.,
-				'UN': 0.}
+				'UN': 0.,
+				'sign': -1}
 
 	psi0 = 0.6
 	N = 2000
