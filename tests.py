@@ -206,7 +206,7 @@ def test_bc():
 	run(phi_sin, ax, {'advection':"upwind", "bc":"dirichlet"})
 
 
-def test_velocity():
+def test_velocity_sramek():
 
 
 	options = {'advection':"FLS", \
@@ -225,7 +225,9 @@ def test_velocity():
 		R = np.linspace(0, 1, N-1)
 		dr = R[1]-R[0]
 		psi = psi0* np.ones(N)
+		phi0=1-psi0
 
+		#Sramek
 		# from the inversion
 		velocity = velocity_Sramek(1-psi, R, options)
 		ax.plot(velocity, R, 'o')
@@ -247,6 +249,47 @@ def test_velocity():
 		print("error : {}".format(error))
 
 
+
+def test_velocity_sumita():
+
+
+	options = {'advection':"FLS", \
+				'Ra':0., \
+				'K0':1., \
+				'eta':1., \
+				'delta':1., \
+				'bc':'',\
+				'psi0':0.1,
+				's': 1,
+				'grain':1}
+
+	def velocity_analytical_check(ax, options):
+
+		psi0 = options["psi0"]
+		N = 100
+		R = np.linspace(0, 1, N+1)
+		dr = R[1]-R[0]
+		psi = psi0* np.ones(N)
+		phi0=1-psi0
+
+		# from the inversion
+		velocity = velocity_Sumita(1-psi, R, options)		
+		ax.plot(velocity, R[1:-1], 'r')
+		
+		#analytical solution
+		x1=np.sqrt(1/phi0**2)*np.sqrt(3./4.)
+		x2=-x1
+		c3=-(phi0**3/((1-phi0)))
+		c2=(c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
+		c1=-c2-c3
+		analytical_solution= c1*np.exp(x1*R) + c2*np.exp(x2*R) + c3
+		ax.plot(analytical_solution, R, linewidth=2)
+		return np.sum(velocity-analytical_solution[1:-1])**2
+
+	_fig, ax = plt.subplots()
+
+	velocity_analytical_check(ax, options)
+
 if __name__ == "__main__":
 
 
@@ -254,7 +297,8 @@ if __name__ == "__main__":
 	Schema()
 	advection_point() 
 	#diffusion()
-	test_velocity()
+	test_velocity_sramek()
+	test_velocity_sumita()
 	advection_gradient_velocity()
 	plt.show()
 
