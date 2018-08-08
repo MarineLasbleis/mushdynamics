@@ -237,7 +237,7 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
 	try:
 		sign = options["sign"]
 	except KeyError:
-		sign = 1.
+		sign = -1.
 		if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
 
 	_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
