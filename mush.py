@@ -185,6 +185,8 @@ def velocity_Sramek(variable, radius, options):
 	#_a[0], _b[0], _c[0], _d[0] = 0,1,0,0
 	# (would be OK if we wanted to force boundary conditions on 0 and N-1, but we want to calculate the values there)
 	# if we wanted V_N = U for example, then d[-1] = d[-1] - U*c[-1]
+	U = 0.01
+	_d[-1] = _d[-1] - U*_c[-1]
 
 	new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
 	return new_velocity
@@ -302,7 +304,7 @@ def compaction_column():
 				'delta':2., \
 				'bc':'',
 				's':1,
-				'phi0': .8,
+				'phi0': .6,
 				'phiN': 0.,
 				'U0': 0.,
 				'UN': 0.,
@@ -316,7 +318,7 @@ def compaction_column():
 	#psi[0] = 1.
 	#psi[-1] = 0.
 
-	calcul_velocity = velocity_Sumita
+	calcul_velocity = velocity_Sramek
 	velocity = calcul_velocity(1-psi, R, options)
 	v_m = np.amax(np.abs(velocity))
 	dt = min(0.5*dr/(v_m), 0.5)
@@ -331,14 +333,14 @@ def compaction_column():
 	#						(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
 	ax[1].plot(analytical_solution, R, linewidth=2)
 
-	for it in range(0,20000):
+	for it in range(0,2000):
 		psi = update(velocity, psi, dt, dr, options)
 		# psi = np.where(psi>0, psi, 0)
 		velocity = calcul_velocity(1-psi, R, options)
 		v_m = np.amax(np.abs(velocity))
 		dt = min(0.5, 0.1*dr/(v_m))
 		#print("dt : {}".format(dt))
-		if it%1000==0:
+		if it%100==0:
 			print(it, dt)
 			ax[0].plot(1-psi, R[:-1]+dr/2.)
 			ax[1].plot(velocity, R[1:-1])
