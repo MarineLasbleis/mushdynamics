@@ -83,17 +83,21 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     # porosity fixed at phi0 and phiN (phi0 and phiN correspond to phi_-1 and phi_N+1, the 2 that are not in the array phi)
     # default is all 0.
 
-    try:
-        U0, UN = options["U0"], options["UN"]
-    except KeyError:
-        U0, UN = 0., 0.
-    try:
-        phi0, phiN = options["phi0"], options["phiN"]
-    except KeyError:
-        phi0, phiN = 0., 0.
+    # try:
+    #     U0, UN = options["U0"], options["UN"]
+    # except KeyError:
+    #     U0, UN = 0., 0.
+    # try:
+    #     phi0, phiN = options["phi0"], options["phiN"]
+    # except KeyError:
+    #     phi0, phiN = 0., 0.
+
+    U0, phi0 = 0., 0. 
+    UN, phiN = velocity[-1], 0.5
 
     U0p, U0m = 0.5*(U0+np.abs(U0)), 0.5*(U0-np.abs(U0))
     UNp, UNm = 0.5*(UN+np.abs(UN)), 0.5*(UN-np.abs(UN))
+
     _a[0] = -U0p*(1/2.) - vm[0]/2.
     _b[0] =  vp[0]*(1/2.) + vm[0]/2. \
                 - U0m*(1/2.) - U0p/2.
@@ -106,6 +110,7 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     _c[-1] =  UNm
     _d[-1] = _a[-1]*variable[-2]+_b[-1]*variable[-1]+_c[-1]*phiN
     _d[-1] = _d[-1] - phiN*_c[-1]
+    print(UNp, UNm, phiN)
 
     return _a/(2*dr), _b/(2*dr), _c/(2*dr), _d/(2*dr)
 
@@ -240,11 +245,28 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
         sign = -1.
         if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
 
+    try:
+        BC = options["BC"]
+    except KeyError:
+        BC = "V==0" # at top
+        if verbose: print("BC was not defined, please consider defining it for later. Default value is {}".format(BC))
+
+
+
     _a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
     _b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
             + (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
     _c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
     _d = -sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
+
+    # default of boundary conditions is v=0 top and bottom
+    # for dV/dz = 0 at top: 
+    if BC == "V==0":
+        pass
+    elif BC == "dVdz==0":
+        _b[-1] = _b[-1] + _c[-1]
+    else:
+        print("Boundary conditions not well defined for velocity. {} requested, but V==0 applied.".format(BC))
 
     too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
     _a = np.where(too_large, 0., _a)

@@ -78,7 +78,7 @@ def compaction_column_growth(calcul_velocity, **options):
     """ Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
 
     psi0 = 1-options["phi0"]
-    N = 10
+    N = 100
     R = np.linspace(0, 0.01, N+1)
     dr = R[1]-R[0]
     psi = psi0* np.ones(N)
@@ -96,15 +96,15 @@ def compaction_column_growth(calcul_velocity, **options):
     time_p = time
     time_max = 4000.
     it = 0
-    iter_max = 100000
+    iter_max = 100
 
     while time<time_max and it<iter_max:
     #for it in range(0,10000):
         it = it+1
         time = time + dt
         time_p = time_p + dt
-        if R[-1]+dr < radius(time):
-            psi, R = append_radius(psi, R)
+        #if R[-1]+dr < radius(time):
+        #    psi, R = append_radius(psi, R)
         #psi = np.append(psi, [0.5, 0.5])
         #R = np.append(R, [R[-1]+dr, R[-1]+2*dr])
         velocity = calcul_velocity(1-psi, R, options)
@@ -112,7 +112,7 @@ def compaction_column_growth(calcul_velocity, **options):
         v_m = np.amax(np.abs(velocity))
         dt = min(0.5, 0.1*dr/(v_m))
         #if time_p > dt_print: 
-        if it%1000==0:
+        if it%10==0:
             print(it, dt, time)
             time_p = time_p - dt_print #reinitinalize the mark to know if we need to print/plot something.
             ax[0].plot(1-psi, R[:-1]+dr/2.)
@@ -137,7 +137,6 @@ def append_radius(psi, R):
 if __name__ == "__main__":
 
 
-
     options = {'advection':"upwind", \
                 'Ra':0., \
                 'eta':1., \
@@ -146,7 +145,8 @@ if __name__ == "__main__":
                 'phiN': 0.,
                 'U0': 0.,
                 'UN': 0.,
-                'sign': 1}
+                'sign': 1, 
+                'BC': "dVdz==0"}
 
 
     # compaction_column(velocity_Sramek, delta=1., **options)
@@ -165,5 +165,5 @@ if __name__ == "__main__":
     # plt.savefig("fig/Sumita_K_01.pdf")
 
 
-    compaction_column_growth(velocity_Sramek, delta=1., **options)
+    compaction_column_growth(velocity_Sumita, delta=1., **options)
     plt.show()
