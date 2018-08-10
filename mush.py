@@ -42,7 +42,6 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     """
 
     # detect size of the system and initialize variables:
-    #lambdap, lambdam, vp, vm = np.zeros(len(variable)+1), np.zeros(len(variable)+1), np.zeros(len(variable)+1), np.zeros(len(variable)+1)
     lambdap, lambdam, vp, vm = np.zeros_like(velocity), np.zeros_like(velocity), np.zeros_like(velocity), np.zeros_like(velocity)
     _a, _b, _c, _d = np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable)
 
@@ -83,6 +82,7 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     # velocity fixed at U0 and UN
     # porosity fixed at phi0 and phiN (phi0 and phiN correspond to phi_-1 and phi_N+1, the 2 that are not in the array phi)
     # default is all 0.
+
     try:
         U0, UN = options["U0"], options["UN"]
     except KeyError:
@@ -106,8 +106,6 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     _c[-1] =  UNm
     _d[-1] = _a[-1]*variable[-2]+_b[-1]*variable[-1]+_c[-1]*phiN
     _d[-1] = _d[-1] - phiN*_c[-1]
-
-    #_a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2., vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 # boundary condition
 
     return _a/(2*dr), _b/(2*dr), _c/(2*dr), _d/(2*dr)
 
