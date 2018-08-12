@@ -192,7 +192,6 @@ def velocity_Sramek(variable, radius, options):
 
 def velocity_Sumita(variable, radius, options={}, verbose=False):
 	### NOT WORKING
-
 	# spherical symmetry
 	# cartesian symmetry
 
@@ -240,11 +239,28 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
 		sign = -1.
 		if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
 
-	_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
+	try:
+		R0=options["R0"]
+	except KeyError:
+		R0=1
+		if verbose: print("R0 was not defined, please consider defining it for later. Default value is {}".format(R0))
+
+	
+	#cartesian symetry			
+	#_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
+	#_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+	#		+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	#_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	#_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
+
+	#spherical symetry
+
+	_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)) * (4/radius[1:-1]**2)
 	_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
-			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
+			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0) * (4/radius[1:-1]**2) + ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0) *(4/radius[1:-1]**2))
+	_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0)*(4/radius[1:-1]**2))
+	_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1]))*(radius[1:-1]/R0))
+
 
 	too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
 	_a = np.where(too_large, 0., _a)
@@ -299,17 +315,17 @@ def compaction_column():
 				'Ra':0., \
 				'K0':1, \
 				'eta':1., \
-				'delta':2., \
+				'delta':0.2, \
 				'bc':'',
 				's':1,
 				'phi0': .8,
 				'phiN': 0.,
 				'U0': 0.,
 				'UN': 0.,
-				'sign': -1}
+				'sign': 1}
 
-	psi0 = 0.6
-	N = 2000
+	psi0 = 0.7
+	N = 1000
 	R = np.linspace(0, 1, N+1)
 	dr = R[1]-R[0]
 	psi = psi0* np.ones(N)
@@ -329,7 +345,7 @@ def compaction_column():
 	#h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
 	#analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\
 	#						(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
-	ax[1].plot(analytical_solution, R, linewidth=2)
+	#ax[1].plot(analytical_solution, R, linewidth=2)
 
 	for it in range(0,20000):
 		psi = update(velocity, psi, dt, dr, options)
@@ -343,21 +359,25 @@ def compaction_column():
 			ax[0].plot(1-psi, R[:-1]+dr/2.)
 			ax[1].plot(velocity, R[1:-1])
 
-
 	ax[0].set_xlim([0,1])
+	ax[0].set_xlabel("Porosity")
+	ax[0].set_ylabel("z")
+	ax[1].set_xlabel("Velocity")
+	plt.suptitle("Evolution of porosity and velocity for a compacted column (Sumita)")
+	
 
 
 def analytic_Sumita(phi0, R):
 	"""Solution analytique pour resolution Sumita."""
-	x1 = np.sqrt((1+phi0)/(1-phi0))/phi0 * np.sqrt(3./4.)
-	x2 = -x1
-	c3 = -(phi0**3/((1+phi0)))
-	c2 = (c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
-	c1 = -c2-c3
+	x1=np.sqrt(1/phi0**2)*np.sqrt(3./4.)
+	x2=-x1
+	c3=-(phi0**3/((1-phi0)))
+	c2=(c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
+	c1=-c2-c3
 	return c1*np.exp(x1*R) + c2*np.exp(x2*R) + c3
-		# print("analytical_solution = {}".format(analytical_solution))
-		# ax.plot(analytical_solution, R, linewidth=2)
-		#return np.sum(velocity-analytical_solution[1:-1])**2
+	# print("analytical_solution = {}".format(analytical_solution))
+	# ax.plot(analytical_solution, R, linewidth=2)
+	#return np.sum(velocity-analytical_solution[1:-1])**2
 
 
 
@@ -370,5 +390,5 @@ if __name__ == '__main__':
 	print('Sumita et al 1996, Geoph. J. Int., equations modified with Sramek (phd thesis)')
 	Schema()
 	compaction_column()
-
 	plt.show()
+	#plt.savefig("sumita_phi03.pdf")
