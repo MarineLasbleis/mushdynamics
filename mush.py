@@ -196,86 +196,87 @@ def velocity_Sramek(variable, radius, options, verbose=False):
 
 
 def velocity_Sumita(variable, radius, options={}, verbose=False):
-    ### NOT WORKING
 
-    # spherical symmetry
-    # cartesian symmetry
+	### NOT WORKING
+	# spherical symmetry
+	# cartesian symmetry
 
-    dr = radius[1]-radius[0] #assuming no variations of dr
+	dr = radius[1]-radius[0] #assuming no variations of dr
 
-    try:
-        K0 = options['K0']
-    except KeyError:
-        K0 = 1.
-        if verbose: print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
+	try:
+		K0 = options['K0']
+	except KeyError:
+		K0 = 1.
+		if verbose: print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
 
-    try:
-        eta = options["eta"]
-    except KeyError:
-        eta = 1.
-        if verbose: print("eta was not defined, please consider defining it for later. Default value is {}".format(eta))
+	try:
+		eta = options["eta"]
+	except KeyError:
+		eta = 1.
+		if verbose: print("eta was not defined, please consider defining it for later. Default value is {}".format(eta))
 
-    try:
-        psi0 = options["psi0"]
-    except KeyError:
-        psi0=1./2.
-        if verbose: print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
+	try:
+		psi0 = options["psi0"]
+	except KeyError:
+		psi0=1./2.
+		if verbose: print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
 
-    try:
-        eta0 = options["eta0"]
-    except KeyError:
-        eta0 = 1.
-        if verbose: print("eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
+	try:
+		eta0 = options["eta0"]
+	except KeyError:
+		eta0 = 1.
+		if verbose: print("eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
 
-    try:
-        K = options["K"]
-    except KeyError:
-        K = 1.
-        if verbose: print("K was not defined, please consider defining it for later. Default value is {}".format(K))
+	try:
+		K = options["K"]
+	except KeyError:
+		K = 1.
+		if verbose: print("K was not defined, please consider defining it for later. Default value is {}".format(K))
 
-    try:
-        grain = options["grain"]
-    except KeyError:
-        grain = 1
-        if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
+	try:
+		grain = options["grain"]
+	except KeyError:
+		grain = 1
+		if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
 
-    try:
-        sign = options["sign"]
-    except KeyError:
-        sign = -1.
-        if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
+	try:
+		sign = options["sign"]
+	except KeyError:
+		sign = -1.
+		if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
 
-    try:
-        BC = options["BC"]
-    except KeyError:
-        BC = "V==0" # at top
-        if verbose: print("BC was not defined, please consider defining it for later. Default value is {}".format(BC))
+	try:
+		R0=options["R0"]
+	except KeyError:
+		R0=1
+		if verbose: print("R0 was not defined, please consider defining it for later. Default value is {}".format(R0))
+
+	
+	#cartesian symetry			
+	#_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
+	#_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+	#		+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	#_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	#_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
+
+	#spherical symetry
+
+	_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)) * (4/radius[1:-1]**2)
+	_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0) * (4/radius[1:-1]**2) + ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0) *(4/radius[1:-1]**2))
+	_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0)*(4/radius[1:-1]**2))
+	_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1]))*(radius[1:-1]/R0))
 
 
+	too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
+	_a = np.where(too_large, 0., _a)
+	_b = np.where(too_large, 1. , _b)
+	_c = np.where(too_large, 0. , _c)
+	_d = np.where(too_large, 0. , _d)
 
-    _a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
-    _b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
-            + (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-    _c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-    _d = -sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
+	new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
+	return new_velocity
 
-    # default of boundary conditions is v=0 top and bottom
-    # for dV/dz = 0 at top: 
-    if BC == "V==0":
-        pass
-    elif BC == "dVdz==0":
-        _b[-1] = _b[-1] + _c[-1]
-    else:
-        print("Boundary conditions not well defined for velocity. {} requested, but V==0 applied.".format(BC))
-
-    too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
-    _a = np.where(too_large, 0., _a)
-    _b = np.where(too_large, 1. , _b)
-    _c = np.where(too_large, 0. , _c)
-    _d = np.where(too_large, 0. , _d)
-
-    new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
-    return new_velocity
 
 
 def update(V, phi, dt, dr, options = {'advection':"upwind", 'Ra':0.}):
@@ -316,10 +317,9 @@ def boundary_conditions(variable, a, b, c, d, options):
 
 if __name__ == '__main__':
 
-
-    #here is the main part of the code
-    print('Sumita et al 1996, Geoph. J. Int., equations modified with Sramek (phd thesis)')
-    Schema()
-    compaction_column()
-
-    plt.show()
+	#here is the main part of the code
+	print('Sumita et al 1996, Geoph. J. Int., equations modified with Sramek (phd thesis)')
+	Schema()
+	compaction_column()
+	plt.show()
+	#plt.savefig("sumita_phi03.pdf")
