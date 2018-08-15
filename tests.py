@@ -259,7 +259,7 @@ def test_velocity_sumita():
 				'eta':1., \
 				'delta':1., \
 				'bc':'',\
-				'psi0':0.1,
+				'psi0':0.5,
 				's': 1,
 				'grain':1}
 
@@ -282,8 +282,14 @@ def test_velocity_sumita():
 		c3=-(phi0**3/((1-phi0)))
 		c2=(c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
 		c1=-c2-c3
-		analytical_solution= c1*np.exp(x1*R) + c2*np.exp(x2*R) + c3
-		ax.plot(analytical_solution, R, linewidth=2)
+
+		#x1=np.sqrt(1/phi0**2)*np.sqrt(3./4.)
+		#x2=-x1
+		#c3=-(phi0**3/((1-phi0)))
+		#c2=(-c3*x1*np.exp(x1))/((x1*np.exp(x1))- (x2*np.exp(x2)))
+		#c1=-c2-c3
+		#analytical_solution= c1*np.exp(x1*R) + c2*np.exp(x2*R) + c3
+		#ax.plot(analytical_solution, R, linewidth=2)
 		return np.sum(velocity-analytical_solution[1:-1])**2
 
 	_fig, ax = plt.subplots()

@@ -212,7 +212,7 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
 	try:
 		psi0 = options["psi0"]
 	except KeyError:
-		psi0=1./2.
+		psi0=0.7
 		if verbose: print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
 
 	try:
@@ -247,20 +247,20 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
 
 	
 	#cartesian symetry			
-	#_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
-	#_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
-	#		+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	#_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	#_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
+	_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
+	_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+	_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
 
 	#spherical symetry
 
-	_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)) * (4/radius[1:-1]**2)
-	_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
-			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0) * (4/radius[1:-1]**2) + ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0) *(4/radius[1:-1]**2))
-	_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0)*(4/radius[1:-1]**2))
-	_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1]))*(radius[1:-1]/R0))
-
+	#_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)) * ((1-radius[1:])-(1/radius[0:-1]))*((radius[0:-1]+dr/2)-(radius[0:-1]-dr/2))
+	#_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+	#		+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)) * ((1-radius[1:])-(1/radius[0:-1]))*((radius[0:-1]+dr/2)-(radius[0:-1]-dr/2)) \
+	#		+ ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0)*((1-radius[0:-1])-(1/radius[-1:-2]))*((radius[1:]+dr/2)-(radius[1:]-dr/2))
+	#_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0)*((1-radius[0:-1])-(1/radius[-1:-2]))*((radius[1:]+dr/2)-(radius[1:]-dr/2)))
+	#_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1]))*(radius[0:-1]+(dr/2)))
 
 	too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
 	_a = np.where(too_large, 0., _a)
@@ -315,10 +315,10 @@ def compaction_column():
 				'Ra':0., \
 				'K0':1, \
 				'eta':1., \
-				'delta':0.2, \
+				'delta':1, \
 				'bc':'',
 				's':1,
-				'phi0': .8,
+				'phi0': 0.3,
 				'phiN': 0.,
 				'U0': 0.,
 				'UN': 0.,
@@ -363,7 +363,7 @@ def compaction_column():
 	ax[0].set_xlabel("Porosity")
 	ax[0].set_ylabel("z")
 	ax[1].set_xlabel("Velocity")
-	plt.suptitle("Evolution of porosity and velocity for a compacted column (Sumita)")
+	plt.suptitle("Evolution of porosity and velocity for a compacted column (Sumita)- test spherical")
 	
 
 
