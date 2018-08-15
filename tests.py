@@ -319,21 +319,22 @@ def test_Sumita_BC():
 
 def analytical_solutions():
     """ Test the analytical solutions for the various boundary conditions. """
-    options = {'advection':"FLS", \
-                'Ra':0., \
-                'K0':1., \
-                'eta':1., \
-                'delta':1., \
-                'bc':'',\
-                'psi0':0.4,\
-                's': 1,\
-                'grain':1}
+    options = {'advection':"FLS"}
     psi0 = options["psi0"]
     N = 100
     R = np.linspace(0, 1, N+1)
     dr = R[1]-R[0]
     psi = psi0* np.ones(N)
     phi0 = 1-psi0
+
+    fig, ax = plt.subplots(2) #cartesian and spherical solutions
+    # function from Sumita
+    velocity = velocity_Sumita(1-psi, R, options)
+    ax[0].plot(velocity, R[1:-1], label="Sumita_cart_V=0")
+
+    # function from Sramek
+    velocity = velocity_Sramek(1-psi, R, options)
+    ax[0].plot(velocity, R[1:-1], label="Sramek_cart_V=0")
 
 
 
