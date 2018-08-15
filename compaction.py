@@ -67,6 +67,7 @@ def analytic_Sumita_cart(phi0, R):
 
 
 def analytic_Sramek_cart(phi0, R):
+        """ Solution analytique pour resolution Sramek in cartesian coordinates. """
     psi0 = 1-phi0
     h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
     analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\

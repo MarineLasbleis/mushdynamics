@@ -191,204 +191,182 @@ def velocity_Sramek(variable, radius, options):
 
 
 def velocity_Sumita(variable, radius, options={}, verbose=False):
-	### NOT WORKING
-	# spherical symmetry
-	# cartesian symmetry
 
-	dr = radius[1]-radius[0] #assuming no variations of dr
+    dr = radius[1]-radius[0] #assuming no variations of dr
 
-	try:
-		K0 = options['K0']
-	except KeyError:
-		K0 = 1.
-		if verbose: print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
+    try:
+        K0 = options['K0']
+    except KeyError:
+        K0 = 1.
+        if verbose: print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
 
-	try:
-		eta = options["eta"]
-	except KeyError:
-		eta = 1.
-		if verbose: print("eta was not defined, please consider defining it for later. Default value is {}".format(eta))
+    try:
+        eta = options["eta"]
+    except KeyError:
+        eta = 1.
+        if verbose: print("eta was not defined, please consider defining it for later. Default value is {}".format(eta))
 
-	try:
-		psi0 = options["psi0"]
-	except KeyError:
-		psi0=0.7
-		if verbose: print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
+    try:
+        psi0 = options["psi0"]
+    except KeyError:
+        psi0 = 1./2.
+        if verbose: print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
 
-	try:
-		eta0 = options["eta0"]
-	except KeyError:
-		eta0 = 1.
-		if verbose: print("eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
+    try:
+        eta0 = options["eta0"]
+    except KeyError:
+        eta0 = 1.
+        if verbose: print("eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
 
-	try:
-		K = options["K"]
-	except KeyError:
-		K = 1.
-		if verbose: print("K was not defined, please consider defining it for later. Default value is {}".format(K))
+    try:
+        K = options["K"]
+    except KeyError:
+        K = 1.
+        if verbose: print("K was not defined, please consider defining it for later. Default value is {}".format(K))
 
-	try:
-		grain = options["grain"]
-	except KeyError:
-		grain = 1
-		if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
+    try:
+        grain = options["grain"]
+    except KeyError:
+        grain = 1
+        if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
 
-	try:
-		sign = options["sign"]
-	except KeyError:
-		sign = -1.
-		if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
+    try:
+        sign = options["sign"]
+    except KeyError:
+        sign = -1.
+        if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
 
-	try:
-		R0=options["R0"]
-	except KeyError:
-		R0=1
-		if verbose: print("R0 was not defined, please consider defining it for later. Default value is {}".format(R0))
+    try:
+        R0=options["R0"]
+    except KeyError:
+        R0=1
+        if verbose: print("R0 was not defined, please consider defining it for later. Default value is {}".format(R0))
 
-	
-	#cartesian symetry			
-	_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
-	_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
-			+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
-	_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
+    _a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
+    _b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+    		+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+    _c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+    _d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
 
-	#spherical symetry
+    # boundary conditions:
+    if options["BC_velo_up"] == "dVdz==0":
+        _b[-1] = _b[-1] + _c[-1]
+    elif options["BC_velo_up"] == "V==U":
+        _d[-1] = _d[-1] - _c[-1]
+    elif options["BC_velo_up"] == "V==0":
+        pass
 
-	#_a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)) * ((1-radius[1:])-(1/radius[0:-1]))*((radius[0:-1]+dr/2)-(radius[0:-1]-dr/2))
-	#_b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
-	#		+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)) * ((1-radius[1:])-(1/radius[0:-1]))*((radius[0:-1]+dr/2)-(radius[0:-1]-dr/2)) \
-	#		+ ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0)*((1-radius[0:-1])-(1/radius[-1:-2]))*((radius[1:]+dr/2)-(radius[1:]-dr/2))
-	#_c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0)*((1-radius[0:-1])-(1/radius[-1:-2]))*((radius[1:]+dr/2)-(radius[1:]-dr/2)))
-	#_d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1]))*(radius[0:-1]+(dr/2)))
+    too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
+    _a = np.where(too_large, 0., _a)
+    _b = np.where(too_large, 1. , _b)
+    _c = np.where(too_large, 0. , _c)
+    _d = np.where(too_large, 0. , _d)
 
-	too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
-	_a = np.where(too_large, 0., _a)
-	_b = np.where(too_large, 1. , _b)
-	_c = np.where(too_large, 0. , _c)
-	_d = np.where(too_large, 0. , _d)
+    new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
+    return new_velocity
 
-	new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
-	return new_velocity
+
+def velocity_Sumita_spher(variable, radius, options={}, verbose=False):
+
+    dr = radius[1]-radius[0] #assuming no variations of dr
+
+    try:
+        K0 = options['K0']
+    except KeyError:
+        K0 = 1.
+        if verbose: print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
+
+    try:
+        eta = options["eta"]
+    except KeyError:
+        eta = 1.
+        if verbose: print("eta was not defined, please consider defining it for later. Default value is {}".format(eta))
+
+    try:
+        psi0 = options["psi0"]
+    except KeyError:
+        psi0 = 1./2.
+        if verbose: print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
+
+    try:
+        eta0 = options["eta0"]
+    except KeyError:
+        eta0 = 1.
+        if verbose: print("eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
+
+    try:
+        K = options["K"]
+    except KeyError:
+        K = 1.
+        if verbose: print("K was not defined, please consider defining it for later. Default value is {}".format(K))
+
+    try:
+        grain = options["grain"]
+    except KeyError:
+        grain = 1
+        if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
+
+    try:
+        sign = options["sign"]
+    except KeyError:
+        sign = -1.
+        if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
+
+    try:
+        R0=options["R0"]
+    except KeyError:
+        R0=1
+        if verbose: print("R0 was not defined, please consider defining it for later. Default value is {}".format(R0))
+
+    _a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)) * (4/radius[1:-1]**2)
+    _b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
+            + (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0) * (4/radius[1:-1]**2) + ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0) *(4/radius[1:-1]**2))
+    _c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0)*(4/radius[1:-1]**2))
+    _d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1]))*(radius[1:-1]/R0))
+
+    too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
+    _a = np.where(too_large, 0., _a)
+    _b = np.where(too_large, 1. , _b)
+    _c = np.where(too_large, 0. , _c)
+    _d = np.where(too_large, 0. , _d)
+
+    new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
+    return new_velocity
+
 
 
 def update(V, phi, dt, dr, options = {'advection':"upwind", 'Ra':0.}):
 
-		# a_adv, b_adv, c_adv, d_adv = fluxlimiterscheme(V, phi, dr, options)
-		# a_diff, b_diff, c_diff, d_diff = CrankNicholson(phi, dr, options)
-		# _a, _b, _c, _d = a_adv+a_diff, b_adv+b_diff, c_adv+c_diff, d_adv+d_diff
-		_a, _b, _c, _d =fluxlimiterscheme(V, phi, dr, options)
+        # a_adv, b_adv, c_adv, d_adv = fluxlimiterscheme(V, phi, dr, options)
+        # a_diff, b_diff, c_diff, d_diff = CrankNicholson(phi, dr, options)
+        # _a, _b, _c, _d = a_adv+a_diff, b_adv+b_diff, c_adv+c_diff, d_adv+d_diff
+        _a, _b, _c, _d = fluxlimiterscheme(V, phi, dr, options)
 
-		_a = _a*dt
-		_b = 1.+_b*dt
-		_c = _c*dt
-		_d = phi-_d*dt
-		phi2 = np.zeros_like(phi)
-		_phi = inversion_matrice(_a[1:], _b[:], _c[:-1], _d[:])
-		phi2[:] = _phi
-		return phi2
+        _a = _a*dt
+        _b = 1.+_b*dt
+        _c = _c*dt
+        _d = phi-_d*dt
+        phi2 = np.zeros_like(phi)
+        _phi = inversion_matrice(_a[1:], _b, _c[:-1], _d)
+        phi2[:] = _phi
+        return phi2
 
 
 def boundary_conditions(variable, a, b, c, d, options):
-	# NOT USED
-	try:
-		BC = options["bc"]
-	except KeyError:
-		BC = "dirichlet"
-
-	if BC == "dirichlet":
-		d[0]  = d[0] -a[0] *variable[0]
-		d[-1] = d[-1]-c[-1]*variable[-1] #Dirichlet
-		#print("==========Dirichlet.")
-	else:
-		#print("==========not-Dirichlet.")
-		d[0] = variable[0]
-		d[-1] = variable[-1]
-
-	return d
-
-
-def compaction_column():
-
-	#options = {'advection':"FLS", 'Ra':0., 'K0':0.1, 'eta':1.}
-	options = {'advection':"upwind", \
-				'Ra':0., \
-				'K0':1, \
-				'eta':1., \
-				'delta':1, \
-				'bc':'',
-				's':1,
-				'phi0': 0.3,
-				'phiN': 0.,
-				'U0': 0.,
-				'UN': 0.,
-				'sign': 1}
-
-	psi0 = 0.7
-	N = 1000
-	R = np.linspace(0, 1, N+1)
-	dr = R[1]-R[0]
-	psi = psi0* np.ones(N)
-	#psi[0] = 1.
-	#psi[-1] = 0.
-
-	calcul_velocity = velocity_Sumita
-	velocity = calcul_velocity(1-psi, R, options)
-	v_m = np.amax(np.abs(velocity))
-	dt = min(0.5*dr/(v_m), 0.5)
-
-	fig, ax = plt.subplots(1,2, sharey=True)
-	ax[0].plot(1-psi, R[:-1]+dr/2.)
-	ax[1].plot(velocity, R[1:-1], 'o')
-
-	analytical_solution = analytic_Sumita(psi0, R)
-	#h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
-	#analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\
-	#						(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
-	#ax[1].plot(analytical_solution, R, linewidth=2)
-
-	for it in range(0,20000):
-		psi = update(velocity, psi, dt, dr, options)
-		# psi = np.where(psi>0, psi, 0)
-		velocity = calcul_velocity(1-psi, R, options)
-		v_m = np.amax(np.abs(velocity))
-		dt = min(0.5, 0.1*dr/(v_m))
-		#print("dt : {}".format(dt))
-		if it%1000==0:
-			print(it, dt)
-			ax[0].plot(1-psi, R[:-1]+dr/2.)
-			ax[1].plot(velocity, R[1:-1])
-
-	ax[0].set_xlim([0,1])
-	ax[0].set_xlabel("Porosity")
-	ax[0].set_ylabel("z")
-	ax[1].set_xlabel("Velocity")
-	plt.suptitle("Evolution of porosity and velocity for a compacted column (Sumita)- test spherical")
-	
-
-
-def analytic_Sumita(phi0, R):
-	"""Solution analytique pour resolution Sumita."""
-	x1=np.sqrt(1/phi0**2)*np.sqrt(3./4.)
-	x2=-x1
-	c3=-(phi0**3/((1-phi0)))
-	c2=(c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
-	c1=-c2-c3
-	return c1*np.exp(x1*R) + c2*np.exp(x2*R) + c3
-	# print("analytical_solution = {}".format(analytical_solution))
-	# ax.plot(analytical_solution, R, linewidth=2)
-	#return np.sum(velocity-analytical_solution[1:-1])**2
-
+    # NOT USED
+    try:
+        BC = options["bc"]
+    except KeyError:
+        BC = "dirichlet"
 
 
 
 
 if __name__ == '__main__':
 
-
-	#here is the main part of the code
-	print('Sumita et al 1996, Geoph. J. Int., equations modified with Sramek (phd thesis)')
-	Schema()
-	compaction_column()
-	plt.show()
-	#plt.savefig("sumita_phi03.pdf")
+    #here is the main part of the code
+    print('Sumita et al 1996, Geoph. J. Int., equations modified with Sramek (phd thesis)')
+    Schema()
+    compaction_column()
+    plt.show()
+    #plt.savefig("sumita_phi03.pdf")
