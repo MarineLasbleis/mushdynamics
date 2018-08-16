@@ -168,12 +168,20 @@ def velocity_Sramek(variable, radius, options):
 
     _inter = (K0+4./3.*variable)*(1.-variable)/variable
 
-    _a = _inter[:-1]/dr**2*variable[:-1]*variable[1:]
-    _b = -1./(delta**2) \
-                    -  _inter[:-1]/dr**2*variable[:-1]*variable[1:]\
-                    -  _inter[1:] /dr**2*variable[:-1]*variable[1:]
-    _c = _inter[1:]/dr**2*variable[:-1]*variable[1:]
-    _d = s*(1-np.sqrt(variable[:-1]*variable[1:]))*variable[:-1]*variable[1:] #if buoyancy/density variations, add terms here! s is 1 or -1.
+    if options["coordinates"]=="cartesian":
+        _a = _inter[:-1]/dr**2*variable[:-1]*variable[1:]
+        _b = -1./(delta**2) \
+                        -  _inter[:-1]/dr**2*variable[:-1]*variable[1:]\
+                        -  _inter[1:] /dr**2*variable[:-1]*variable[1:]
+        _c = _inter[1:]/dr**2*variable[:-1]*variable[1:]
+        _d = s*(1-np.sqrt(variable[:-1]*variable[1:]))*variable[:-1]*variable[1:]
+    elif options["coordinates"]=="spherical":
+        _a = _inter[:-1]/dr**2*variable[:-1]*variable[1:] * radius[:-2]**2/(radius[0:-2]+dr/2)**2
+        _b = -1./(delta**2) \
+                        -  _inter[:-1]/dr**2*variable[:-1]*variable[1:] * radius[1:-1]**2/(radius[0:-2]+dr/2)**2\
+                        -  _inter[1:] /dr**2*variable[:-1]*variable[1:] * radius[1:-1]**2/(radius[1:-1]+dr/2)**2
+        _c = _inter[1:]/dr**2*variable[:-1]*variable[1:] * radius[2:]**2/(radius[1:-1]+dr/2)**2
+        _d = s*(1-np.sqrt(variable[:-1]*variable[1:]))*variable[:-1]*variable[1:] * radius[1:-1]
 
 
     # boundary conditions: V is solved between 0 and N-1,
@@ -185,6 +193,14 @@ def velocity_Sramek(variable, radius, options):
     #_a[0], _b[0], _c[0], _d[0] = 0,1,0,0
     # (would be OK if we wanted to force boundary conditions on 0 and N-1, but we want to calculate the values there)
     # if we wanted V_N = U for example, then d[-1] = d[-1] - U*c[-1]
+
+    # boundary conditions:
+    if options["BC"] == "dVdz==0":
+        _b[-1] = _b[-1] + _c[-1]
+    elif options["BC"] == "V==U":
+        _d[-1] = _d[-1] - _c[-1]
+    elif options["BC"] == "V==0":
+        pass
 
     new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
     return new_velocity
@@ -307,7 +323,6 @@ def velocity_Sumita_spher(variable, radius, options={}, verbose=False):
 
     new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
     return new_velocity
-
 
 
 def update(V, phi, dt, dr, options = {'advection':"upwind", 'Ra':0.}):
