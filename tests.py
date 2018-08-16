@@ -212,7 +212,8 @@ def analytical_solutions():
                 'phi0':0.3, 
                 'delta':1., 
                 's': 1}
-    
+    options["delta"] = 1./ np.sqrt(4/3*0.3/0.7**2)
+
     psi0 = 1- options["phi0"]
     N = 100
     R = np.linspace(0, 1, N+1)
@@ -228,6 +229,8 @@ def analytical_solutions():
     ax[0].plot(velocity, R[1:-1], label="Sumita_cart_V=0")
     velocity = compaction.analytic_Sumita_cart(phi0, R)
     ax[0].plot(velocity, R[:], '--', label="analytic_Sumita_cart_V=0")
+    velocity = velocity_Sumita_spher(1-psi, R, options)
+    ax[1].plot(velocity, R[1:-1], label="Sumita_spher_V=0")
 
     # function from Sramek
     options["coordinates"] = "cartesian"

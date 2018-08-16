@@ -309,11 +309,18 @@ def velocity_Sumita_spher(variable, radius, options={}, verbose=False):
     except KeyError:
         grain=1
         if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
-    
-    _a = ((4*(1-variable[0:-1])**2)/(3*variable[]))
-    _b =
-    _c =    
-    _d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1]))*(radius[1:]))
+
+
+    _a = -((4*(1-variable[0:-1])**2)/(3*variable[0:-1]))*(eta/eta0) \
+        * (1/((radius[0:-2])+(dr/2))**2) * ((radius[0:-2])**2/dr**2)
+    _b = ((K*K0)/grain**2)* ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) \
+        + (((4*(1-variable[1:])**2)/(3*variable[1:]))*(eta/eta0) \
+        * (1/((radius[1:-1])+(dr/2))**2) * (((radius[1:-1])**2/dr**2))) \
+        + (((4*(1-variable[0:-1])**2)/(3*variable[0:-1]))*(eta/eta0) \
+        * (1/((radius[0:-2])+(dr/2))**2) * (((radius[1:-1])**2/dr**2)))
+    _c = -((4*(1-variable[1:])**2)/(3*variable[1:]))*(eta/eta0) \
+        * (1/((radius[1:-1])+(dr/2))**2) * (((radius[2:])**2/dr**2))   
+    _d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1]))*(radius[1:-1]))
 
     too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
     _a = np.where(too_large, 0., _a)
