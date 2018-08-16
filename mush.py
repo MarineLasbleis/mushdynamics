@@ -42,6 +42,7 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     """
 
     # detect size of the system and initialize variables:
+    #lambdap, lambdam, vp, vm = np.zeros(len(variable)+1), np.zeros(len(variable)+1), np.zeros(len(variable)+1), np.zeros(len(variable)+1)
     lambdap, lambdam, vp, vm = np.zeros_like(velocity), np.zeros_like(velocity), np.zeros_like(velocity), np.zeros_like(velocity)
     _a, _b, _c, _d = np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable), np.zeros_like(variable)
 
@@ -82,22 +83,17 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     # velocity fixed at U0 and UN
     # porosity fixed at phi0 and phiN (phi0 and phiN correspond to phi_-1 and phi_N+1, the 2 that are not in the array phi)
     # default is all 0.
-
-    # try:
-    #     U0, UN = options["U0"], options["UN"]
-    # except KeyError:
-    #     U0, UN = 0., 0.
-    # try:
-    #     phi0, phiN = options["phi0"], options["phiN"]
-    # except KeyError:
-    #     phi0, phiN = 0., 0.
-
-    U0, phi0 = 0., 0. 
-    UN, phiN = velocity[-1], 0.5
+    try:
+        U0, UN = options["U0"], options["UN"]
+    except KeyError:
+        U0, UN = 0., 0.
+    try:
+        phi0, phiN = options["phi0"], options["phiN"]
+    except KeyError:
+        phi0, phiN = 0., 0.
 
     U0p, U0m = 0.5*(U0+np.abs(U0)), 0.5*(U0-np.abs(U0))
     UNp, UNm = 0.5*(UN+np.abs(UN)), 0.5*(UN-np.abs(UN))
-
     _a[0] = -U0p*(1/2.) - vm[0]/2.
     _b[0] =  vp[0]*(1/2.) + vm[0]/2. \
                 - U0m*(1/2.) - U0p/2.
@@ -110,7 +106,8 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     _c[-1] =  UNm
     _d[-1] = _a[-1]*variable[-2]+_b[-1]*variable[-1]+_c[-1]*phiN
     _d[-1] = _d[-1] - phiN*_c[-1]
-    #print(UNp, UNm, phiN)
+
+    #_a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2., vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 # boundary condition
 
     return _a/(2*dr), _b/(2*dr), _c/(2*dr), _d/(2*dr)
 
@@ -140,7 +137,7 @@ def CrankNicholson(variable, dr, options):
     return _a, _b, _c, _d
 
 
-def velocity_Sramek(variable, radius, options, verbose=False):
+def velocity_Sramek(variable, radius, options):
     """ Sramek thesis p46, equation 3.22
     $$ \frac{V}{\delta**2\phi**2} = \frac{d}{dz} [ \frac{(K0+4/3\phi)(1-\phi)}{\phi} \frac{d}{dz}V]-s(1-\phi) $$
 
@@ -152,22 +149,22 @@ def velocity_Sramek(variable, radius, options, verbose=False):
     dr = radius[1]-radius[0]
 
     try:
-        s = options['sign']
+        s = options['s']
     except KeyError:
         s=1.
-        if verbose: print("s (sign of density difference) was not defined, please consider defining it for later. Default value is {}".format(s))
+        print("s (sign of density difference) was not defined, please consider defining it for later. Default value is {}".format(s))
 
     try:
         K0 = options['K0']
     except KeyError:
         K0=1.
-        if verbose: print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
+        print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
 
     try:
         delta = options["delta"]
     except KeyError:
         delta = 1.
-        if verbose: print("Delta (compaction length) was not defined, please consider defining it for later. Default value is {}".format(delta))
+        print("Delta (compaction length) was not defined, please consider defining it for later. Default value is {}".format(delta))
 
     _inter = (K0+4./3.*variable)*(1.-variable)/variable
 
@@ -196,8 +193,6 @@ def velocity_Sramek(variable, radius, options, verbose=False):
     #_a[0], _b[0], _c[0], _d[0] = 0,1,0,0
     # (would be OK if we wanted to force boundary conditions on 0 and N-1, but we want to calculate the values there)
     # if we wanted V_N = U for example, then d[-1] = d[-1] - U*c[-1]
-    #U = -0.01
-    #_d[-1] = _d[-1] - U*_c[-1]
 
     # boundary conditions:
     if options["BC"] == "dVdz==0":
@@ -228,12 +223,6 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
         if verbose: print("eta was not defined, please consider defining it for later. Default value is {}".format(eta))
 
     try:
-        psi0 = options["psi0"]
-    except KeyError:
-        psi0 = 1./2.
-        if verbose: print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
-
-    try:
         eta0 = options["eta0"]
     except KeyError:
         eta0 = 1.
@@ -246,9 +235,9 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
         if verbose: print("K was not defined, please consider defining it for later. Default value is {}".format(K))
 
     try:
-        grain = options["grain"]
+        grain=options["grain"]
     except KeyError:
-        grain = 1
+        grain=1
         if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
 
     try:
@@ -257,15 +246,9 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
         sign = -1.
         if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
 
-    try:
-        R0=options["R0"]
-    except KeyError:
-        R0=1
-        if verbose: print("R0 was not defined, please consider defining it for later. Default value is {}".format(R0))
-
     _a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0))
     _b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
-    		+ (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
+            + (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)+((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
     _c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0))
     _d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
 
@@ -304,12 +287,6 @@ def velocity_Sumita_spher(variable, radius, options={}, verbose=False):
         if verbose: print("eta was not defined, please consider defining it for later. Default value is {}".format(eta))
 
     try:
-        psi0 = options["psi0"]
-    except KeyError:
-        psi0 = 1./2.
-        if verbose: print("psi0 was not defined, please consider defining it for later. Default value is {}".format(psi0))
-
-    try:
         eta0 = options["eta0"]
     except KeyError:
         eta0 = 1.
@@ -322,28 +299,21 @@ def velocity_Sumita_spher(variable, radius, options={}, verbose=False):
         if verbose: print("K was not defined, please consider defining it for later. Default value is {}".format(K))
 
     try:
-        grain = options["grain"]
-    except KeyError:
-        grain = 1
-        if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
-
-    try:
         sign = options["sign"]
     except KeyError:
         sign = -1.
         if verbose: print("sign was not defined, please consider defining it for later. Default value is {}".format(sign))
 
     try:
-        R0=options["R0"]
+        grain=options["grain"]
     except KeyError:
-        R0=1
-        if verbose: print("R0 was not defined, please consider defining it for later. Default value is {}".format(R0))
-
-    _a = - ((1./(dr**2.)) * ((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0)) * (4/radius[1:-1]**2)
-    _b = ((1.-np.sqrt(variable[1:]*variable[0:-1]))**2/(variable[0:-1]*variable[1:])**(3./2.)) * ((K*K0)/grain**2.) \
-            + (1./dr**2.) * (((1.-variable[0:-1])**2.) * (4./(3.*variable[0:-1])) * (eta/eta0) * (4/radius[1:-1]**2) + ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0) *(4/radius[1:-1]**2))
-    _c = - ((1./(dr**2.)) * ((1.-variable[1:])**2.) * (4./(3.* variable[1:])) * (eta/eta0)*(4/radius[1:-1]**2))
-    _d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1]))*(radius[1:-1]/R0))
+        grain=1
+        if verbose: print("grain was not defined, please consider defining it for later. Default value is {}".format(grain))
+    
+    _a = ((4*(1-variable[0:-1])**2)/(3*variable[]))
+    _b =
+    _c =    
+    _d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1]))*(radius[1:]))
 
     too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
     _a = np.where(too_large, 0., _a)
@@ -379,16 +349,7 @@ def boundary_conditions(variable, a, b, c, d, options):
     except KeyError:
         BC = "dirichlet"
 
-    if BC == "dirichlet":
-        d[0]  = d[0] -a[0] *variable[0]
-        d[-1] = d[-1]-c[-1]*variable[-1] #Dirichlet
-        #print("==========Dirichlet.")
-    else:
-        #print("==========not-Dirichlet.")
-        d[0] = variable[0]
-        d[-1] = variable[-1]
 
-    return d
 
 
 if __name__ == '__main__':

@@ -88,7 +88,7 @@ def compaction_column_growth(calcul_velocity, **options):
     """ Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
 
     psi0 = 1-options["phi0"]
-    N = 100
+    N = 1000
     R = np.linspace(0, 0.01, N+1)
     dr = R[1]-R[0]
     psi = psi0* np.ones(N)
@@ -106,7 +106,7 @@ def compaction_column_growth(calcul_velocity, **options):
     time_p = time
     time_max = 4000.
     it = 0
-    iter_max = 100
+    iter_max = 500
 
     while time<time_max and it<iter_max:
     #for it in range(0,10000):
@@ -129,7 +129,7 @@ def compaction_column_growth(calcul_velocity, **options):
             ax[1].plot(velocity, R[1:-1])
     print(it)
 
-    ax[0].set_xlim([0,1])
+    ax[0].set_xlim([0.3,0.7])
     #ax[0].set_ylim([0,1])
     ax[0].set_xlabel("Porosity")
     ax[0].set_ylabel("Height (non-dim)")
@@ -151,7 +151,7 @@ if __name__ == "__main__":
                 'Ra':0., \
                 'eta':1., \
                 'bc':'',
-                'phi0': .5,
+                'phi0': .3,
                 'phiN': 0.,
                 'U0': 0.,
                 'UN': 0.,
@@ -159,14 +159,17 @@ if __name__ == "__main__":
                 'BC': "dVdz==0"}
 
 
-    # compaction_column(velocity_Sramek, delta=1., **options)
-    # plt.savefig("fig/Sramek_delta_1.pdf")
-    # compaction_column(velocity_Sramek, delta=.5, **options)
-    # plt.savefig("fig/Sramek_delta_05.pdf")
-    # compaction_column(velocity_Sramek, delta=.1, **options)
-    # plt.savefig("fig/Sramek_delta_01.pdf")
-    # compaction_column(velocity_Sramek, delta=.05, **options)
-    # plt.savefig("fig/Sramek_delta_005.pdf")
+    compaction_column(velocity_Sramek, delta=1., **options)
+    plt.savefig("fig/phi0.3/Sramek_delta_1.pdf")
+    compaction_column(velocity_Sramek, delta=.5, **options)
+    plt.savefig("fig/phi0.3/Sramek_delta_05.pdf")
+    compaction_column(velocity_Sramek, delta=.2, **options)
+    plt.savefig("fig/phi0.3/Sramek_delta_02.pdf")
+    compaction_column(velocity_Sramek, delta=.1, **options)
+    plt.savefig("fig/phi0.3/Sramek_delta_01.pdf")
+    compaction_column(velocity_Sramek, delta=.05, **options)
+    plt.savefig("fig/phi0.3/Sramek_delta_005.pdf")
+    
     # compaction_column(velocity_Sumita, K0=1, **options)
     # plt.savefig("fig/Sumita_K_1.pdf")
     # compaction_column(velocity_Sumita, K0=10, **options)

@@ -206,9 +206,6 @@ def test_bc():
 
     run(phi_sin, ax, {'advection':"upwind", "bc":"dirichlet"})
 
-
-
-
 def analytical_solutions():
     """ Test the analytical solutions for the various boundary conditions. """
     options = {'advection':"FLS", 
