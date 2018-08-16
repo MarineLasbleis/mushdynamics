@@ -110,7 +110,7 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     _c[-1] =  UNm
     _d[-1] = _a[-1]*variable[-2]+_b[-1]*variable[-1]+_c[-1]*phiN
     _d[-1] = _d[-1] - phiN*_c[-1]
-    print(UNp, UNm, phiN)
+    #print(UNp, UNm, phiN)
 
     return _a/(2*dr), _b/(2*dr), _c/(2*dr), _d/(2*dr)
 
@@ -171,12 +171,20 @@ def velocity_Sramek(variable, radius, options, verbose=False):
 
     _inter = (K0+4./3.*variable)*(1.-variable)/variable
 
-    _a = _inter[:-1]/dr**2*variable[:-1]*variable[1:]
-    _b = -1./(delta**2) \
-                    -  _inter[:-1]/dr**2*variable[:-1]*variable[1:]\
-                    -  _inter[1:] /dr**2*variable[:-1]*variable[1:]
-    _c = _inter[1:]/dr**2*variable[:-1]*variable[1:]
-    _d = s*(1-np.sqrt(variable[:-1]*variable[1:]))*variable[:-1]*variable[1:] #if buoyancy/density variations, add terms here! s is 1 or -1.
+    if options["coordinates"]=="cartesian":
+        _a = _inter[:-1]/dr**2*variable[:-1]*variable[1:]
+        _b = -1./(delta**2) \
+                        -  _inter[:-1]/dr**2*variable[:-1]*variable[1:]\
+                        -  _inter[1:] /dr**2*variable[:-1]*variable[1:]
+        _c = _inter[1:]/dr**2*variable[:-1]*variable[1:]
+        _d = s*(1-np.sqrt(variable[:-1]*variable[1:]))*variable[:-1]*variable[1:]
+    elif options["coordinates"]=="spherical":
+        _a = _inter[:-1]/dr**2*variable[:-1]*variable[1:] * radius[:-2]**2/(radius[0:-2]+dr/2)**2
+        _b = -1./(delta**2) \
+                        -  _inter[:-1]/dr**2*variable[:-1]*variable[1:] * radius[1:-1]**2/(radius[0:-2]+dr/2)**2\
+                        -  _inter[1:] /dr**2*variable[:-1]*variable[1:] * radius[1:-1]**2/(radius[1:-1]+dr/2)**2
+        _c = _inter[1:]/dr**2*variable[:-1]*variable[1:] * radius[2:]**2/(radius[1:-1]+dr/2)**2
+        _d = s*(1-np.sqrt(variable[:-1]*variable[1:]))*variable[:-1]*variable[1:] * radius[1:-1]
 
 
     # boundary conditions: V is solved between 0 and N-1,
@@ -190,6 +198,14 @@ def velocity_Sramek(variable, radius, options, verbose=False):
     # if we wanted V_N = U for example, then d[-1] = d[-1] - U*c[-1]
     #U = -0.01
     #_d[-1] = _d[-1] - U*_c[-1]
+
+    # boundary conditions:
+    if options["BC"] == "dVdz==0":
+        _b[-1] = _b[-1] + _c[-1]
+    elif options["BC"] == "V==U":
+        _d[-1] = _d[-1] - _c[-1]
+    elif options["BC"] == "V==0":
+        pass
 
     new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
     return new_velocity
@@ -254,11 +270,11 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
     _d = sign * ((1.-np.sqrt(variable[1:]*variable[0:-1])))
 
     # boundary conditions:
-    if options["BC_velo_up"] == "dVdz==0":
+    if options["BC"] == "dVdz==0":
         _b[-1] = _b[-1] + _c[-1]
-    elif options["BC_velo_up"] == "V==U":
+    elif options["BC"] == "V==U":
         _d[-1] = _d[-1] - _c[-1]
-    elif options["BC_velo_up"] == "V==0":
+    elif options["BC"] == "V==0":
         pass
 
     too_large = (variable[:-1]>1.-1e-6) # phi is too close to 1 for the system to converge to a velocity
@@ -337,7 +353,6 @@ def velocity_Sumita_spher(variable, radius, options={}, verbose=False):
 
     new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
     return new_velocity
-
 
 
 def update(V, phi, dt, dr, options = {'advection':"upwind", 'Ra':0.}):
