@@ -260,7 +260,7 @@ def test_velocity_sumita():
                 'psi0':0.1,
                 's': 1,
                 'grain':1,
-                "BC_velo_up": "V==0"}
+                'BC': "dVdz==0"}
 
     def velocity_analytical_check(ax, options):
 
@@ -270,17 +270,25 @@ def test_velocity_sumita():
         dr = R[1]-R[0]
         psi = psi0* np.ones(N)
         phi0=1-psi0
-
+        BC=2
         # from the inversion
         velocity = velocity_Sumita(1-psi, R, options)
         ax.plot(velocity, R[1:-1], 'r')
 
         #analytical solution
-        x1=np.sqrt(1/phi0**2)*np.sqrt(3./4.)
-        x2=-x1
-        c3=-(phi0**3/((1-phi0)))
-        c2=(c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
-        c1=-c2-c3
+        if BC == 1 : # V=0 for z=0 
+            x1=np.sqrt(1/phi0**2)*np.sqrt(3./4.)
+            x2=-x1
+            c3=-(phi0**3/((1-phi0)))
+            c2=(c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
+            c1=-c2-c3
+        elif BC == 2: # dV/dz=0 for z=1
+            x1=np.sqrt(1/phi0**2)*np.sqrt(3./4.)
+            x2=-x1
+            c3=-(phi0**3/((1-phi0)))
+            c2=(c3*x1*(np.exp(x1)))/(x2*np.exp(x2)-(x1*np.exp(x1)))
+            c1=-c2-c3
+
         analytical_solution= c1*np.exp(x1*R) + c2*np.exp(x2*R) + c3
         ax.plot(analytical_solution, R, linewidth=2)
         return np.sum(velocity-analytical_solution[1:-1])**2
@@ -343,10 +351,10 @@ if __name__ == "__main__":
 
     #test_TDMA()
     Schema()
-    advection_point()
+    #advection_point()
     #diffusion()
-    test_velocity_sramek()
+    #test_velocity_sramek()
     test_velocity_sumita()
-    advection_gradient_velocity()
-    test_Sumita_BC()
+    #advection_gradient_velocity()
+    #test_Sumita_BC()
     plt.show()

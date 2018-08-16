@@ -61,17 +61,17 @@ def analytic_Sumita_cart(phi0, R):
     x1 = np.sqrt((1+phi0)/(1-phi0))/phi0 * np.sqrt(3./4.)
     x2 = -x1
     c3 = -(phi0**3/((1+phi0)))
-    c2 = (c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
+    c2 = (c3*x1*(np.exp(x1)))/(x2*np.exp(x2)-(x1*np.exp(x1)))
     c1 = -c2-c3
     return c1*np.exp(x1*R) + c2*np.exp(x2*R) + c3
 
 
 def analytic_Sramek_cart(phi0, R):
-        """ Solution analytique pour resolution Sramek in cartesian coordinates. """
+    """ Solution analytique pour resolution Sramek in cartesian coordinates. """
     psi0 = 1-phi0
     h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
     analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\
-							(1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
+                            (1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
     return analytical_solution
 
 
