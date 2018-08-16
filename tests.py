@@ -260,11 +260,8 @@ if __name__ == "__main__":
 
     #test_TDMA()
     Schema()
-    # advection_point()
+    advection_point()
     #diffusion()
-    #test_velocity_sramek()
-    #test_velocity_sumita()
-    #advection_gradient_velocity()
-    #test_Sumita_BC()
+    advection_gradient_velocity()
     analytical_solutions()
     plt.show()
