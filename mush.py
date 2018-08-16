@@ -137,7 +137,7 @@ def CrankNicholson(variable, dr, options):
     return _a, _b, _c, _d
 
 
-def velocity_Sramek(variable, radius, options):
+def velocity_Sramek(variable, radius, options, verbose=False):
     """ Sramek thesis p46, equation 3.22
     $$ \frac{V}{\delta**2\phi**2} = \frac{d}{dz} [ \frac{(K0+4/3\phi)(1-\phi)}{\phi} \frac{d}{dz}V]-s(1-\phi) $$
 
@@ -152,19 +152,19 @@ def velocity_Sramek(variable, radius, options):
         s = options['s']
     except KeyError:
         s=1.
-        print("s (sign of density difference) was not defined, please consider defining it for later. Default value is {}".format(s))
+        if verbose: print("s (sign of density difference) was not defined, please consider defining it for later. Default value is {}".format(s))
 
     try:
         K0 = options['K0']
     except KeyError:
         K0=1.
-        print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
+        if verbose: print("K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
 
     try:
         delta = options["delta"]
     except KeyError:
         delta = 1.
-        print("Delta (compaction length) was not defined, please consider defining it for later. Default value is {}".format(delta))
+        if verbose: print("Delta (compaction length) was not defined, please consider defining it for later. Default value is {}".format(delta))
 
     _inter = (K0+4./3.*variable)*(1.-variable)/variable
 

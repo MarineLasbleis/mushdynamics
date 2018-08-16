@@ -156,7 +156,8 @@ if __name__ == "__main__":
                 'U0': 0.,
                 'UN': 0.,
                 'sign': 1, 
-                'BC': "dVdz==0"}
+                'BC': "dVdz==0", 
+                'coordinates': "cartesian"}
 
 
     compaction_column(velocity_Sramek, delta=1., **options)
