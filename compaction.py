@@ -48,31 +48,40 @@ def compaction_column(calcul_velocity, **options):
             ax[0].plot(1-psi, R[:-1]+dr/2.)
             ax[1].plot(velocity, R[1:-1])
     print(it)
-
     ax[0].set_xlim([0,1])
     ax[0].set_ylim([0,1])
     ax[0].set_xlabel("Porosity")
     ax[0].set_ylabel("Height (non-dim)")
     ax[1].set_xlabel("Solid velocity (non-dim)")
 
-
 def analytic_Sumita_cart(phi0, R):
     """ Solution analytique pour resolution Sumita in cartesian coordinates. """
-    x1 = np.sqrt((1+phi0)/(1-phi0))/phi0 * np.sqrt(3./4.)
-    x2 = -x1
-    c3 = -(phi0**3/((1+phi0)))
-    c2 = (c3*x1*(np.exp(x1)))/(x2*np.exp(x2)-(x1*np.exp(x1)))
-    c1 = -c2-c3
+    x1=np.sqrt(1/phi0**2)*np.sqrt(3./4.)
+    x2=-x1
+    c3=-(phi0**3/((1-phi0)))
+    c2=(c3*(np.exp(x1)-1))/(np.exp(x2)-np.exp(x1))
+    c1=-c2-c3
     return c1*np.exp(x1*R) + c2*np.exp(x2*R) + c3
 
-
-def analytic_Sramek_cart(phi0, R):
+def analytic_Sramek_cart(phi0, R, options):
     """ Solution analytique pour resolution Sramek in cartesian coordinates. """
-    psi0 = 1-phi0
-    h = np.sqrt(options["delta"]**2 * psi0*(1-psi0)*(1+4/3*(1-psi0)))
-    analytical_solution = -options["delta"]**2* psi0*(1-psi0)**2*\
-                            (1+ np.sinh(1/h)*np.sinh(R/h)/(np.cosh(1/h)+1)-np.cosh(R/h))
+    h = np.sqrt(options["delta"]**2 *phi0 *(1.+4./3.*phi0)*(1-phi0))
+    C3 = -options["s"] * phi0**2 *(1-phi0)*options["delta"]**2
+    if options["BC"] == "V==0":
+        C1 = C3 *(np.exp(-1/h)-1)/(np.exp(1/h)-np.exp(-1/h))
+        C2 = -C1 -C3
+    elif options["BC"] == "dVdz==0":
+        C1 = -C3/(1+np.exp(2/h))
+        C2 = C1*np.exp(2/h)
+    analytical_solution = C1*np.exp(R/h) +C2*np.exp(-R/h)+C3
     return analytical_solution
+
+def analytic_Sramek_spher(phi0, R, options):
+    h = np.sqrt(options["delta"]**2 *phi0 *(1.+4./3.*phi0)*(1-phi0))
+    C3 = -options["s"] * phi0**2 *(1-phi0)*options["delta"]**2
+    div = np.cosh(1/h) -h*np.sinh(1/h)
+    op = (np.cosh(R/h) -h/R*np.sinh(R/h))/R
+    return (R-op/div)*C3
 
 
 def compaction_column_growth(calcul_velocity, **options):
