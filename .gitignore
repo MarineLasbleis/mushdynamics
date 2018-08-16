@@ -103,3 +103,4 @@ ENV/
 
 #figures
 .pdf
+/fig
