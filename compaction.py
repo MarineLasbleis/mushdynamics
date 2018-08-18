@@ -13,7 +13,7 @@ def compaction_column(calcul_velocity, **options):
     
     Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
 
-    psi0 = 1 - options["phi0"]
+    psi0 = 1 - options["phi_init"]
     N = 1000
     R = np.linspace(0, 1, N + 1)
     dr = R[1] - R[0]
@@ -32,14 +32,14 @@ def compaction_column(calcul_velocity, **options):
     time_p = time
     time_max = 4000.
     it = 0
-    iter_max = 15000
+    iter_max = 5000
 
     while time < time_max and it < iter_max:
         # for it in range(0,10000):
         it = it + 1
         time = time + dt
         time_p = time_p + dt
-        psi = update(velocity, psi, dt, dr, options)
+        psi = update(velocity, psi, dt, R, options)
         velocity = calcul_velocity(1 - psi, R, options)
         v_m = np.amax(np.abs(velocity))
         dt = min(0.5, 0.1 * dr / (v_m))
@@ -106,7 +106,7 @@ def compaction_column_dVdz():
         it = it + 1
         time = time + dt
         time_p = time_p + dt
-        psi = update(velocity, psi, dt, dr, options)
+        psi = update(velocity, psi, dt, R, options)
         velocity = calcul_velocity(1 - psi, R, options)
         v_m = np.amax(np.abs(velocity))
         dt = min(0.5, 0.1 * dr / (v_m))
@@ -174,8 +174,8 @@ def figures_compaction_only():
                'Ra': 0.,
                'eta': 1.,
                'bc': '',
-               'phi0': .3,
-               'phiN': 0.,
+               'phi0': 0.,
+               'phiN': 1.,
                'U0': 0.,
                'UN': 0.,
                'sign': -1,
@@ -265,7 +265,7 @@ def compaction_column_growth(calcul_velocity, **options):
         #psi = np.append(psi, [psi0, psi0])
         #R = np.append(R, [R[-1]+dr, R[-1]+2*dr])
         velocity = calcul_velocity(1 - psi, R, options)
-        psi = update(velocity, psi, dt, dr, options)
+        psi = update(velocity, psi, dt, radius, options)
         v_m = np.amax(np.abs(velocity))
         dt = min(0.5, 0.001 * dr / (v_m))
         # if time_p > dt_print:
@@ -302,14 +302,19 @@ if __name__ == "__main__":
                'Ra': 0.,
                'eta': 1.,
                'bc': '',
-               'phi0': 0.3,
-               'phiN': 0.3,
+               'phi0': 1.,
+               'phiN': 0.,
+               'phi_init': 0.3,
                'sign': -1,
-               'BC': "dVdz==0",
-               'coordinates': "cartesian"}
+               'BC': "V==0",
+               'coordinates': "spherical"}
 
-
+    compaction_column(velocity_Sramek, delta=1., **options)
     #compaction_column_growth(velocity_Sumita, **options)
-    compaction_column_dVdz()
+    #compaction_column_dVdz()
     #figures_compaction_only()
+    
+
+    
+    
     plt.show()

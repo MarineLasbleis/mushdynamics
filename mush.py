@@ -392,23 +392,47 @@ def velocity_Sumita_spher(variable, radius, options, verbose=False):
     new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
     return new_velocity
 
+def source_spherical_advection(psi, velocity, radius, options):
+    """ Source term for advection in spherical coordiantes
 
-def update(V, phi, dt, dr, options={'advection': "upwind", 'Ra': 0.}):
+    Equation 3.60 in Sramek PhD thesis
+    psi: (1-porosity) np.array length: N
+    velocity: np.array length: N-1
+    radius: np.array length: N+1
+    output: d (np.array ) length N
+    """
+    dr = radius[1]-radius[0]
+    d = np.zeros_like(psi)
+    d[1:-1] = psi[1:-1] * (velocity[1:]+velocity[:-1])/(radius[2:-1]+dr/2)
+    # V==0 at z=0
+    d[0] = psi[0]*velocity[0]/(dr/2)
+    if options['BC'] == 'V==0':
+        d[-1] = psi[-1]*velocity[-1]/(radius[-1]-dr/2)
+    elif options['BC'] == 'dVdz==0':
+        d[-1] = 2.*psi[-1]*velocity[-1]/(radius[-1]-dr/2)
+    return d
 
+
+def update(V, psi, dt, radius, options={'advection': "upwind", 'Ra': 0.}):
+
+    dr = radius[1]-radius[0]
         # a_adv, b_adv, c_adv, d_adv = fluxlimiterscheme(V, phi, dr, options)
         # a_diff, b_diff, c_diff, d_diff = CrankNicholson(phi, dr, options)
         # _a, _b, _c, _d = a_adv+a_diff, b_adv+b_diff, c_adv+c_diff, d_adv+d_diff
-    _a, _b, _c, _d = fluxlimiterscheme(V, phi, dr, options)
-    #d_spherical = source_spherical_advection()
+    _a, _b, _c, _d = fluxlimiterscheme(V, psi, dr, options)
+
+    if options["coordinates"] == "spherical":
+        d_spherical = source_spherical_advection(psi, V, radius, options)
+        _d = _d + d_spherical
 
     _a = _a * dt
     _b = 1. + _b * dt
     _c = _c * dt
-    _d = phi - _d * dt
-    phi2 = np.zeros_like(phi)
-    _phi = inversion_matrice(_a[1:], _b, _c[:-1], _d)
-    phi2[:] = _phi
-    return phi2
+    _d = psi - _d * dt
+    psi2 = np.zeros_like(psi)
+    _psi = inversion_matrice(_a[1:], _b, _c[:-1], _d)
+    psi2[:] = _psi
+    return psi2
 
 
 def boundary_conditions(variable, a, b, c, d, options):
