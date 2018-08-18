@@ -65,13 +65,13 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
         # minmod
         lambdap[1:-1] = np.fmax(0., np.minimum(1., Rp))
         lambdam[1:-1] = np.fmax(0., np.minimum(1., Rm))
-        # at the points [0], [-1]: lamba =0.
+        # at the points [0], [-1]: lambda =0.
     else:
         print("Problem with the choosen scheme for advection. Default is upwind.")
 
     if len(velocity) == 1:
-        vp[:] = velocity
-        vm[:] = 0.
+        if velocity>0: vp[:] = velocity
+        else: vm[:] = - velocity
     else:
         vp[:] = 0.5 * (velocity[:] + np.abs(velocity[:]))
         vm[:] = 0.5 * (velocity[:] - np.abs(velocity[:]))
@@ -87,29 +87,42 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     # velocity fixed at U0 and UN
     # porosity fixed at phi0 and phiN (phi0 and phiN correspond to phi_-1 and phi_N+1, the 2 that are not in the array phi)
     # default is all 0.
-    try:
-        U0, UN = options["U0"], options["UN"]
-    except KeyError:
-        U0, UN = 0., 0.
-    try:
-        phi0, phiN = options["phi0"], options["phiN"]
-    except KeyError:
-        phi0, phiN = 0., 0.
+    # try:
+    #     U0, UN = options["U0"], options["UN"]
+    # except KeyError:
+    #     #U0, UN = 0., 0.
+    U0, UN = velocity[0], velocity[-1]
+    #     print(velocity[-1])
+    # try:
+    phi0, phiN = options["phi0"], options["phiN"]
+    # phi0, phiN = 0.3, 0.9
+    # print(phi0, phiN)
+    # except KeyError:
+    #     phi0, phiN = 0.5, 0.5
+
+        # minmod
+    lambdap_up = 0.
+    lambdam_up = 0.
+    lambdam_down = 0.
+    lambdap_down = 0.
 
     U0p, U0m = 0.5 * (U0 + np.abs(U0)), 0.5 * (U0 - np.abs(U0))
     UNp, UNm = 0.5 * (UN + np.abs(UN)), 0.5 * (UN - np.abs(UN))
-    _a[0] = -U0p * (1 / 2.) - vm[0] / 2.
-    _b[0] = vp[0] * (1 / 2.) + vm[0] / 2. \
-        - U0m * (1 / 2.) - U0p / 2.
-    _c[0] = vm[0] * (1 / 2.) + vp[0] / 2.
-    _d[0] = (_a[0] * phi0 + _b[0] * variable[0] + _c[0] * variable[1])
-    _d[0] = _d[0] - phi0 * _a[0]
+
+    _a[0] = -U0p * (1 - lambdap_down / 2.) - U0m * lambdam_down / 2.
+    _b[0] = vp[0] * (1 - lambdap[0] / 2.) + vm[0] * lambdam[0] / 2. \
+        - U0m * (1 - lambdam_down / 2.) - U0p * lambdap_down / 2.
+    _c[0] = vm[0] * (1 - lambdam[0] / 2.) + vp[0] * lambdap[0] / 2.
+    _d[0] = (_a[0]*phi0+ _b[0] * variable[0] + _c[0] * variable[1]) +_a[0]*phi0
+
     # values in -1
     _a[-1] = -vp[-1]
     _b[-1] = UNp - vm[-1]
     _c[-1] = UNm
     _d[-1] = _a[-1] * variable[-2] + _b[-1] * variable[-1] + _c[-1] * phiN
-    _d[-1] = _d[-1] - phiN * _c[-1]
+    _d[-1] = _d[-1] + phiN * _c[-1]
+    #print(_a[-1], _b[-1], _d[-1], 1-_d[-1]/_b[-1])
+    #print(UNp, UNm)
 
     # _a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2.,
     # vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 #
@@ -159,9 +172,9 @@ def velocity_Sramek(variable, radius, options, verbose=False):
     dr = radius[1] - radius[0]
 
     try:
-        s = options['s']
+        s = options['sign']
     except KeyError:
-        s = 1.
+        s = -1.
         if verbose:
             print("s (sign of density difference) was not defined, please consider defining it for later. Default value is {}".format(s))
 
@@ -188,7 +201,7 @@ def velocity_Sramek(variable, radius, options, verbose=False):
             - _inter[:-1] / dr**2 * variable[:-1] * variable[1:]\
             - _inter[1:] / dr**2 * variable[:-1] * variable[1:]
         _c = _inter[1:] / dr**2 * variable[:-1] * variable[1:]
-        _d = s * \
+        _d = -s * \
             (1 - np.sqrt(variable[:-1] * variable[1:])) * \
             variable[:-1] * variable[1:]
     elif options["coordinates"] == "spherical":
@@ -200,7 +213,7 @@ def velocity_Sramek(variable, radius, options, verbose=False):
             radius[1:-1]**2 / (radius[1:-1] + dr / 2)**2
         _c = _inter[1:] / dr**2 * variable[:-1] * variable[1:] * \
             radius[2:]**2 / (radius[1:-1] + dr / 2)**2
-        _d = s * (1 - np.sqrt(variable[:-1] * variable[1:])) * \
+        _d = -s * (1 - np.sqrt(variable[:-1] * variable[1:])) * \
             variable[:-1] * variable[1:] * radius[1:-1]
 
     # boundary conditions: V is solved between 0 and N-1,
@@ -305,7 +318,7 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
     return new_velocity
 
 
-def velocity_Sumita_spher(variable, radius, options={}, verbose=False):
+def velocity_Sumita_spher(variable, radius, options, verbose=False):
 
     dr = radius[1] - radius[0]  # assuming no variations of dr
 
@@ -386,6 +399,7 @@ def update(V, phi, dt, dr, options={'advection': "upwind", 'Ra': 0.}):
         # a_diff, b_diff, c_diff, d_diff = CrankNicholson(phi, dr, options)
         # _a, _b, _c, _d = a_adv+a_diff, b_adv+b_diff, c_adv+c_diff, d_adv+d_diff
     _a, _b, _c, _d = fluxlimiterscheme(V, phi, dr, options)
+    #d_spherical = source_spherical_advection()
 
     _a = _a * dt
     _b = 1. + _b * dt

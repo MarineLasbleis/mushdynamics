@@ -62,7 +62,7 @@ def advection_point():
     V = V0 * np.ones([N - 1])
     R = np.linspace(-2, 5, N)
     phi = np.zeros_like(R)
-    phi_sin = np.where(np.abs(R) > 1, 0, 1 + np.cos(R * np.pi))
+    phi_sin =  np.where(np.abs(R) > 1, 0, 1 + np.cos(R * np.pi))
     phi_rec = np.where(np.abs(R) > 1, 0, 1.)
 
     #phi[30:60] = 2.
@@ -217,7 +217,7 @@ def analytical_solutions():
     options = {'advection': "FLS",
                'phi0': 0.3,
                'delta': 1.,
-               's': 1}
+               'sign': 1}
     options["delta"] = 1. / np.sqrt(4 / 3 * 0.3 / 0.7**2)
 
     psi0 = 1 - options["phi0"]
@@ -262,15 +262,58 @@ def analytical_solutions():
     ax[1].legend()
 
 
+
+
+
+
+
+def advection_Vcst():
+
+    N = 200
+    V0 = 1.
+    V = V0 * np.ones([N - 1])
+    R = np.linspace(-5, 5, N)
+    phi = np.zeros_like(R)
+    phi_sin = 0.5+ np.where(np.abs(R) > 1, 0, 1 + np.cos(R * np.pi))
+    phi_rec = np.where(np.abs(R) > 1, 0, 1.)
+
+    #phi[30:60] = 2.
+
+    dr = R[1] - R[0]
+    dt = np.abs(0.5 * dr / V0)
+
+    fig, ax = plt.subplots()
+#	fig, ax = plt.subplots(2, 1, sharex = True)
+
+    def run(init, axis, scheme, correction_V=False):
+        phi = init
+        time = 0.
+        axis.plot(R, init, 'k', linewidth=2)
+        for it in range(1, 100):
+            phi_0 = phi
+            phi = update(V, phi, dt, dr, scheme)
+            time = time + dt
+            if it % 20 == 0:
+                if correction_V:
+                    correction = time * V[0]
+                else:
+                    correction = 0.
+                axis.plot(R - correction, phi)
+                axis.set_title(scheme)
+
+    run(phi_sin, ax, {'advection': "FLS"})
+    ax.plot(0., 0.3, 'o')
+
 if __name__ == "__main__":
 
     # test_TDMA()
     Schema()
-    advection_point()
+    # advection_point()
     # diffusion()
     # test_velocity_sramek()
     # test_velocity_sumita()
-    advection_gradient_velocity()
+    # advection_gradient_velocity()
     # test_Sumita_BC()
-    analytical_solutions()
+    #analytical_solutions()
+    advection_Vcst()
     plt.show()
