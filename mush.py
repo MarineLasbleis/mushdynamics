@@ -289,16 +289,27 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
         if verbose:
             print(
                 "sign was not defined, please consider defining it for later. Default value is {}".format(sign))
-
-    _a = - ((1. / (dr**2.)) * ((1. - variable[0:-1])**2.)
+    if options["coordinates"] == "cartesian":
+        _a = - ((1. / (dr**2.)) * ((1. - variable[0:-1])**2.)
             * (4. / (3. * variable[0:-1])) * (eta / eta0))
-    _b = ((1. - np.sqrt(variable[1:] * variable[0:-1]))**2 / (variable[0:-1] * variable[1:])**(3. / 2.)) * ((K * K0) / grain**2.) \
-        + (1. / dr**2.) * (((1. - variable[0:-1])**2.) * (4. / (3. * variable[0:-1])) * (
+        _b = ((1. - np.sqrt(variable[1:] * variable[0:-1]))**2 / (variable[0:-1] * variable[1:])**(3. / 2.)) * ((K * K0) / grain**2.) \
+            + (1. / dr**2.) * (((1. - variable[0:-1])**2.) * (4. / (3. * variable[0:-1])) * (
             eta / eta0) + ((1. - variable[1:])**2.) * (4. / (3. * variable[1:])) * (eta / eta0))
-    _c = - ((1. / (dr**2.)) *
+        _c = - ((1. / (dr**2.)) *
             ((1. - variable[1:])**2.) * (4. / (3. * variable[1:])) * (eta / eta0))
-    _d = sign * ((1. - np.sqrt(variable[1:] * variable[0:-1])))
-
+        _d = sign * ((1. - np.sqrt(variable[1:] * variable[0:-1])))
+    elif options["coordinates"] == "spherical":
+        _a = -((4 * (1 - variable[0:-1])**2) / (3 * variable[0:-1])) * (eta / eta0) \
+        * (1 / ((radius[0:-2]) + (dr / 2))**2) * ((radius[0:-2])**2 / dr**2)
+        _b = ((K * K0) / grain**2) * ((1. - np.sqrt(variable[1:] * variable[0:-1]))**2 / (variable[0:-1] * variable[1:])**(3. / 2.)) \
+            + (((4 * (1 - variable[1:])**2) / (3 * variable[1:])) * (eta / eta0)
+           * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[1:-1])**2 / dr**2))) \
+            + (((4 * (1 - variable[0:-1])**2) / (3 * variable[0:-1])) * (eta / eta0)
+           * (1 / ((radius[0:-2]) + (dr / 2))**2) * (((radius[1:-1])**2 / dr**2)))
+        _c = -((4 * (1 - variable[1:])**2) / (3 * variable[1:])) * (eta / eta0) \
+        * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[2:])**2 / dr**2))
+        _d = sign * \
+            ((1. - np.sqrt(variable[1:] * variable[0:-1])) * (radius[1:-1]))    
     # boundary conditions:
     if options["BC"] == "dVdz==0":
         _b[-1] = _b[-1] + _c[-1]
@@ -306,81 +317,6 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
         _d[-1] = _d[-1] - _c[-1]
     elif options["BC"] == "V==0":
         pass
-
-    # phi is too close to 1 for the system to converge to a velocity
-    too_large = (variable[:-1] > 1. - 1e-6)
-    _a = np.where(too_large, 0., _a)
-    _b = np.where(too_large, 1., _b)
-    _c = np.where(too_large, 0., _c)
-    _d = np.where(too_large, 0., _d)
-
-    new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
-    return new_velocity
-
-
-def velocity_Sumita_spher(variable, radius, options, verbose=False):
-
-    dr = radius[1] - radius[0]  # assuming no variations of dr
-
-    try:
-        K0 = options['K0']
-    except KeyError:
-        K0 = 1.
-        if verbose:
-            print(
-                "K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
-
-    try:
-        eta = options["eta"]
-    except KeyError:
-        eta = 1.
-        if verbose:
-            print(
-                "eta was not defined, please consider defining it for later. Default value is {}".format(eta))
-
-    try:
-        eta0 = options["eta0"]
-    except KeyError:
-        eta0 = 1.
-        if verbose:
-            print(
-                "eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
-
-    try:
-        K = options["K"]
-    except KeyError:
-        K = 1.
-        if verbose:
-            print(
-                "K was not defined, please consider defining it for later. Default value is {}".format(K))
-
-    try:
-        sign = options["sign"]
-    except KeyError:
-        sign = -1.
-        if verbose:
-            print(
-                "sign was not defined, please consider defining it for later. Default value is {}".format(sign))
-
-    try:
-        grain = options["grain"]
-    except KeyError:
-        grain = 1
-        if verbose:
-            print(
-                "grain was not defined, please consider defining it for later. Default value is {}".format(grain))
-
-    _a = -((4 * (1 - variable[0:-1])**2) / (3 * variable[0:-1])) * (eta / eta0) \
-        * (1 / ((radius[0:-2]) + (dr / 2))**2) * ((radius[0:-2])**2 / dr**2)
-    _b = ((K * K0) / grain**2) * ((1. - np.sqrt(variable[1:] * variable[0:-1]))**2 / (variable[0:-1] * variable[1:])**(3. / 2.)) \
-        + (((4 * (1 - variable[1:])**2) / (3 * variable[1:])) * (eta / eta0)
-           * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[1:-1])**2 / dr**2))) \
-        + (((4 * (1 - variable[0:-1])**2) / (3 * variable[0:-1])) * (eta / eta0)
-           * (1 / ((radius[0:-2]) + (dr / 2))**2) * (((radius[1:-1])**2 / dr**2)))
-    _c = -((4 * (1 - variable[1:])**2) / (3 * variable[1:])) * (eta / eta0) \
-        * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[2:])**2 / dr**2))
-    _d = sign * \
-        ((1. - np.sqrt(variable[1:] * variable[0:-1])) * (radius[1:-1]))
 
     # phi is too close to 1 for the system to converge to a velocity
     too_large = (variable[:-1] > 1. - 1e-6)
