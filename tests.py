@@ -97,7 +97,8 @@ def analytical_solutions():
     ax[0].plot(velocity, R[1:-1], label="Sumita_cart_V=0")
     velocity = compaction.analytic_Sumita_cart(phi0, R)
     ax[0].plot(velocity, R[:], '--', label="analytic_Sumita_cart_V=0")
-    velocity = velocity_Sumita_spher(1 - psi, R, options)
+    options["coordinates"] = "spherical"
+    velocity = velocity_Sumita(1 - psi, R, options)
     ax[1].plot(velocity, R[1:-1], label="Sumita_spher_V=0")
 
     # function from Sramek
@@ -112,7 +113,6 @@ def analytical_solutions():
     ax[0].plot(velocity, R[1:-1], label="Sramek_cart_dVdz=0")
     velocity = compaction.analytic_Sramek_cart(phi0, R, options)
     ax[0].plot(velocity, R[:], '--', label="analytic_Sramek_cart_V=0")
-
     options["coordinates"] = "spherical"
     options["BC"] = "V==0"
     velocity = velocity_Sramek(1 - psi, R, options)
@@ -170,10 +170,6 @@ if __name__ == "__main__":
 
     # test_TDMA()
     Schema()
-    advection_point()
-    #diffusion()
-    advection_gradient_velocity()
-    analytical_solutions()
     advection_point()
     analytical_solutions()
     advection_Vcst()
