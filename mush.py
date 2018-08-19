@@ -87,18 +87,23 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     # velocity fixed at U0 and UN
     # porosity fixed at phi0 and phiN (phi0 and phiN correspond to phi_-1 and phi_N+1, the 2 that are not in the array phi)
     # default is all 0.
-    # try:
-    #     U0, UN = options["U0"], options["UN"]
-    # except KeyError:
-    #     #U0, UN = 0., 0.
-    U0, UN = velocity[0], velocity[-1]
-    #     print(velocity[-1])
-    # try:
-    phi0, phiN = options["phi0"], options["phiN"]
-    # phi0, phiN = 0.3, 0.9
-    # print(phi0, phiN)
-    # except KeyError:
-    #     phi0, phiN = 0.5, 0.5
+
+    try:
+        if options["BC"] == "V==0":
+            U0, UN = 0., 0. # velocity[0], velocity[-1]
+        elif options["BC"] == "dVdz==0":
+            U0, UN = velocity[0], velocity[-1]
+    except KeyError:
+        U0, UN = 0., 0.
+        print("BC not well defined. U0, UN = 0., 0.")
+
+    try:
+        psi0, psiN = options["psi0"], options["psiN"]
+    except KeyError:
+        try:
+            psi0, psiN = 1-options["phi0"], 1-options["phiN"]
+        except KeyError:
+            psi0, psiN = 0.5, 0.5
 
         # minmod
     lambdap_up = 0.
@@ -113,20 +118,13 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     _b[0] = vp[0] * (1 - lambdap[0] / 2.) + vm[0] * lambdam[0] / 2. \
         - U0m * (1 - lambdam_down / 2.) - U0p * lambdap_down / 2.
     _c[0] = vm[0] * (1 - lambdam[0] / 2.) + vp[0] * lambdap[0] / 2.
-    _d[0] = (_a[0]*phi0+ _b[0] * variable[0] + _c[0] * variable[1]) +_a[0]*phi0
+    _d[0] = (_a[0]*psi0+ _b[0] * variable[0] + _c[0] * variable[1]) +_a[0]*psi0
 
-    # values in -1
     _a[-1] = -vp[-1]
     _b[-1] = UNp - vm[-1]
     _c[-1] = UNm
-    _d[-1] = _a[-1] * variable[-2] + _b[-1] * variable[-1] + _c[-1] * phiN
-    _d[-1] = _d[-1] + phiN * _c[-1]
-    #print(_a[-1], _b[-1], _d[-1], 1-_d[-1]/_b[-1])
-    #print(UNp, UNm)
-
-    # _a[0], _b[0], _c[0] = 0., vp[0]*(1-lambdap[0]/2.) + vm[0]*lambdam[0]/2.,
-    # vm[0]*(1-lambdam[0]/2.) + vp[1:]*lambdap[0]/2.  #because V-1 = 0 #
-    # boundary condition
+    _d[-1] = _a[-1] * variable[-2] + _b[-1] * variable[-1] + _c[-1] * psiN
+    _d[-1] = _d[-1] + psiN * _c[-1]
 
     return _a / (2 * dr), _b / (2 * dr), _c / (2 * dr), _d / (2 * dr)
 
@@ -170,7 +168,6 @@ def velocity_Sramek(variable, radius, options, verbose=False):
     and a, c are injected as length N-2 for calculating the tridiagonal matrix.
     """
     dr = radius[1] - radius[0]
-
     try:
         s = options['sign']
     except KeyError:
