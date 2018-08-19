@@ -198,7 +198,7 @@ def velocity_Sramek(variable, radius, options, verbose=False):
             - _inter[:-1] / dr**2 * variable[:-1] * variable[1:]\
             - _inter[1:] / dr**2 * variable[:-1] * variable[1:]
         _c = _inter[1:] / dr**2 * variable[:-1] * variable[1:]
-        _d = -s * \
+        _d = s * \
             (1 - np.sqrt(variable[:-1] * variable[1:])) * \
             variable[:-1] * variable[1:]
     elif options["coordinates"] == "spherical":
@@ -210,7 +210,7 @@ def velocity_Sramek(variable, radius, options, verbose=False):
             radius[1:-1]**2 / (radius[1:-1] + dr / 2)**2
         _c = _inter[1:] / dr**2 * variable[:-1] * variable[1:] * \
             radius[2:]**2 / (radius[1:-1] + dr / 2)**2
-        _d = -s * (1 - np.sqrt(variable[:-1] * variable[1:])) * \
+        _d = s * (1 - np.sqrt(variable[:-1] * variable[1:])) * \
             variable[:-1] * variable[1:] * radius[1:-1]
 
     # boundary conditions: V is solved between 0 and N-1,
@@ -294,7 +294,7 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
             eta / eta0) + ((1. - variable[1:])**2.) * (4. / (3. * variable[1:])) * (eta / eta0))
         _c = - ((1. / (dr**2.)) *
             ((1. - variable[1:])**2.) * (4. / (3. * variable[1:])) * (eta / eta0))
-        _d = sign * ((1. - np.sqrt(variable[1:] * variable[0:-1])))
+        _d = - sign * ((1. - np.sqrt(variable[1:] * variable[0:-1])))
     elif options["coordinates"] == "spherical":
         _a = -((4 * (1 - variable[0:-1])**2) / (3 * variable[0:-1])) * (eta / eta0) \
         * (1 / ((radius[0:-2]) + (dr / 2))**2) * ((radius[0:-2])**2 / dr**2)
@@ -305,7 +305,7 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
            * (1 / ((radius[0:-2]) + (dr / 2))**2) * (((radius[1:-1])**2 / dr**2)))
         _c = -((4 * (1 - variable[1:])**2) / (3 * variable[1:])) * (eta / eta0) \
         * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[2:])**2 / dr**2))
-        _d = sign * \
+        _d = - sign * \
             ((1. - np.sqrt(variable[1:] * variable[0:-1])) * (radius[1:-1]))
 
     # boundary conditions:

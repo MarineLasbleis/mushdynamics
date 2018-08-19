@@ -95,7 +95,7 @@ def analytical_solutions():
     options["coordinates"] = "cartesian"
     velocity = velocity_Sumita(1 - psi, R, options)
     ax[0].plot(velocity, R[1:-1], label="Sumita_cart_V=0")
-    velocity = compaction.analytic_Sumita_cart(phi0, R)
+    velocity = compaction.analytic_Sumita_cart(phi0, R, options)
     ax[0].plot(velocity, R[:], '--', label="analytic_Sumita_cart_V=0")
     options["coordinates"] = "spherical"
     velocity = velocity_Sumita(1 - psi, R, options)
