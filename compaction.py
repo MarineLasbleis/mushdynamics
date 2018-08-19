@@ -23,7 +23,7 @@ def compaction_column(calcul_velocity, **options):
     v_m = np.amax(np.abs(velocity))
     dt = min(0.5 * dr / (v_m), 0.5)
 
-    fig, ax = plt.subplots(1, 2, sharey=True)
+    fig, ax = plt.subplots(1, 4)
     ax[0].plot(1 - psi, R[:-1] + dr / 2.)
     ax[1].plot(velocity, R[1:-1])
 
@@ -51,15 +51,26 @@ def compaction_column(calcul_velocity, **options):
             time_p = time_p - dt_print
             ax[0].plot(1 - psi, R[:-1] + dr / 2.)
             ax[1].plot(velocity, R[1:-1])
+            ax[2].plot(sum_phi(1-psi, R[1:], options), time, 'x')
+            ax[3].plot(velocity[-1], time, '+')
     ax[0].set_xlim([0, 1])
     ax[0].set_ylim([0, 1])
+    ax[1].set_ylim([0, 1])
     ax[0].set_xlabel("Porosity")
     ax[0].set_ylabel("Height (non-dim)")
     ax[1].set_xlabel("Solid velocity (non-dim)")
+    ax[2].set_ylabel("time (un dim)")
+    ax[2].set_xlabel("Total porosity")
+    ax[2].set_xlim([0, 1])
+    ax[3].set_xlabel("Velocity at top")
 
-
-def sum_phi(phi):
-    return np.sum(phi)/len(phi) #in cartesian
+def sum_phi(phi, R, options):
+    dr = R[1]-R[0] # constant steps in radius/heigth
+    if options["coordinates"] == "cartesian":
+        dV = dr*np.ones_like(R)
+    elif options["coordinates"] == "spherical":
+        dV = 4*np.pi*dr*R**2
+    return np.sum(phi*dV)/np.sum(dV) #in cartesian
 
 def flux_top(phi, velocity):
     return (1-phi[-1])*velocity[-1]
