@@ -16,7 +16,7 @@ def compaction_column_growth(calcul_velocity, **options):
     time = options["t_init"]
     dt_print = .1
     time_p = time
-    time_max = 10.
+    time_max = 1.
     it = 0
     iter_max = 100000
 
@@ -26,7 +26,7 @@ def compaction_column_growth(calcul_velocity, **options):
     dt = min(dt, dr/growth_rate(time, options))
     print(dt)
 
-    fig, ax = plt.subplots(1, 2, sharey=True)
+    fig, ax = plt.subplots(1, 4, sharey=True)
     ax[0].plot(1 - psi, R[:-1] + dr / 2.)
     ax[1].plot(velocity, R[1:-1])
 
@@ -49,12 +49,14 @@ def compaction_column_growth(calcul_velocity, **options):
 
         if time_p > dt_print:
         # if it % 100 == 0:
-            print(it, dt, time, R[-1])
+            print(it, dt, time, R[-1], len(R))
             # reinitinalize the mark to know if we need to print/plot
             # something.
             time_p = time_p - dt_print
             ax[0].plot(1 - psi, R[:-1] + dr / 2.)
             ax[1].plot(velocity, R[1:-1])
+            ax[2].plot(sum_phi(1-psi, R[1:], options), R[-1], 'x')
+            ax[3].plot((options["psiN"])*velocity[-1], R[-1], 'x')
     print(it)
 
     #ax[0].set_xlim([0.3, 0.7])
@@ -72,7 +74,7 @@ def growth_rate(time, options):
     return time**(1-options["growth rate exponent"])
 
 def append_radius(psi, R, options):
-    psi = np.append(psi, [1-options["phiN"]])
+    psi = np.append(psi, [options["psiN"]])
     dr = R[1] - R[0]
     R = np.append(R, [R[-1] + dr])
     return psi, R
@@ -97,7 +99,7 @@ if __name__ == "__main__":
                'delta': 1.,
                'eta': 1.,
                'psi0': 1.,
-               'phiN': 0.5,
+               'psiN': 0.5,
                'phi_init': 0.5,
                'sign': 1,
                'BC': "dVdz==0",
