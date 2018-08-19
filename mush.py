@@ -368,15 +368,6 @@ def update(V, psi, dt, radius, options={'advection': "upwind", 'Ra': 0.}):
     psi2[:] = _psi
     return psi2
 
-
-def boundary_conditions(variable, a, b, c, d, options):
-    # NOT USED
-    try:
-        BC = options["bc"]
-    except KeyError:
-        BC = "dirichlet"
-
-
 if __name__ == '__main__':
 
     # here is the main part of the code
