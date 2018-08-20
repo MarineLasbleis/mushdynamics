@@ -33,7 +33,7 @@ def compaction_column_growth(calcul_velocity, **options):
     stat_file = "output/"+ options["filename"]+'_statistics.txt'
     with open(stat_file, 'w') as f:
         f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max velocity RMS velocity\n")
-        f.write('{} {} {} {} {} {} {} {} {}\n'.format(it, time, R[-1], len(R), sum_phi(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), sum_phi(velocity, R[1:-1], options)))
+        f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), sum_phi(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), sum_phi(velocity, R[1:-1], options)))
 
     while time < time_max and it < iter_max:
         # for it in range(0,10000):
@@ -51,7 +51,7 @@ def compaction_column_growth(calcul_velocity, **options):
         dt = min(dt, 0.5*dr/growth_rate(time, options))
 
         with open(stat_file, 'a') as f:
-            f.write('{} {} {} {} {} {} {} {} {}\n'.format(it, time, R[-1], len(R), sum_phi(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), sum_phi(velocity, R[1:-1], options)))
+            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), sum_phi(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), sum_phi(velocity, R[1:-1], options)))
 
         if time_p > dt_print:
         # if it % 100 == 0:
@@ -63,14 +63,14 @@ def compaction_column_growth(calcul_velocity, **options):
             ax[1].plot(velocity, R[1:-1])
             ax[2].plot(sum_phi(1-psi, R[1:], options), R[-1], 'x')
             ax[3].plot((options["psiN"])*velocity[-1], R[-1], 'x')
-    print(it)
+            ax[0].set_xlabel("Porosity")
+            ax[0].set_ylabel("Height (non-dim)")
+            ax[1].set_xlabel("Solid velocity (non-dim)")
+            ax[0].set_xlim([0., 1.])
+            ax[0].set_ylim([0,1])
+            plt.savefig("output/"+options['filename']+'.pdf')
 
-    #ax[0].set_xlim([0.3, 0.7])
-    # ax[0].set_ylim([0,1])
-    ax[0].set_xlabel("Porosity")
-    ax[0].set_ylabel("Height (non-dim)")
-    ax[1].set_xlabel("Solid velocity (non-dim)")
-    plt.savefig("output/"+options['filename']+'.pdf')
+    # plt.savefig("output/"+options['filename']+'.pdf')
 
 
 def radius(time, options):
@@ -84,7 +84,6 @@ def append_radius(psi, R, options):
     dr = R[1] - R[0]
     R = np.append(R, [R[-1] + dr])
     return psi, R
-
 
 def sum_phi(phi, R, options):
     dr = R[1]-R[0] # constant steps in radius/heigth
