@@ -30,7 +30,7 @@ def compaction_column_growth(calcul_velocity, **options):
     ax[0].plot(1 - psi, R[:-1] + dr / 2.)
     ax[1].plot(velocity, R[1:-1])
 
-    stat_file = options["filename"]+'_statistics.txt'
+    stat_file = "output/"+ options["filename"]+'_statistics.txt'
     with open(stat_file, 'w') as f:
         f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max velocity RMS velocity\n")
         f.write('{} {} {} {} {} {} {} {} {}\n'.format(it, time, R[-1], len(R), sum_phi(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), sum_phi(velocity, R[1:-1], options)))
@@ -70,7 +70,7 @@ def compaction_column_growth(calcul_velocity, **options):
     ax[0].set_xlabel("Porosity")
     ax[0].set_ylabel("Height (non-dim)")
     ax[1].set_xlabel("Solid velocity (non-dim)")
-    plt.savefig(options['filename']+'.pdf')
+    plt.savefig("output/"+options['filename']+'.pdf')
 
 
 def radius(time, options):
