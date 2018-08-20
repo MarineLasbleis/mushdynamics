@@ -32,7 +32,7 @@ def compaction_column(calcul_velocity, **options):
     time_p = time
     time_max = 50.
     it = 0
-    iter_max = 10000
+    iter_max = 20000
 
     while time < time_max and it < iter_max:
         # for it in range(0,10000):
@@ -203,4 +203,4 @@ if __name__ == "__main__":
     #compaction_column_dVdz()
     figures_compaction_only()
 
-    plt.show()
+    #plt.show()
