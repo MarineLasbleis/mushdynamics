@@ -1,11 +1,16 @@
 import mush
 import numpy as np
 import matplotlib.pyplot as plt
+import yaml
 
 
 
 def compaction_column_growth(calcul_velocity, **options):
     """ Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
+
+    param_file = "output/"+ options["filename"]+'_param.yaml'
+    with open(param_file, 'w') as f:
+        yaml.dump(options, f) # write parameter file with all input parameters
 
     psi0 = 1 - options["phi_init"]
     N = 10
@@ -14,9 +19,9 @@ def compaction_column_growth(calcul_velocity, **options):
     dr = R[1] - R[0]
     psi = psi0 * np.ones(N)
     time = options["t_init"]
-    dt_print = .1
+    dt_print = options["dt_print"]
     time_p = time
-    time_max = 1.
+    time_max = options["time_max"]
     it = 0
     iter_max = 1000000
 
@@ -24,7 +29,6 @@ def compaction_column_growth(calcul_velocity, **options):
     v_m = np.amax(np.abs(velocity))
     dt = min(0.5 * dr / (v_m), 0.5)
     dt = min(dt, dr/growth_rate(time, options))
-    print(dt)
 
     fig, ax = plt.subplots(1, 4, sharey=True)
     ax[0].plot(1 - psi, R[:-1] + dr / 2.)
@@ -67,7 +71,7 @@ def compaction_column_growth(calcul_velocity, **options):
             ax[0].set_ylabel("Height (non-dim)")
             ax[1].set_xlabel("Solid velocity (non-dim)")
             ax[0].set_xlim([0., 1.])
-            ax[0].set_ylim([0,1])
+            #ax[0].set_ylim([0,1])
             plt.savefig("output/"+options['filename']+'.pdf')
 
     # plt.savefig("output/"+options['filename']+'.pdf')
@@ -100,7 +104,6 @@ def flux_top(phi, velocity):
 if __name__ == "__main__":
 
     options = {'advection': "FLS",
-               'Ra': 0.,
                'delta': 1.,
                'eta': 1.,
                'psi0': 1.,
@@ -110,8 +113,11 @@ if __name__ == "__main__":
                'BC': "dVdz==0",
                'coordinates': "cartesian",
                "t_init": 0.01,
-               "growth rate exponent": 1, 
-               'filename': 'test'}
+               "growth rate exponent": 1,
+               'filename': 'test',
+               'time_max': .1,
+               'dt_print': 0.01
+               }
     compaction_column_growth(mush.velocity_Sramek, **options)
 
     plt.show()
