@@ -9,12 +9,13 @@ import mush
 def compaction_column_growth(calcul_velocity, **options):
     """ Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
 
+    options["Ric_adim"] = radius(options["time_max"], options)
     param_file = "output/"+ options["filename"]+'_param.yaml'
     with open(param_file, 'w') as f:
         yaml.dump(options, f) # write parameter file with all input parameters
 
     psi0 = 1 - options["phi_init"]
-    N = 10
+    N = 400
     R_init = radius(options["t_init"], options)
     R = np.linspace(0, R_init, N + 1)
     dr = R[1] - R[0]
@@ -71,7 +72,7 @@ def compaction_column_growth(calcul_velocity, **options):
             ax[0].set_xlabel("Porosity")
             ax[0].set_ylabel("Height (non-dim)")
             ax[1].set_xlabel("Solid velocity (non-dim)")
-            ax[0].set_xlim([0., 1.])
+            ax[0].set_xlim([0., 1-options["psiN"]])
             #ax[0].set_ylim([0,1])
             plt.savefig("output/"+options['filename']+'.pdf')
 
@@ -114,7 +115,7 @@ def flux_top(phi, velocity):
 if __name__ == "__main__":
 
     r_max = 10.
-    t_max = (10/0.5)**2
+    t_max = (10/1.)**2
     dt = t_max/20
 
     options = {'advection': "FLS",
@@ -126,11 +127,11 @@ if __name__ == "__main__":
                'sign': 1,
                'BC': "dVdz==0",
                'coordinates': "spherical",
-               "t_init": 0.1,
+               "t_init": 50.,
                "growth rate exponent": 0.5,
                'filename': 'IC_ref',
                'time_max': t_max,
                'dt_print': dt,
-               'coeff_velocity': 0.5}
+               'coeff_velocity': 1.}
     print("Time to be computer: {}, dt for print: {}".format(t_max, dt))
     compaction_column_growth(mush.velocity_Sumita, **options)
