@@ -74,14 +74,15 @@ def compaction_column_growth(calcul_velocity, **options):
             #ax[0].set_ylim([0,1])
             plt.savefig("output/"+options['filename']+'.pdf')
 
+    plt.close(fig)
     # plt.savefig("output/"+options['filename']+'.pdf')
 
 
 def radius(time, options):
-    return (time)**options["growth rate exponent"]
+    return options["coeff_velocity"]*(time)**options["growth rate exponent"]
 
 def growth_rate(time, options):
-    return time**(1-options["growth rate exponent"])
+    return options["coeff_velocity"]*time**(1-options["growth rate exponent"])
 
 def append_radius(psi, R, options):
     psi = np.append(psi, [options["psiN"]])
@@ -103,21 +104,25 @@ def flux_top(phi, velocity):
 
 if __name__ == "__main__":
 
+    r_max = 10.
+    t_max = (10/0.5)**2
+    dt = t_max/20
+
     options = {'advection': "FLS",
                'delta': 1.,
                'eta': 1.,
                'psi0': 1.,
-               'psiN': 0.5,
-               'phi_init': 0.5,
+               'psiN': 0.6,
+               'phi_init': 0.4,
                'sign': 1,
                'BC': "dVdz==0",
-               'coordinates': "cartesian",
-               "t_init": 0.01,
-               "growth rate exponent": 1,
-               'filename': 'test',
-               'time_max': .1,
-               'dt_print': 0.01
+               'coordinates': "spherical",
+               "t_init": 0.1,
+               "growth rate exponent": 0.5,
+               'filename': 'IC_ref',
+               'time_max': t_max,
+               'dt_print': dt,
+               'coeff_velocity': 0.5
                }
-    compaction_column_growth(mush.velocity_Sramek, **options)
-
-    plt.show()
+    print("Time to be computer: {}, dt for print: {}".format(t_max, dt))
+    compaction_column_growth(mush.velocity_Sumita, **options)
