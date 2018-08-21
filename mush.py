@@ -231,8 +231,11 @@ def velocity_Sramek(variable, radius, options, verbose=False):
     return new_velocity
 
 
-def velocity_Sumita(variable, radius, options={}, verbose=False):
-
+def velocity_Sumita(variable, radius, options, verbose=False):
+    """ Solve the velocity of the solid, based on equation 9 in Sumita et al. 1996 
+    
+    Cartesian and Spherical coordinates (change in options["coordinates"])
+    """
     dr = radius[1] - radius[0]  # assuming no variations of dr
 
     try:
