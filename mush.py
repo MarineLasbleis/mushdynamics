@@ -216,7 +216,7 @@ def velocity_Sramek(variable, radius, options, verbose=False):
         _c = _inter[1:] / dr**2 * variable[:-1] * variable[1:] * \
             radius[2:]**2 / (radius[1:-1] + dr / 2)**2
         # TODO add a version if no time max (so no growth)
-        _d = s / options["Ric"] \
+        _d = s / options["Ric_adim"] \
             * (1 - np.sqrt(variable[:-1] * variable[1:])) * \
             variable[:-1] * variable[1:] * radius[1:-1]
 
@@ -316,7 +316,7 @@ def velocity_Sumita(variable, radius, options, verbose=False):
         _c = -((4 * (1 - variable[1:])**2) / (3 * variable[1:])) * (eta / eta0) \
             * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[2:])**2 / dr**2))
          # TODO add a version if no time max (so no growth)
-        _d = - sign / options["Ric"] * \
+        _d = - sign / options["Ric_adim"] * \
             ((1. - np.sqrt(variable[1:] * variable[0:-1])) * (radius[1:-1]))
 
     # boundary conditions:

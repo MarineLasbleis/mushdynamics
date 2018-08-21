@@ -15,7 +15,7 @@ def compaction_column_growth(calcul_velocity, **options):
         yaml.dump(options, f) # write parameter file with all input parameters
 
     psi0 = 1 - options["phi_init"]
-    N = 400
+    N = 10
     R_init = radius(options["t_init"], options)
     R = np.linspace(0, R_init, N + 1)
     dr = R[1] - R[0]
@@ -62,6 +62,7 @@ def compaction_column_growth(calcul_velocity, **options):
         if time_p > dt_print:
         # if it % 100 == 0:
             print(it, dt, time, R[-1], len(R))
+            print(thickness_boundary_layer(1-psi, R))
             # reinitinalize the mark to know if we need to print/plot
             # something.
             time_p = time_p - dt_print
@@ -111,11 +112,32 @@ def flux_top(phi, velocity):
     """ Flux of solid from the top boundary """
     return (1-phi[-1])*velocity[-1]
 
+def thickness_boundary_layer(phi, R):
+    """ Thickness of the mushy zone at the top """
+    # find the first inflexion point (starting from top)
+    # of the porosity field
+    dr = R[1]-R[0]
+    dphi = phi[2:] - phi[:-2]
+    d2phi = phi[2:] + phi[:-2] -2*phi[1:-1]
+    find_it = False
+    it = 0
+    init_sign = np.sign(d2phi[-1])
+    while find_it == False and it <= len(phi)-2:
+        if it == len(phi)-2:
+            delta = 0.
+            it += 1
+        elif np.sign(d2phi[-it]) == init_sign:
+            it = it+1
+        else:
+            delta = - dr/dphi[it]
+            find_it = True
+    return delta
+
 
 if __name__ == "__main__":
 
     r_max = 10.
-    t_max = (10/1.)**2
+    t_max = (10/2.)**2
     dt = t_max/20
 
     options = {'advection': "FLS",
@@ -127,11 +149,11 @@ if __name__ == "__main__":
                'sign': 1,
                'BC': "dVdz==0",
                'coordinates': "spherical",
-               "t_init": 50.,
+               "t_init": 0.1,
                "growth rate exponent": 0.5,
                'filename': 'IC_ref',
                'time_max': t_max,
                'dt_print': dt,
-               'coeff_velocity': 1.}
+               'coeff_velocity': 2.}
     print("Time to be computer: {}, dt for print: {}".format(t_max, dt))
     compaction_column_growth(mush.velocity_Sumita, **options)
