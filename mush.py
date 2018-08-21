@@ -70,8 +70,10 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
         print("Problem with the choosen scheme for advection. Default is upwind.")
 
     if len(velocity) == 1:
-        if velocity>0: vp[:] = velocity
-        else: vm[:] = - velocity
+        if velocity > 0:
+            vp[:] = velocity
+        else:
+            vm[:] = - velocity
     else:
         vp[:] = 0.5 * (velocity[:] + np.abs(velocity[:]))
         vm[:] = 0.5 * (velocity[:] - np.abs(velocity[:]))
@@ -90,7 +92,7 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
 
     try:
         if options["BC"] == "V==0":
-            U0, UN = 0., 0. # velocity[0], velocity[-1]
+            U0, UN = 0., 0.  # velocity[0], velocity[-1]
         elif options["BC"] == "dVdz==0":
             U0, UN = velocity[0], velocity[-1]
     except KeyError:
@@ -119,7 +121,8 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     _b[0] = vp[0] * (1 - lambdap[0] / 2.) + vm[0] * lambdam[0] / 2. \
         - U0m * (1 - lambdam_down / 2.) - U0p * lambdap_down / 2.
     _c[0] = vm[0] * (1 - lambdam[0] / 2.) + vp[0] * lambdap[0] / 2.
-    _d[0] = (_a[0]*psi0+ _b[0] * variable[0] + _c[0] * variable[1]) +_a[0]*psi0
+    _d[0] = (_a[0]*psi0 + _b[0] * variable[0] +
+             _c[0] * variable[1]) + _a[0]*psi0
 
     _a[-1] = -vp[-1]
     _b[-1] = UNp - vm[-1]
@@ -233,7 +236,7 @@ def velocity_Sramek(variable, radius, options, verbose=False):
 
 def velocity_Sumita(variable, radius, options, verbose=False):
     """ Solve the velocity of the solid, based on equation 9 in Sumita et al. 1996 
-    
+
     Cartesian and Spherical coordinates (change in options["coordinates"])
     """
     dr = radius[1] - radius[0]  # assuming no variations of dr
@@ -287,23 +290,23 @@ def velocity_Sumita(variable, radius, options, verbose=False):
                 "sign was not defined, please consider defining it for later. Default value is {}".format(sign))
     if options["coordinates"] == "cartesian":
         _a = - ((1. / (dr**2.)) * ((1. - variable[0:-1])**2.)
-            * (4. / (3. * variable[0:-1])) * (eta / eta0))
+                * (4. / (3. * variable[0:-1])) * (eta / eta0))
         _b = ((1. - np.sqrt(variable[1:] * variable[0:-1]))**2 / (variable[0:-1] * variable[1:])**(3. / 2.)) * ((K * K0) / grain**2.) \
             + (1. / dr**2.) * (((1. - variable[0:-1])**2.) * (4. / (3. * variable[0:-1])) * (
-            eta / eta0) + ((1. - variable[1:])**2.) * (4. / (3. * variable[1:])) * (eta / eta0))
+                eta / eta0) + ((1. - variable[1:])**2.) * (4. / (3. * variable[1:])) * (eta / eta0))
         _c = - ((1. / (dr**2.)) *
-            ((1. - variable[1:])**2.) * (4. / (3. * variable[1:])) * (eta / eta0))
+                ((1. - variable[1:])**2.) * (4. / (3. * variable[1:])) * (eta / eta0))
         _d = - sign * ((1. - np.sqrt(variable[1:] * variable[0:-1])))
     elif options["coordinates"] == "spherical":
         _a = -((4 * (1 - variable[0:-1])**2) / (3 * variable[0:-1])) * (eta / eta0) \
-        * (1 / ((radius[0:-2]) + (dr / 2))**2) * ((radius[0:-2])**2 / dr**2)
+            * (1 / ((radius[0:-2]) + (dr / 2))**2) * ((radius[0:-2])**2 / dr**2)
         _b = ((K * K0) / grain**2) * ((1. - np.sqrt(variable[1:] * variable[0:-1]))**2 / (variable[0:-1] * variable[1:])**(3. / 2.)) \
             + (((4 * (1 - variable[1:])**2) / (3 * variable[1:])) * (eta / eta0)
-           * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[1:-1])**2 / dr**2))) \
+               * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[1:-1])**2 / dr**2))) \
             + (((4 * (1 - variable[0:-1])**2) / (3 * variable[0:-1])) * (eta / eta0)
-           * (1 / ((radius[0:-2]) + (dr / 2))**2) * (((radius[1:-1])**2 / dr**2)))
+               * (1 / ((radius[0:-2]) + (dr / 2))**2) * (((radius[1:-1])**2 / dr**2)))
         _c = -((4 * (1 - variable[1:])**2) / (3 * variable[1:])) * (eta / eta0) \
-        * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[2:])**2 / dr**2))
+            * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[2:])**2 / dr**2))
         _d = - sign * \
             ((1. - np.sqrt(variable[1:] * variable[0:-1])) * (radius[1:-1]))
 
@@ -354,9 +357,9 @@ def update(V, psi, dt, radius, options):
     options is a dictionnary, with a bunch of parameters for everything.
     """
     dr = radius[1]-radius[0]
-        # a_adv, b_adv, c_adv, d_adv = fluxlimiterscheme(V, phi, dr, options)
-        # a_diff, b_diff, c_diff, d_diff = CrankNicholson(phi, dr, options)
-        # _a, _b, _c, _d = a_adv+a_diff, b_adv+b_diff, c_adv+c_diff, d_adv+d_diff
+    # a_adv, b_adv, c_adv, d_adv = fluxlimiterscheme(V, phi, dr, options)
+    # a_diff, b_diff, c_diff, d_diff = CrankNicholson(phi, dr, options)
+    # _a, _b, _c, _d = a_adv+a_diff, b_adv+b_diff, c_adv+c_diff, d_adv+d_diff
     _a, _b, _c, _d = fluxlimiterscheme(V, psi, dr, options)
 
     if options["coordinates"] == "spherical":
