@@ -104,6 +104,7 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
             psi0, psiN = 1-options["phi0"], 1-options["phiN"]
         except KeyError:
             psi0, psiN = 0.5, 0.5
+            print("Be careful, boundary conditions not well specified. You need to specify psi0, psiN or phi0, phiN")
 
         # minmod
     lambdap_up = 0.
@@ -127,11 +128,6 @@ def fluxlimiterscheme(velocity, variable, dr, options={}):
     _d[-1] = _d[-1] + psiN * _c[-1]
 
     return _a / (2 * dr), _b / (2 * dr), _c / (2 * dr), _d / (2 * dr)
-
-
-def sourceterm():
-    # for now, we can pass this! But useful for later. Will go into the "d".
-    pass
 
 
 def CrankNicholson(variable, dr, options):
@@ -326,6 +322,7 @@ def velocity_Sumita(variable, radius, options={}, verbose=False):
     new_velocity = inversion_matrice(_a[1:], _b, _c[:-1], _d)
     return new_velocity
 
+
 def source_spherical_advection(psi, velocity, radius, options):
     """ Source term for advection in spherical coordiantes
 
@@ -347,8 +344,12 @@ def source_spherical_advection(psi, velocity, radius, options):
     return d
 
 
-def update(V, psi, dt, radius, options={'advection': "upwind", 'Ra': 0.}):
+def update(V, psi, dt, radius, options):
+    """ Solve the porosity evolution equation
 
+    advection of the variable psi (1-porosity) by the velocity V
+    options is a dictionnary, with a bunch of parameters for everything.
+    """
     dr = radius[1]-radius[0]
         # a_adv, b_adv, c_adv, d_adv = fluxlimiterscheme(V, phi, dr, options)
         # a_diff, b_diff, c_diff, d_diff = CrankNicholson(phi, dr, options)
@@ -368,11 +369,8 @@ def update(V, psi, dt, radius, options={'advection': "upwind", 'Ra': 0.}):
     psi2[:] = _psi
     return psi2
 
+
 if __name__ == '__main__':
 
-    # here is the main part of the code
-    print('Sumita et al 1996, Geoph. J. Int., equations modified with Sramek (phd thesis)')
-    Schema()
-    compaction_column()
-    plt.show()
+    pass
     # plt.savefig("sumita_phi03.pdf")
