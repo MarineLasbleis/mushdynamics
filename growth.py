@@ -1,9 +1,10 @@
-import mush
+""" Compaction of a growing layer """
+
 import numpy as np
 import matplotlib.pyplot as plt
 import yaml
 
-
+import mush
 
 def compaction_column_growth(calcul_velocity, **options):
     """ Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
@@ -37,7 +38,7 @@ def compaction_column_growth(calcul_velocity, **options):
     stat_file = "output/"+ options["filename"]+'_statistics.txt'
     with open(stat_file, 'w') as f:
         f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max velocity RMS velocity\n")
-        f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), sum_phi(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), sum_phi(velocity, R[1:-1], options)))
+        f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options)))
 
     while time < time_max and it < iter_max:
         # for it in range(0,10000):
@@ -55,7 +56,7 @@ def compaction_column_growth(calcul_velocity, **options):
         dt = min(dt, 0.5*dr/growth_rate(time, options))
 
         with open(stat_file, 'a') as f:
-            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), sum_phi(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), sum_phi(velocity, R[1:-1], options)))
+            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options)))
 
         if time_p > dt_print:
         # if it % 100 == 0:
@@ -65,7 +66,7 @@ def compaction_column_growth(calcul_velocity, **options):
             time_p = time_p - dt_print
             ax[0].plot(1 - psi, R[:-1] + dr / 2.)
             ax[1].plot(velocity, R[1:-1])
-            ax[2].plot(sum_phi(1-psi, R[1:], options), R[-1], 'x')
+            ax[2].plot(average(1-psi, R[1:], options), R[-1], 'x')
             ax[3].plot((options["psiN"])*velocity[-1], R[-1], 'x')
             ax[0].set_xlabel("Porosity")
             ax[0].set_ylabel("Height (non-dim)")
@@ -79,26 +80,34 @@ def compaction_column_growth(calcul_velocity, **options):
 
 
 def radius(time, options):
+    """ Radius of the IC, as function of time. """
     return options["coeff_velocity"]*(time)**options["growth rate exponent"]
 
 def growth_rate(time, options):
+    """ Growth of the IC, as function of time.
+
+    Correspond to d(radius)/dt
+    """
     return options["coeff_velocity"]*time**(1-options["growth rate exponent"])
 
 def append_radius(psi, R, options):
+    """ Add one element in radius """
     psi = np.append(psi, [options["psiN"]])
     dr = R[1] - R[0]
     R = np.append(R, [R[-1] + dr])
     return psi, R
 
-def sum_phi(phi, R, options):
+def average(variable, R, options):
+    """ Average of a variable, weigthed by volume of elements. """
     dr = R[1]-R[0] # constant steps in radius/heigth
     if options["coordinates"] == "cartesian":
         dV = dr*np.ones_like(R)
     elif options["coordinates"] == "spherical":
         dV = 4*np.pi*dr*R**2
-    return np.sum(phi*dV)/np.sum(dV) #in cartesian
+    return np.sum(variable*dV)/np.sum(dV) #in cartesian
 
 def flux_top(phi, velocity):
+    """ Flux of solid from the top boundary """
     return (1-phi[-1])*velocity[-1]
 
 
@@ -122,7 +131,6 @@ if __name__ == "__main__":
                'filename': 'IC_ref',
                'time_max': t_max,
                'dt_print': dt,
-               'coeff_velocity': 0.5
-               }
+               'coeff_velocity': 0.5}
     print("Time to be computer: {}, dt for print: {}".format(t_max, dt))
     compaction_column_growth(mush.velocity_Sumita, **options)
