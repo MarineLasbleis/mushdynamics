@@ -220,6 +220,12 @@ def velocity_Sramek(variable, radius, options, verbose=False):
             * (1 - np.sqrt(variable[:-1] * variable[1:])) * \
             variable[:-1] * variable[1:] * radius[1:-1]
 
+        # correction with the term in 4\mu dphi/dr /r
+        if options["correct"]:
+            correction = + 4.*(variable[1:]-variable[:-1])*variable[1:]*variable[:-1]/dr/radius[1:-1]
+            print(np.max(np.abs(_b)), np.max(np.abs(correction)))
+            _b = _b + correction
+
     # boundary conditions: V is solved between 0 and N-1,
     # and boundary conditions are forced for V_-1=0 and V_N=0
     # for line 0: V_-1 a_0+ V_0b_0 + V_1 c_0 = d_0,

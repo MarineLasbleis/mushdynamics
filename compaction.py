@@ -28,11 +28,11 @@ def compaction_column(calcul_velocity, **options):
     ax[1].plot(velocity, R[1:-1])
 
     time = 0.
-    dt_print = 2.
+    dt_print = 20.
     time_p = time
-    time_max = 50.
+    time_max = 400.
     it = 0
-    iter_max = 20000
+    iter_max = 2000
 
     while time < time_max and it < iter_max:
         # for it in range(0,10000):
@@ -193,14 +193,18 @@ if __name__ == "__main__":
                'phi0': 1.,
                'phiN': 0.,
                'phi_init': 0.3,
-               'sign': -1,
+               'sign': 1,
                'BC': "V==0",
-               'coordinates': "spherical"}
+               'coordinates': "spherical", 
+               "Ric_adim": 1.}
 
-    # compaction_column(velocity_Sramek, delta=1., **options)
+    options["correct"] = False
+    compaction_column(velocity_Sramek, delta=.1, **options)
+    options["correct"] = True
+    compaction_column(velocity_Sramek, delta=.1, **options)
 
 
     #compaction_column_dVdz()
-    figures_compaction_only()
+    #figures_compaction_only()
 
-    #plt.show()
+    plt.show()
