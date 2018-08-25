@@ -59,8 +59,8 @@ def compaction_column(calcul_velocity, output_fig=True, **options):
                 ax[2].plot(sum_phi(1-psi, R[1:], options), time, 'x')
                 ax[3].plot(velocity[-1], time, '+')
             else:
-                file = "output_{}".format(time)
-                _data = {"radius": R, 'porosity': phi, 'velocity': velocity}
+                file = "output/output_{:5.2f}.csv".format(time)
+                _data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
                 data = pd.DataFrame(_data)
                 data.to_csv(file)
 
@@ -215,7 +215,7 @@ if __name__ == "__main__":
                'coordinates': "spherical", 
                "Ric_adim": 1.}
 
-    compaction_column(velocity_Sramek, delta=.1, **options)
+    compaction_column(velocity_Sramek, output_fig=False, delta=.1, **options)
 
 
     #compaction_column_dVdz()
