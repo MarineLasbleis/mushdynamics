@@ -133,6 +133,14 @@ def thickness_boundary_layer(phi, R):
             find_it = True
     return delta
 
+def porosity_given_depth(phi, depth, R):
+    """ extract the porosity value at the given depth
+
+    if depth is larger than max radius, return 0.
+    """
+    index = np.argmin(np.abs(R-depth))
+    return phi[index]
+
 
 if __name__ == "__main__":
 
