@@ -4,14 +4,17 @@
 import numpy as np
 import scipy as sc
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from mush import *
 
 
-def compaction_column(calcul_velocity, **options):
+def compaction_column(calcul_velocity, output_fig=True, **options):
     """ Compaction of a column of sediments.
 
-    Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
+    Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) 
+    if output_fig False: output data files and no figures (OK for cluster)
+    """
 
     psi0 = 1 - options["phi_init"]
     N = 1000
@@ -23,9 +26,10 @@ def compaction_column(calcul_velocity, **options):
     v_m = np.amax(np.abs(velocity))
     dt = min(0.5 * dr / (v_m), 0.5)
 
-    fig, ax = plt.subplots(1, 4)
-    ax[0].plot(1 - psi, R[:-1] + dr / 2.)
-    ax[1].plot(velocity, R[1:-1])
+    if output_fig:
+        fig, ax = plt.subplots(1, 4)
+        ax[0].plot(1 - psi, R[:-1] + dr / 2.)
+        ax[1].plot(velocity, R[1:-1])
 
     time = 0.
     dt_print = 20.
@@ -45,24 +49,33 @@ def compaction_column(calcul_velocity, **options):
         dt = min(0.5, 0.1 * dr / (v_m))
         if time_p > dt_print:
         # if it % 1000 == 0:
-            print(it, dt, time)
-            # reinitinalize the mark to know if we need to print/plot
-            # something.
-            time_p = time_p - dt_print
-            ax[0].plot(1 - psi, R[:-1] + dr / 2.)
-            ax[1].plot(velocity, R[1:-1])
-            ax[2].plot(sum_phi(1-psi, R[1:], options), time, 'x')
-            ax[3].plot(velocity[-1], time, '+')
-    ax[0].set_xlim([0, 1])
-    ax[0].set_ylim([0, 1])
-    ax[1].set_ylim([0, 1])
-    ax[0].set_xlabel("Porosity")
-    ax[0].set_ylabel("Height (non-dim)")
-    ax[1].set_xlabel("Solid velocity (non-dim)")
-    ax[2].set_ylabel("time (un dim)")
-    ax[2].set_xlabel("Total porosity")
-    ax[2].set_xlim([0, 1])
-    ax[3].set_xlabel("Velocity at top")
+            if output_fig:
+                print(it, dt, time)
+                # reinitinalize the mark to know if we need to print/plot
+                # something.
+                time_p = time_p - dt_print
+                ax[0].plot(1 - psi, R[:-1] + dr / 2.)
+                ax[1].plot(velocity, R[1:-1])
+                ax[2].plot(sum_phi(1-psi, R[1:], options), time, 'x')
+                ax[3].plot(velocity[-1], time, '+')
+            else:
+                file = "output_{}".format(time)
+                _data = {"radius": R, 'porosity': phi, 'velocity': velocity}
+                data = pd.DataFrame(_data)
+                data.to_csv(file)
+
+
+    if output_fig:
+        ax[0].set_xlim([0, 1])
+        ax[0].set_ylim([0, 1])
+        ax[1].set_ylim([0, 1])
+        ax[0].set_xlabel("Porosity")
+        ax[0].set_ylabel("Height (non-dim)")
+        ax[1].set_xlabel("Solid velocity (non-dim)")
+        ax[2].set_ylabel("time (un dim)")
+        ax[2].set_xlabel("Total porosity")
+        ax[2].set_xlim([0, 1])
+        ax[3].set_xlabel("Velocity at top")
 
 def sum_phi(phi, R, options):
     dr = R[1]-R[0] # constant steps in radius/heigth
@@ -114,7 +127,8 @@ def analytic_Sramek_spher(phi0, R, options):
 
 
 
-def figures_compaction_only():
+def figures_compaction_only(output="/fig"):
+
     options = {'advection': "FLS",
                'eta': 1.,
                'phi0': 0.,
@@ -183,6 +197,9 @@ def figures_compaction_only():
     plt.savefig("fig/top_phi03_Sumita_K_1_sph.pdf")
     compaction_column(velocity_Sumita, K=.5, **options)
     plt.savefig("fig/top_phi03_Sumita_K_05_sph.pdf")
+
+
+
 
 
 if __name__ == "__main__":
