@@ -215,9 +215,6 @@ if __name__ == "__main__":
                'coordinates': "spherical", 
                "Ric_adim": 1.}
 
-    options["correct"] = False
-    compaction_column(velocity_Sramek, delta=.1, **options)
-    options["correct"] = True
     compaction_column(velocity_Sramek, delta=.1, **options)
 
 
