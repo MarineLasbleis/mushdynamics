@@ -79,7 +79,8 @@ def analytical_solutions():
     options = {'advection': "FLS",
                'phi0': 0.3,
                'delta': 1.,
-               'sign': -1}
+               'sign': -1, 
+               'Ric_adim': 1.}
     options["delta"] = 1. / np.sqrt(4 / 3 * 0.3 / 0.7**2)
 
     psi0 = 1 - options["phi0"]
@@ -165,12 +166,38 @@ def advection_Vcst():
     run(phi_sin, ax, options)
     ax.plot(0., 0.3, 'o')
 
+def test_output():
+    """ Test function output in mush """
+    options = {'advection': "FLS",
+               'phi0': 0.3,
+               'delta': 1.,
+               'sign': -1}
+    options["delta"] = 1. / np.sqrt(4 / 3 * 0.3 / 0.7**2)
+
+    psi0 = 1 - options["phi0"]
+    N = 100
+    R = np.linspace(0, 1, N + 1)
+    dr = R[1] - R[0]
+    psi = psi0 * np.ones(N)
+    phi0 = 1 - psi0
+
+    fig, ax = plt.subplots(1, 2)  # cartesian and spherical solutions
+    # function from Sumita
+    options["BC"] = "V==0"
+    options["coordinates"] = "cartesian"
+    velocity = velocity_Sumita(1 - psi, R, options)
+    output(0, psi, velocity, R, True, True, "test", ax )
+    velocity = compaction.analytic_Sumita_cart(phi0, R, options)
+    output(1, psi, velocity[1:-1], R, True, True, "test", ax )
+    # output(time, psi, velocity, R, fig=False, file=False, output_folder="", ax=[]):
+
 
 if __name__ == "__main__":
 
     # test_TDMA()
-    Schema()
+    schema()
     advection_point()
     analytical_solutions()
     advection_Vcst()
+    test_output()
     plt.show()

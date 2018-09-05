@@ -48,12 +48,12 @@ def compaction_column(calcul_velocity, output_fig=True, **options):
         v_m = np.amax(np.abs(velocity))
         dt = min(0.5, 0.1 * dr / (v_m))
         if time_p > dt_print:
+            time_p = time_p - dt_print
         # if it % 1000 == 0:
             if output_fig:
                 print(it, dt, time)
                 # reinitinalize the mark to know if we need to print/plot
                 # something.
-                time_p = time_p - dt_print
                 ax[0].plot(1 - psi, R[:-1] + dr / 2.)
                 ax[1].plot(velocity, R[1:-1])
                 ax[2].plot(sum_phi(1-psi, R[1:], options), time, 'x')

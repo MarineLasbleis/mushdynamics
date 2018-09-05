@@ -8,6 +8,8 @@ Boundary conditions are specified to either study
 
 
 import numpy as np
+import os
+import pandas as pd
 # import scipy as sc
 # import matplotlib.pyplot as plt
 
@@ -386,6 +388,29 @@ def update(V, psi, dt, radius, options):
     _psi = tdma.inversion_matrice(_a[1:], _b, _c[:-1], _d)
     psi2[:] = _psi
     return psi2
+
+
+def output(time, psi, velocity, R, fig=False, file=False, output_folder="", ax=[]):
+    """ function to write output
+
+    fig: True for output a figure. Require to provide a figure ax variable
+    file: True for output a file
+    output_folder: name of the folder for the output
+    """
+    # verifiy if folder exist
+    if not os.path.isdir(output_folder):
+         os.makedirs(output_folder)
+
+    # write the outputs
+    if fig:
+        dr = R[1]-R[0]
+        ax[0].plot(1 - psi, R[:-1] + dr / 2.)
+        ax[1].plot(velocity, R[1:-1])
+    if file:
+        file = output_folder+"/output_{:5.2f}.csv".format(time)
+        _data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
+        data = pd.DataFrame(_data)
+        data.to_csv(file)
 
 
 if __name__ == '__main__':
