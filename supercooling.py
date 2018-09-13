@@ -188,19 +188,19 @@ if __name__ == "__main__":
 
     delta_T = 30 #initial supercooling
 
-    test = Evolution(100, 1e12, 5e6)
+    test = Evolution(100, 1e13, 5e6)
     test.run_print()
     fig_from_file(test.file)
-    test = Evolution(30, 1e12, 3e6)
+    test = Evolution(30, 1e13, 3e6)
     test.run_print()
     fig_from_file(test.file)
-    test = Evolution(50, 1e12, 3e6)
+    test = Evolution(120, 1e13, 3e6)
     test.run_print()
     fig_from_file(test.file)
-    test = Evolution(10, 1e13, 5e6)
+    test = Evolution(1, 1e13, 5e6)
     test.run_print()
     fig_from_file(test.file)
-    test = Evolution(5, 1e13, 5e6)
+    test = Evolution(100, 1e14, 5e6)
     test.run_print()
     fig_from_file(test.file)
 
