@@ -433,7 +433,7 @@ def fig_stat(filename, save=False, output="./", print_all=True, print_list=[]):
     data = pd.read_csv(filename, sep=" ", index_col=False)
     print("Number of lines in the file: {}".format(data.shape[0]))
     print("Number of columns in the file: {}".format(data.shape[1]))
-    print(data.columns)
+    print(data.columns.to_list)
     if print_all:
         n_col = data.shape[1]
         fig, ax = plt.subplots(n_col-2, 2, figsize=[6, n_col*3]) #first column with iteration as x axis, 2nd column with time

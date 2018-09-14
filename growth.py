@@ -62,7 +62,7 @@ def compaction_column_growth(calcul_velocity, **options):
         dt = min(dt, 0.5*dr/growth_rate(time, options))
 
         with open(stat_file, 'a') as f:
-            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(np.abs(velocity)), average(np.abs(velocity), R[1:-1], options)))
+            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), np.abs(velocity[-1]), np.max(np.abs(velocity)), average(np.abs(velocity), R[1:-1], options)))
 
         if time_p > dt_print:
         # if it % 100 == 0:
