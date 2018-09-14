@@ -186,9 +186,13 @@ def test_output():
     options["BC"] = "V==0"
     options["coordinates"] = "cartesian"
     velocity = velocity_Sumita(1 - psi, R, options)
-    output(0, psi, velocity, R, True, True, "test", ax )
+    data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
+    data = pd.DataFrame(data)
+    output(0, data, True, True, "test", ax)
     velocity = compaction.analytic_Sumita_cart(phi0, R, options)
-    output(1, psi, velocity[1:-1], R, True, True, "test", ax )
+    data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
+    data = pd.DataFrame(data)
+    output(1, data, True, True, "test", ax)
     # output(time, psi, velocity, R, fig=False, file=False, output_folder="", ax=[]):
 
 

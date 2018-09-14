@@ -390,7 +390,7 @@ def update(V, psi, dt, radius, options):
     return psi2
 
 
-def output(time, psi, velocity, R, fig=False, file=False, output_folder="", ax=[]):
+def output(time, panda_frame, fig=False, file=False, output_folder="", ax=[]):
     """ function to write output
 
     fig: True for output a figure. Require to provide a figure ax variable
@@ -403,14 +403,16 @@ def output(time, psi, velocity, R, fig=False, file=False, output_folder="", ax=[
 
     # write the outputs
     if fig:
-        dr = R[1]-R[0]
-        ax[0].plot(1 - psi, R[:-1] + dr / 2.)
-        ax[1].plot(velocity, R[1:-1])
+        if ax==[]:
+            fig, ax = plt.subplots(2, sharey=True)
+        dr = panda_frame["radius"][1]-panda_frame["radius"][0]
+        ax[0].plot(panda_frame["porosity"], panda_frame["radius"] + dr / 2.)
+        ax[1].plot(panda_frame["velocity"], panda_frame["radius"] + dr)
     if file:
         file = output_folder+"/output_{:5.2f}.csv".format(time)
-        _data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
-        data = pd.DataFrame(_data)
-        data.to_csv(file)
+        #_data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
+        #data = pd.DataFrame(_data)
+        panda_frame.to_csv(file)
 
 
 if __name__ == '__main__':
