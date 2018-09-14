@@ -447,9 +447,12 @@ def all_figures(output_folder, save=False):
             print(file)
             data = pd.read_csv(output_folder +'/' + file, sep=" ")
             dr = data["radius"][1]-data["radius"][0]
-            ax[0].plot(data["porosity"], data["radius"] + dr / 2.)
-            ax[1].plot(data["velocity"], data["radius"] + dr)
-    if save: 
+            time = file[-14:-9]
+            ax[0].plot(data["porosity"], data["radius"] + dr / 2., label=time)
+            ax[1].plot(data["velocity"], data["radius"] + dr, label=time)
+    #ax[1].legend(loc="upper left", bbox_to_anchor=(1,1))
+    #plt.tight_layout()
+    if save:
         plt.savefig(output + filename[:-4] + '.pdf') # -4 to remove the .csv
         plt.close(fig)
     else: plt.show()
