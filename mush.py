@@ -11,7 +11,7 @@ import numpy as np
 import os
 import pandas as pd
 # import scipy as sc
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 import tdma
 
@@ -413,6 +413,36 @@ def output(time, panda_frame, fig=False, file=False, output_folder="", ax=[]):
         #_data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
         #data = pd.DataFrame(_data)
         panda_frame.to_csv(file)
+
+
+def figure(filename, save=False, output="./"):
+    data = pd.read_csv(filename, sep=" ", index_col=False)
+    fig, ax = plt.subplots(2, sharey=True)
+    dr = data["radius"][1] - data["radius"][0]
+    ax[0].plot(data["porosity"], data["radius"] + dr / 2.)
+    ax[1].plot(data["velocity"], data["radius"] + dr)
+            # ax[2].plot(average(1-psi, R[1:], options), R[-1], 'x')
+            # ax[3].plot((options["psiN"])*velocity[-1], R[-1], 'x')
+    ax[0].set_xlabel("Porosity")
+    ax[0].set_ylabel("Height (non-dim)")
+    ax[1].set_xlabel("Solid velocity (non-dim)")
+    ax[0].set_ylim([0,1])
+    if save: plt.savefig(output + filename[:-4] + '.pdf') # -4 to remove the .csv
+
+def fig_stat(filename, save=False, output="./", print_all=True, print_list=[]):
+    data = pd.read_csv(filename, sep=" ", index_col=False)
+    print("Number of lines in the file: {}".format(data.shape[0]))
+    print("Number of columns in the file: {}".format(data.shape[1]))
+    print(data.columns)
+    if print_all:
+        n_col = data.shape[1]
+        fig, ax = plt.subplots(n_col-2, 2, figsize=[6, n_col*3]) #first column with iteration as x axis, 2nd column with time
+        names = data.columns
+        for i in range(n_col-2):
+            ax[i, 0].plot(data['iteration_number'], data[names[i+2]])
+            ax[i, 1].plot(data['time'], data[names[i+2]])
+            ax[i, 0].set_ylabel(names[i+2])
+    plt.savefig(filename[:-4]+".pdf")
 
 
 if __name__ == '__main__':

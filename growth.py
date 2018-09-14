@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import yaml
 import os
+import pandas as pd
 
 import mush
 
@@ -29,7 +30,7 @@ def compaction_column_growth(calcul_velocity, **options):
     time_p = time
     time_max = options["time_max"]
     it = 0
-    iter_max = 100
+    iter_max = 100000
 
     velocity = calcul_velocity(1 - psi, R, options)
     v_m = np.amax(np.abs(velocity))
@@ -42,7 +43,7 @@ def compaction_column_growth(calcul_velocity, **options):
 
     stat_file = output_folder + options["filename"]+'_statistics.txt'
     with open(stat_file, 'w') as f:
-        f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max velocity RMS velocity\n")
+        f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity\n")
         f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options)))
 
     while time < time_max and it < iter_max:
@@ -61,7 +62,7 @@ def compaction_column_growth(calcul_velocity, **options):
         dt = min(dt, 0.5*dr/growth_rate(time, options))
 
         with open(stat_file, 'a') as f:
-            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options)))
+            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(np.abs(velocity)), average(np.abs(velocity), R[1:-1], options)))
 
         if time_p > dt_print:
         # if it % 100 == 0:
@@ -165,7 +166,7 @@ if __name__ == "__main__":
                'sign': 1,
                'BC': "dVdz==0",
                'coordinates': "spherical",
-               "t_init": 0.1,
+               "t_init": 0.01,
                "growth rate exponent": 0.5,
                'filename': 'IC_ref',
                'time_max': t_max,
@@ -174,3 +175,4 @@ if __name__ == "__main__":
                'output': "compaction/"}
     print("Time to be computer: {}, dt for print: {}".format(t_max, dt))
     compaction_column_growth(mush.velocity_Sumita, **options)
+    mush.fig_stat("compaction/IC_ref_statistics.txt")
