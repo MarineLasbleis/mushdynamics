@@ -409,7 +409,7 @@ def output(time, panda_frame, fig=False, file=False, output_folder="", ax=[]):
         ax[0].plot(panda_frame["porosity"], panda_frame["radius"] + dr / 2.)
         ax[1].plot(panda_frame["velocity"], panda_frame["radius"] + dr)
     if file:
-        file = output_folder+"/output_{:5.2f}.csv".format(time)
+        file = output_folder+"/output_{:5.2f}.timestep".format(time)
         #_data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
         #data = pd.DataFrame(_data)
         panda_frame.to_csv(file, sep=" ")
@@ -436,7 +436,23 @@ def figure(filename, save=False, output="./"):
     else: plt.show()
 
 def all_figures(output_folder, save=False):
-    pass
+    list_files = os.listdir(output_folder)
+    fig, ax = plt.subplots(1,2, sharey=True)
+    ax[0].set_xlabel("Porosity")
+    ax[0].set_ylabel("Height (non-dim)")
+    ax[1].set_xlabel("Solid velocity (non-dim)")
+    for file in list_files:
+        #print(file[-9:])
+        if file[-9:] == ".timestep":
+            print(file)
+            data = pd.read_csv(output_folder +'/' + file, sep=" ")
+            dr = data["radius"][1]-data["radius"][0]
+            ax[0].plot(data["porosity"], data["radius"] + dr / 2.)
+            ax[1].plot(data["velocity"], data["radius"] + dr)
+    if save: 
+        plt.savefig(output + filename[:-4] + '.pdf') # -4 to remove the .csv
+        plt.close(fig)
+    else: plt.show()
 
 def fig_stat(filename, save=False, output="./", print_all=True, print_list=[]):
     data = pd.read_csv(filename, sep=" ", index_col=False)
@@ -456,7 +472,7 @@ def fig_stat(filename, save=False, output="./", print_all=True, print_list=[]):
 
 if __name__ == '__main__':
 
-    figure("compaction/output_13.75.csv")
-    
+    all_figures("compaction/")
+
     pass
     # plt.savefig("sumita_phi03.pdf")
