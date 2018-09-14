@@ -105,3 +105,4 @@ ENV/
 .pdf
 /fig
 /output/*
+/output_supercooling/*
