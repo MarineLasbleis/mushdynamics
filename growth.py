@@ -20,7 +20,7 @@ def compaction_column_growth(calcul_velocity, **options):
         yaml.dump(options, f) # write parameter file with all input parameters
 
     psi0 = 1 - options["phi_init"]
-    N = 10
+    N = 20
     R_init = radius(options["t_init"], options)
     R = np.linspace(0, R_init, N + 1)
     dr = R[1] - R[0]
@@ -30,21 +30,17 @@ def compaction_column_growth(calcul_velocity, **options):
     time_p = time
     time_max = options["time_max"]
     it = 0
-    iter_max = 100000
+    iter_max = 10000000
 
     velocity = calcul_velocity(1 - psi, R, options)
     v_m = np.amax(np.abs(velocity))
     dt = min(0.5 * dr / (v_m), 0.5)
     dt = min(dt, dr/growth_rate(time, options))
 
-    # fig, ax = plt.subplots(1, 4, sharey=True)
-    # ax[0].plot(1 - psi, R[:-1] + dr / 2.)
-    # ax[1].plot(velocity, R[1:-1])
-
     stat_file = output_folder + options["filename"]+'_statistics.txt'
     with open(stat_file, 'w') as f:
-        f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity\n")
-        f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options)))
+        f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary\n")
+        f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options), thickness_boundary_layer(1-psi, R)))
 
     while time < time_max and it < iter_max:
         # for it in range(0,10000):
@@ -53,8 +49,6 @@ def compaction_column_growth(calcul_velocity, **options):
         time_p = time_p + dt
         if R[-1]+dr < radius(time, options):
             psi, R = append_radius(psi, R, options)
-        #psi = np.append(psi, [psi0, psi0])
-        #R = np.append(R, [R[-1]+dr, R[-1]+2*dr])
         velocity = calcul_velocity(1 - psi, R, options)
         psi = mush.update(velocity, psi, dt, R, options)
         v_m = np.amax(np.abs(velocity))
@@ -62,32 +56,14 @@ def compaction_column_growth(calcul_velocity, **options):
         dt = min(dt, 0.5*dr/growth_rate(time, options))
 
         with open(stat_file, 'a') as f:
-            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), np.abs(velocity[-1]), np.max(np.abs(velocity)), average(np.abs(velocity), R[1:-1], options)))
+            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options), thickness_boundary_layer(1-psi, R)))
 
         if time_p > dt_print:
         # if it % 100 == 0:
-            #print(it, dt, time, R[-1], len(R))
-            #print(thickness_boundary_layer(1-psi, R))
-            # reinitinalize the mark to know if we need to print/plot
-            # something.
-
             data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
             data = pd.DataFrame(data)
             mush.output(time, data, fig=False, file=True, output_folder=output_folder, ax=[])
             time_p = time_p - dt_print
-            # ax[0].plot(1 - psi, R[:-1] + dr / 2.)
-            # ax[1].plot(velocity, R[1:-1])
-            # ax[2].plot(average(1-psi, R[1:], options), R[-1], 'x')
-            # ax[3].plot((options["psiN"])*velocity[-1], R[-1], 'x')
-            # ax[0].set_xlabel("Porosity")
-            # ax[0].set_ylabel("Height (non-dim)")
-            # ax[1].set_xlabel("Solid velocity (non-dim)")
-            # ax[0].set_xlim([0., 1-options["psiN"]])
-            # ax[0].set_ylim([0,1])
-            # plt.savefig("output/"+options['filename']+'.pdf')
-
-    # plt.close(fig)
-    # plt.savefig("output/"+options['filename']+'.pdf')
 
 
 def radius(time, options):

@@ -444,7 +444,7 @@ def all_figures(output_folder, save=False):
     for file in list_files:
         #print(file[-9:])
         if file[-9:] == ".timestep":
-            print(file)
+            print(output_folder+file)
             data = pd.read_csv(output_folder +'/' + file, sep=" ")
             dr = data["radius"][1]-data["radius"][0]
             time = file[-14:-9]
@@ -453,7 +453,7 @@ def all_figures(output_folder, save=False):
     #ax[1].legend(loc="upper left", bbox_to_anchor=(1,1))
     #plt.tight_layout()
     if save:
-        plt.savefig(output + filename[:-4] + '.pdf') # -4 to remove the .csv
+        plt.savefig(output_folder + "/all_fig"+ '.pdf') # -4 to remove the .csv
         plt.close(fig)
     else: plt.show()
 
@@ -470,6 +470,8 @@ def fig_stat(filename, save=False, output="./", print_all=True, print_list=[]):
             ax[i, 0].plot(data['iteration_number'], data[names[i+2]])
             ax[i, 1].plot(data['time'], data[names[i+2]])
             ax[i, 0].set_ylabel(names[i+2])
+        ax[n_col-3,0].set_xlabel("iteration_number")
+        ax[n_col-3,1].set_xlabel("time")
     plt.savefig(filename[:-4]+".pdf")
 
 
