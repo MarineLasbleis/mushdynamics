@@ -46,5 +46,5 @@ if __name__ == "__main__":
                                         output=folder_name,
                                         coeff_velocity=coeff)
                 print(folder_name)
-                print("Time to be computer: {:.2e}, dt for print: {:.2e}".format(t_max, dt))
-                compaction_column_growth(mush.velocity_Sumita, **options)
+                print("Time to be computed: {:.2e}, dt for print: {:.2e}".format(t_max, dt))
+                mush.compaction_column_growth(mush.velocity_Sumita, **options)
