@@ -1,7 +1,7 @@
 """ Series of runs """
 
 
-import mush
+# import mush
 import growth
 
 if __name__ == "__main__":
@@ -47,4 +47,4 @@ if __name__ == "__main__":
                                         coeff_velocity=coeff)
                 print(folder_name)
                 print("Time to be computed: {:.2e}, dt for print: {:.2e}".format(t_max, dt))
-                mush.compaction_column_growth(mush.velocity_Sumita, **options)
+                growth.compaction_column_growth(mush.velocity_Sumita, **options)
