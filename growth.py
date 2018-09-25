@@ -68,14 +68,14 @@ def compaction_column_growth(calcul_velocity, **options):
 
 def radius(time, options):
     """ Radius of the IC, as function of time. """
-    return options["coeff_velocity"]*(time)**options["growth rate exponent"]
+    return options["coeff_velocity"]*(time)**options["growth_rate_exponent"]
 
 def growth_rate(time, options):
     """ Growth of the IC, as function of time.
 
     Correspond to d(radius)/dt
     """
-    return options["coeff_velocity"]*time**(1-options["growth rate exponent"])
+    return options["coeff_velocity"]*time**(1-options["growth_rate_exponent"])
 
 def append_radius(psi, R, options):
     """ Add one element in radius """
@@ -143,7 +143,7 @@ if __name__ == "__main__":
                'BC': "dVdz==0",
                'coordinates': "spherical",
                "t_init": 0.01,
-               "growth rate exponent": 0.5,
+               "growth_rate_exponent": 0.5,
                'filename': 'IC_ref',
                'time_max': t_max,
                'dt_print': dt,
@@ -151,4 +151,4 @@ if __name__ == "__main__":
                'output': "compaction/"}
     print("Time to be computer: {}, dt for print: {}".format(t_max, dt))
     compaction_column_growth(mush.velocity_Sumita, **options)
-    mush.fig_stat("compaction/IC_ref_statistics.txt")
+    # mush.fig_stat("compaction/IC_ref_statistics.txt")

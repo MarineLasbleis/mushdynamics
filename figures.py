@@ -114,12 +114,12 @@ def all_figures(folder):
     colors = plt.cm.viridis(np.linspace(0,1,n))
     for name, time in sorted(timesteps.items(), key = itemgetter(1)):
         print(name, time)
-        # single figure 
+        # single figure
         make_figure(name, save=True, output="./", max_r=options["Ric_adim"])
         # figure with all timesteps
         data = pd.read_csv(name, sep=" ")
         dr = data["radius"][1]-data["radius"][0]
-        if i%n_i ==0: 
+        if i%n_i ==0:
             ax[0].plot(data["porosity"], data["radius"] + dr / 2.,color=colors[i], label=time)
             ax[1].plot(data["velocity"], data["radius"] + dr, color=colors[i], label=time)
         i += 1
@@ -132,6 +132,6 @@ if __name__ == "__main__":
 
 
     # snippet for ordering dictionnary and print values.
-    # from operator import itemgetter  
+    # from operator import itemgetter
     # for key, value in sorted(d.items(), key = itemgetter(1)):
     #     print(key, value)
