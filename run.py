@@ -1,7 +1,7 @@
 """ Series of runs """
 
 
-# import mush
+import mush
 import growth
 
 if __name__ == "__main__":
