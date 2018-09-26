@@ -30,7 +30,7 @@ def compaction_column_growth(calcul_velocity, **options):
     time_p = time
     time_max = options["time_max"]
     it = 0
-    iter_max = 10000000
+    iter_max = 1000000
 
     velocity = calcul_velocity(1 - psi, R, options)
     v_m = np.amax(np.abs(velocity))
@@ -142,7 +142,7 @@ if __name__ == "__main__":
                'sign': 1,
                'BC': "dVdz==0",
                'coordinates': "spherical",
-               "t_init": 0.01,
+               "t_init": 0.1,
                "growth_rate_exponent": 0.5,
                'filename': 'IC_ref',
                'time_max': t_max,
