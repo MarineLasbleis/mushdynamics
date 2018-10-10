@@ -20,8 +20,15 @@ def compaction_column_growth(calcul_velocity, **options):
         yaml.dump(options, f) # write parameter file with all input parameters
 
     psi0 = 1 - options["phi_init"]
-    N = 20
-    R_init = radius(options["t_init"], options)
+    try:
+        N = options["N_init"]
+    except Exception:
+        N=20
+    
+    try:
+        R_init =  options["R_init"]
+    except Exception as e:
+        R_init = radius(options["t_init"], options)
     R = np.linspace(0, R_init, N + 1)
     dr = R[1] - R[0]
     psi = psi0 * np.ones(N)
@@ -30,7 +37,7 @@ def compaction_column_growth(calcul_velocity, **options):
     time_p = time
     time_max = options["time_max"]
     it = 0
-    iter_max = 10000000
+    iter_max = 100000000
 
     velocity = calcul_velocity(1 - psi, R, options)
     v_m = np.amax(np.abs(velocity))
