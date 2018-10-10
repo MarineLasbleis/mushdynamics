@@ -142,7 +142,7 @@ if __name__ == "__main__":
                'sign': 1,
                'BC': "dVdz==0",
                'coordinates': "spherical",
-               "t_init": 0.1,
+               "t_init": 0.05,
                "growth_rate_exponent": 0.5,
                'filename': 'IC_ref',
                'time_max': t_max,
