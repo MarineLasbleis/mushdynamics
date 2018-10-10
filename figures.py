@@ -27,7 +27,7 @@ def find_folder():
     return folder
 
 
-def fig_stat(filename, save=False, output="./", print_all=True, print_list=[]):
+def fig_stat(filename, save=False, output="", print_all=True, print_list=[]):
     data = pd.read_csv(filename, sep=" ", index_col=False)
     if print_all:
         n_col = data.shape[1]
@@ -42,7 +42,7 @@ def fig_stat(filename, save=False, output="./", print_all=True, print_list=[]):
     plt.savefig(output + filename[:-4]+".pdf")
 
 
-def make_figure(filename, save=False, output="./", max_r=None):
+def make_figure(filename, save=False, output="", max_r=None):
     data = pd.read_csv(filename, sep=" ") # , index_col=False)
     fig, ax = plt.subplots(1,2, sharey=True)
     dr = data["radius"][1] - data["radius"][0]
@@ -115,7 +115,7 @@ def all_figures(folder):
     for name, time in sorted(timesteps.items(), key = itemgetter(1)):
         print(name, time)
         # single figure
-        make_figure(name, save=True, output="./", max_r=options["Ric_adim"])
+        make_figure(name, save=True, output="", max_r=options["Ric_adim"])
         # figure with all timesteps
         data = pd.read_csv(name, sep=" ")
         dr = data["radius"][1]-data["radius"][0]
@@ -127,8 +127,13 @@ def all_figures(folder):
 
 if __name__ == "__main__":
 
+    folder = "/home/marine/Desktop/compaction_mush/"
+    list_folder = os.listdir(folder)
 
-    all_figures("output/exp_1_coeff__02")
+    for name in list_folder:
+        if name[:7] == "exp_1.0":
+            print(folder+name)
+            all_figures(folder+'/'+name)
 
 
     # snippet for ordering dictionnary and print values.

@@ -20,8 +20,14 @@ def compaction_column_growth(calcul_velocity, **options):
         yaml.dump(options, f) # write parameter file with all input parameters
 
     psi0 = 1 - options["phi_init"]
-    N = 20
-    R_init = radius(options["t_init"], options)
+    try:
+        N = options["N_init"]
+    except Exception:
+        N=20
+    try:
+        R_init =  options["R_init"]
+    except Exception as e:
+        R_init = radius(options["t_init"], options)
     R = np.linspace(0, R_init, N + 1)
     dr = R[1] - R[0]
     psi = psi0 * np.ones(N)
@@ -30,7 +36,7 @@ def compaction_column_growth(calcul_velocity, **options):
     time_p = time
     time_max = options["time_max"]
     it = 0
-    iter_max = 1000000
+    iter_max = 100000000
 
     velocity = calcul_velocity(1 - psi, R, options)
     v_m = np.amax(np.abs(velocity))
@@ -55,8 +61,15 @@ def compaction_column_growth(calcul_velocity, **options):
         dt = min(0.5, 0.001 * dr / (v_m))
         dt = min(dt, 0.5*dr/growth_rate(time, options))
 
-        with open(stat_file, 'a') as f:
-            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options), thickness_boundary_layer(1-psi, R)))
+        stat = False
+        if i > 1e5: 
+            if it%100==0:
+                stat = True
+        else:
+            stat = True
+        if stat:
+            with open(stat_file, 'a') as f:
+                f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options), thickness_boundary_layer(1-psi, R)))
 
         if time_p > dt_print:
         # if it % 100 == 0:
