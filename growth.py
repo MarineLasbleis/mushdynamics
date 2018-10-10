@@ -24,7 +24,6 @@ def compaction_column_growth(calcul_velocity, **options):
         N = options["N_init"]
     except Exception:
         N=20
-    
     try:
         R_init =  options["R_init"]
     except Exception as e:

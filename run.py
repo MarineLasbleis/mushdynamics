@@ -29,8 +29,10 @@ if __name__ == "__main__":
                 'filename': 'IC_Sumita',
                 'time_max': t_max,
                 'dt_print': dt,
-                'coeff_velocity': 2., 
-                'output': "compaction/"}
+                'coeff_velocity': 2.,
+                'output': "compaction/",
+                "R_init": 0.01,
+                "N_init": min(5, int(1e2/r_max))}
         options = {**options, **param}
         return options
 
