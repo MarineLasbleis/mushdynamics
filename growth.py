@@ -62,7 +62,7 @@ def compaction_column_growth(calcul_velocity, **options):
         dt = min(dt, 0.5*dr/growth_rate(time, options))
 
         stat = False
-        if i > 1e5: 
+        if it > 1e5: 
             if it%100==0:
                 stat = True
         else:
