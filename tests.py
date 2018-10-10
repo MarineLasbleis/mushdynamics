@@ -181,7 +181,7 @@ def test_output():
     psi = psi0 * np.ones(N)
     phi0 = 1 - psi0
 
-    fig, ax = plt.subplots(1, 2)  # cartesian and spherical solutions
+    fig, ax = plt.subplots(1, 2)  
     # function from Sumita
     options["BC"] = "V==0"
     options["coordinates"] = "cartesian"
