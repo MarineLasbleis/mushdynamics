@@ -6,10 +6,10 @@ import growth
 
 if __name__ == "__main__":
 
-    r_max = [1., 2., 5., 10., 20., 50., 100.]
+    r_max = [1., 2., 5., 10., 20., 100.]
     N_fig = 30
-    exp_velocity = [1., 0.5, 1./3.]
-    coeff_velocity = [0.05, 0.1, 1., 2., 5., 10., 20., 50., 100.]
+    exp_velocity = [1.]
+    coeff_velocity = [0.01, 0.05, 0.1, 1.]
 
     def new_options(**param):
         r_max = 10.
