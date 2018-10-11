@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import yaml
 import os
 import pandas as pd
+from scipy.optimize import leastsq
+import numpy.ma as ma
 
 import mush
 
@@ -26,12 +28,13 @@ def compaction_column_growth(calcul_velocity, **options):
         N=20
     try:
         R_init =  options["R_init"]
+        time = (R_init/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
     except Exception as e:
         R_init = radius(options["t_init"], options)
+        time = options["t_init"]
     R = np.linspace(0, R_init, N + 1)
     dr = R[1] - R[0]
     psi = psi0 * np.ones(N)
-    time = options["t_init"]
     dt_print = options["dt_print"]
     time_p = time
     time_max = options["time_max"]
@@ -51,6 +54,7 @@ def compaction_column_growth(calcul_velocity, **options):
     while time < time_max and it < iter_max:
         # for it in range(0,10000):
         it = it + 1
+        # print(it)
         time = time + dt
         time_p = time_p + dt
         if R[-1]+dr < radius(time, options):
@@ -110,7 +114,7 @@ def flux_top(phi, velocity):
     """ Flux of solid from the top boundary """
     return (1-phi[-1])*velocity[-1]
 
-def thickness_boundary_layer(phi, R):
+def thickness_boundary_layer_old(phi, R):
     """ Thickness of the mushy zone at the top """
     # find the first inflexion point (starting from top)
     # of the porosity field
@@ -130,6 +134,45 @@ def thickness_boundary_layer(phi, R):
             delta = - dr/dphi[it]
             find_it = True
     return delta
+
+def thickness_boundary_layer(phi, R):
+    """ Thickness of the mushy zone at the top """
+    def logistic4(x, A, B, C, D):
+        """4PL lgoistic equation."""
+        return ((A-D)/(1.0+((x/C)**B))) + D
+    def residuals(p, y, x):
+        """Deviations of data from fitted 4PL curve"""
+        A,B,C,D = p
+        err = y-logistic4(x, A, B, C, D)
+        return err
+    # find 1st minimum of function
+    min_phi = np.argmin(phi)
+    # fit with sigmoid function
+    dr = R[1] -R[0]
+    y_values = phi[min_phi:]
+    radius = R[min_phi:-1] +dr/2
+    # initial guess
+    p0 = [phi[min_phi], np.abs((phi[-1]-phi[min_phi])/(radius[-1]-radius[0])), (radius[-1]+radius[0])/2 , phi[-1]]
+    plsq = leastsq(residuals, p0, args=(y_values, radius))
+    # get the thickness of the sigmoid
+    A, B, C, D = plsq[0]
+    # if 1/B > radius[-1] or 1/B < radius[0]:
+    #     print("oups, probably a problem while evaluating boundary thickness")
+    # return value1
+    return 1./B
+
+
+def porosity_compacted_region(phi, R, delta, options):
+    """ Porosity in the compacted region
+
+    delta: thickness of mushy zone
+    """
+    if delta > R[-1]:
+        print("mushy zone larger than core. No compacted region.")
+        return 0.
+    R_max = R[-1]-delta
+    mask = R<R_max
+    return average(ma.masked_array(phi_comp, mask=mask), ma.masked_array(R_comp, mask=mask), options)
 
 def porosity_given_depth(phi, depth, R):
     """ extract the porosity value at the given depth
