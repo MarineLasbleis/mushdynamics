@@ -197,6 +197,7 @@ def velocity_Sramek(variable, radius, options, verbose=False):
         if verbose:
             print("Delta (compaction length) was not defined, please consider defining it for later. Default value is {}".format(delta))
 
+
     _inter = (K0 + 4. / 3. * variable) * (1. - variable) / variable
 
     if options["coordinates"] == "cartesian":

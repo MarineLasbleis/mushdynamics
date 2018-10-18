@@ -39,7 +39,31 @@ def fig_stat(filename, save=False, output="", print_all=True, print_list=[]):
             ax[i, 0].set_ylabel(names[i+2])
         ax[n_col-3,0].set_xlabel("iteration_number")
         ax[n_col-3,1].set_xlabel("time")
-    plt.savefig(output + filename[:-4]+".pdf")
+        if names[i+2] == "thickness_boundary":
+            try:
+                    maximum = data["thickness_boundary"].iloc[100]
+                    print(maximum)
+            except Exception as e:
+                    maximum = data["thickness_boundary"].iloc[-1]*10
+            ax[i,0].set_ylim([0, maximum])
+            ax[i,1].set_ylim([0, maximum])
+                # ax[i,0].set_ylim([0, 10*data["radius"].iloc[-1]])
+                # ax[i,1].set_ylim([0, 10*data["radius"].iloc[-1]])
+        plt.savefig(output + filename[:-4]+".pdf")
+    else:
+        n_col = len(print_list)
+        fig, ax = plt.subplots(n_col, 2, figsize=[6, n_col*4])
+        for name in print_list:
+            ax[i, 0].plot(data['iteration_number'], data[name])
+            ax[i, 1].plot(data['time'], data[name])
+            ax[i, 0].set_ylabel(name)
+            if name == "thickness_boundary":
+                try:
+                    maximum = data["radius"].iloc[100]
+                except Exception as e:
+                    maximum = data["radius"].iloc[-1]
+                ax[i,0].set_ylim([0, maximum])
+                ax[i,1].set_ylim([0, maximum])
 
 
 def make_figure(filename, save=False, output="", max_r=None):
@@ -127,13 +151,14 @@ def all_figures(folder):
 
 if __name__ == "__main__":
 
-    folder = "/home/marine/Desktop/compaction_mush/"
+    folder = "/home/marine/ownCloud/Research/Projets/output_mush/"
     list_folder = os.listdir(folder)
 
     for name in list_folder:
-        if name[:7] == "exp_1.0":
+        if name[:3] == "exp":
             print(folder+name)
             all_figures(folder+'/'+name)
+
 
 
     # snippet for ordering dictionnary and print values.
