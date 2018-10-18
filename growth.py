@@ -66,7 +66,7 @@ def compaction_column_growth(calcul_velocity, **options):
         dt = min(dt, 0.5*dr/growth_rate(time, options))
 
         stat = False
-        if it > 1e5: 
+        if it > 1e3: 
             if it%100==0:
                 stat = True
         else:
@@ -156,10 +156,8 @@ def thickness_boundary_layer(phi, R):
     plsq = leastsq(residuals, p0, args=(y_values, radius))
     # get the thickness of the sigmoid
     A, B, C, D = plsq[0]
-    # if 1/B > radius[-1] or 1/B < radius[0]:
-    #     print("oups, probably a problem while evaluating boundary thickness")
-    # return value1
-    return 1./B
+    phi_c = logistic4(C, A, B, C, D)
+    return radius[-1]-C+phi_c*4*C/B/(D-A)
 
 
 def porosity_compacted_region(phi, R, delta, options):
