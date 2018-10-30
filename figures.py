@@ -42,6 +42,7 @@ def fig_stat(filename, save=False, output="", print_all=True, print_list=[]):
         if names[i+2] == "thickness_boundary":
             try:
                     maximum = data["thickness_boundary"].iloc[100]
+                    maximum = data["thickness_boundary"].iloc[-1]*10
                     print(maximum)
             except Exception as e:
                     maximum = data["thickness_boundary"].iloc[-1]*10
@@ -49,7 +50,7 @@ def fig_stat(filename, save=False, output="", print_all=True, print_list=[]):
             ax[i,1].set_ylim([0, maximum])
                 # ax[i,0].set_ylim([0, 10*data["radius"].iloc[-1]])
                 # ax[i,1].set_ylim([0, 10*data["radius"].iloc[-1]])
-        plt.savefig(output + filename[:-4]+".pdf")
+        plt.savefig(output + filename[:-4]+".pdf")                           
     else:
         n_col = len(print_list)
         fig, ax = plt.subplots(n_col, 2, figsize=[6, n_col*4])
@@ -149,17 +150,40 @@ def all_figures(folder):
         i += 1
     plt.savefig(folder+"/all_figs.pdf")
 
+
+
+def fig_thickness(folder_main):
+
+        fig, ax = plt.subplots()
+        list_subfolder = os.listdir(folder_main)
+        for subfolder_name in list_subfolder:
+            list_files = os.listdir(folder_main+"/"+subfolder_name)
+            for file in list_files:
+                if file[-14:] == "statistics.txt":
+                    file_stat = folder_main + "/" + subfolder_name + "/" + file
+                if file[-5:] == ".yaml":
+                    with open(folder_main + "/" + subfolder_name + "/" + file, 'r') as stream:
+                        try:
+                            param = yaml.safe_load(stream)
+                        except yaml.YAMLError as exc:
+                            print(exc)
+            data = pd.read_csv(file_stat, sep=" ", index_col=False)
+            ax.plot(data["radius"], data["thickness_boundary"] /param["Ric_adim"])
+        ax.set_ylim([0, 100])
+        ax.set_xlim([0, 10])
+        plt.show()
+
 if __name__ == "__main__":
 
-    folder = "/home/marine/ownCloud/Research/Projets/output_mush/"
+    folder = "/home/marine/ownCloud/Research/Projets/output_mush/compaction_Sramek/"
     list_folder = os.listdir(folder)
 
-    for name in list_folder:
-        if name[:3] == "exp":
-            print(folder+name)
-            all_figures(folder+'/'+name)
+    # for name in list_folder:
+    #    if name[:3] == "exp":
+    #        print(folder+name)
+    #        all_figures(folder+'/'+name)
 
-
+    fig_thickness(folder)
 
     # snippet for ordering dictionnary and print values.
     # from operator import itemgetter
