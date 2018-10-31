@@ -106,3 +106,4 @@ ENV/
 /fig
 /output/*
 /output_supercooling/*
+/compaction/*
