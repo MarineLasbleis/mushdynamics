@@ -11,49 +11,103 @@ import numpy.ma as ma
 import mush, data_analysis
 
 
+class Compaction():
 
-def verify_parameters(options):
-    """ Verify if the parameters given in options are compatible, then write param file. """
+    def __init__(self, calcul_velocity, **options):
+        self.options = options
+        self.verify_parameters()
+        self.iter_max = 100000000
+        self.calcul_velocity = calcul_velocity
+        self.output_folder = options["output"] + "/"
 
-    # calculate the missing Ric_adim, time_max, coeff velocity
-    if "Ric_adim" in options and "time_max" in options and "coeff_velocity" in options:
-        print("Ric_adim, time_max and coeff_velocity should not be given together as options. Coeff_velocity overwritten by the system.")
-        options["coeff_velocity"] = options["Ric_adim"]*options["time_max"]**(-options["growth_rate_exponent"])
-    elif not "Ric_adim" in options:
-        options["Ric_adim"] = options["coeff_velocity"]*options["time_max"]**options["growth_rate_exponent"]
-    elif not "time_max" in options:
-        options["time_max"] = (options["Ric_adim"]/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
-    elif not "coeff_velocity" in options:
-        options["coeff_velocity"] = options["Ric_adim"]/options["time_max"]**options["growth_rate_exponent"]
+    def verify_parameters(self):
+        self.options = verify_parameters(self.options)
 
-    options["Ric_adim"] = radius(options["time_max"], options)
+    def run(self):
+        self.initialisation()
+        while time < time_max and it < iter_max:
+            self.it =+ 1
+            self.time =+ self.dt
+            self.time_p =+ dt
+            self.one_step()
+            self.write_stat()
+            self.write_profile()
 
-    # calculate the R_init / N_init
-    if "t_init" in options and "R_init" in options:
-        if not radius(options["t_init"], options) == options["R_init"]:
-            options["R_init"] = radius(options["t_init"], options)
-            print("t_init and R_init should not be both given in options. R_init overwritten to value {}".format(options["R_init"]))
-    elif "t_init" in options:
-        options["R_init"] = radius(options["t_init"], options)
-    elif "R_init" in options:
-        options["t_init"] = (R_init/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
-    else:
-        print("Please provide either t_init or R_init. R_init set to 0.1*R_ic_adim")
-        options["R_init"] = 0.1*options["Ric_adim"]
-        options["t_init"] = (R_init/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
+    def initialisation(self):
+        self.it = 0
+        self.time = self.options["t_init"]
+        self.R_init =  self.options["R_init"]
+        self.N = self.options["N_init"]
+        self.psi0 = 1 - self.options["phi_init"]
+        self.R = np.linspace(0, R_init, N + 1)
+        self.dr = R[1] - R[0]
+        self.psi = psi0 * np.ones(N)
+        self.dt_print = options["dt_print"]
+        self.time_p = time
+        self.time_max = options["time_max"]
+        # 1st run
+        velocity = calcul_velocity(1 - self.psi, self.R, self.options)
+        v_m = np.amax(np.abs(velocity))
+        dt = min(0.5 * self.dr / (v_m), 0.5)
+        dt = min(dt, self.dr/self.growth_rate(self.time))
+        # init stat file
+        self.stat_file = self.output_folder + self.options["filename"]+'_statistics.txt'
+        with open(self.stat_file, 'w') as f:
+            f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary\n")
+            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
+                                                self.R[-1], len(self.R), data_analysis.average(1-self.psi, self.R[1:], \
+                                                self.options), self.growth_rate(self.time), self.velocity[-1], np.max(self.velocity), \
+                                                data_analysis.average(self.velocity, self.R[1:-1], self.options), \
+                                                data_analysis.thickness_boundary_layer(1-self.psi, self.R)))
 
-    try:
-        N = options["N_init"]
-    except Exception:
-        N=20
+    def one_step(self):
+        if self.R[-1]+self.dr < self.radius(self.time):
+            self.psi, self.R = append_radius(self.psi, self.R, self.options)
+        self.velocity = calcul_velocity(1 - self.psi, self.R, self.options)
+        self.psi = mush.update(self.velocity, self.psi, self.dt, self.R, self.options)
+        v_m = np.amax(np.abs(velocity))
+        dt = min(0.5, 0.001 * self.dr / (v_m))
+        self.dt = min(dt, 0.5*self.dr/self.growth_rate(self.time))
 
-    output_folder = options["output"] + "/"
-    if not os.path.isdir(output_folder):
-         os.makedirs(output_folder)
-    param_file = output_folder + options["filename"]+'_param.yaml'
-    with open(param_file, 'w') as f:
-        yaml.dump(options, f) # write parameter file with all input parameters
-    return options
+    def write_stat(self):
+        stat = False
+        if self.it > 1e3:
+            if self.it%100==0:
+                stat = True
+        else:
+            stat = True
+        if stat:
+            with open(self.stat_file, 'a') as f:
+                f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
+                                                self.R[-1], len(self.R), data_analysis.average(1-self.psi, self.R[1:], \
+                                                self.options), self.growth_rate(self.time), self.velocity[-1], np.max(self.velocity), \
+                                                data_analysis.average(self.velocity, self.R[1:-1], self.options), \
+                                                data_analysis.thickness_boundary_layer(1-self.psi, self.R)))
+
+    def write_profile(self):
+        if self.time_p > self.dt_print:
+            # if it % 100 == 0:
+            data = {"radius": pd.Series(self.R), 'porosity': pd.Series(1-self.psi), 'velocity': pd.Series(self.velocity)}
+            data = pd.DataFrame(data)
+            mush.output(self.time, data, fig=False, file=True, output_folder=self.output_folder, ax=[])
+            self.time_p =+ -dt_print
+
+    def radius(self, time):
+        return radius(time, self.options)
+
+    def growth_rate(self, time):
+        return growth_rate(time, self.options)
+
+
+class Compaction_Supercooling(Compaction):
+
+    def verify_parameters(self):
+        self.options = verify_parameters(self.options)
+
+
+    def radius(self, time):
+
+    def growth_rate(self, time):
 
 
 
@@ -66,7 +120,7 @@ def compaction_column_growth(calcul_velocity, **options):
     R_init =  options["R_init"]
     N = options["N_init"]
     psi0 = 1 - options["phi_init"]
-    
+
     R = np.linspace(0, R_init, N + 1)
     dr = R[1] - R[0]
     psi = psi0 * np.ones(N)
@@ -120,12 +174,6 @@ def compaction_column_growth(calcul_velocity, **options):
 
 def radius(time, options):
     """ Radius of the IC, as function of time. """
-    try:
-        if options["supercooling"] == True:
-           pass
-    except Exception as e:
-        pass
-
     return options["coeff_velocity"]*(time)**options["growth_rate_exponent"]
 
 def growth_rate(time, options):
@@ -142,7 +190,45 @@ def append_radius(psi, R, options):
     R = np.append(R, [R[-1] + dr])
     return psi, R
 
+def verify_parameters(options):
+    """ Verify if the parameters given in options are compatible, then write param file. """
+    # calculate the missing Ric_adim, time_max, coeff velocity
+    if "Ric_adim" in options and "time_max" in options and "coeff_velocity" in options:
+        print("Ric_adim, time_max and coeff_velocity should not be given together as options. Coeff_velocity overwritten by the system.")
+        options["coeff_velocity"] = options["Ric_adim"]*options["time_max"]**(-options["growth_rate_exponent"])
+    elif not "Ric_adim" in options:
+        options["Ric_adim"] = options["coeff_velocity"]*options["time_max"]**options["growth_rate_exponent"]
+    elif not "time_max" in options:
+        options["time_max"] = (options["Ric_adim"]/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
+    elif not "coeff_velocity" in options:
+        options["coeff_velocity"] = options["Ric_adim"]/options["time_max"]**options["growth_rate_exponent"]
 
+    # calculate the R_init / N_init
+    if "t_init" in options and "R_init" in options:
+        if not radius(options["t_init"], options) == options["R_init"]:
+            options["R_init"] = radius(options["t_init"], options)
+            print("t_init and R_init should not be both given in options. R_init overwritten to value {}".format(options["R_init"]))
+    elif "t_init" in options:
+        options["R_init"] = radius(options["t_init"], options)
+    elif "R_init" in options:
+        options["t_init"] = (R_init/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
+    else:
+        print("Please provide either t_init or R_init. R_init set to 0.1*R_ic_adim")
+        options["R_init"] = 0.1*options["Ric_adim"]
+        options["t_init"] = (R_init/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
+
+    try:
+        N = options["N_init"]
+    except Exception:
+        N=20
+
+    output_folder = options["output"] + "/"
+    if not os.path.isdir(output_folder):
+         os.makedirs(output_folder)
+    param_file = output_folder + options["filename"]+'_param.yaml'
+    with open(param_file, 'w') as f:
+        yaml.dump(options, f) # write parameter file with all input parameters
+    return options
 
 
 if __name__ == "__main__":
