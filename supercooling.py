@@ -50,13 +50,13 @@ class Evolution:
 
     def new_dt(self, dot_r, dot_T, dr0=1.):
         # dr0 = 50 # max variation of r allowed
-        # dT0 = 0.1 # max variation of Tcmb allowed 
+        # dT0 = 0.1 # max variation of Tcmb allowed
         dt0_r = np.abs(dr0 /dot_r) *0.5
         return min(1000*year, dt0_r)
 
     def run_constant_temperature(self):
         self.initilization()
-        T_center = self.T_Fe(0., 0.) - self.delta_T # initial temperature at center. 
+        T_center = self.T_Fe(0., 0.) - self.delta_T # initial temperature at center.
         self.dric[0] = 0. #self.G*(self.delta_T)**2
         self.Tic[0] = T_center
         self.supercooling = self.delta_T
