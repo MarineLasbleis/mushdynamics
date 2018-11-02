@@ -9,7 +9,7 @@ if __name__ == "__main__":
     r_max = [1., 10.]# , 2., 5., 10., 20., 50., 100.]
     N_fig = 30
     exp_velocity = [1.] # , 0.5, 1./3.]
-    coeff_velocity = [0.05, 0.1, 0.5, 2.]# [0.05, 0.1, 1., 2., 5., 10., 20., 50., 100.]
+    coeff_velocity = [1.]# [0.05, 0.1, 1., 2., 5., 10., 20., 50., 100.]
 
     def new_options(**param):
         r_max = 10.
@@ -31,7 +31,7 @@ if __name__ == "__main__":
                 'time_max': t_max,
                 'dt_print': dt,
                 'coeff_velocity': 2.,
-                'output': "compaction_Sramek/",
+                'output': "compaction/",
                 "R_init": 0.01,
                 "N_init": min(5, int(1e3/r_max))}
         options = {**options, **param}
@@ -39,6 +39,7 @@ if __name__ == "__main__":
 
     for r in r_max:
         for exp in exp_velocity:
+
             for coeff in coeff_velocity:
                 t_max = (r/coeff)**(1/exp)
                 dt = t_max/N_fig
@@ -50,4 +51,5 @@ if __name__ == "__main__":
                                         coeff_velocity=coeff)
                 print(folder_name)
                 print("Time to be computed: {:.2e}, dt for print: {:.2e}".format(t_max, dt))
-                growth.compaction_column_growth(mush.velocity_Sramek, **options)
+                Model = growth.Compaction(mush.velocity_Sramek, **options)
+                Model.run()

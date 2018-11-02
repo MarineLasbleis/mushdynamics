@@ -16,6 +16,7 @@ class Compaction():
     def __init__(self, calcul_velocity, **options):
         self.options = options
         self.verify_parameters()
+        self.print_param()
         self.iter_max = 100000000
         self.calcul_velocity = calcul_velocity
         self.output_folder = options["output"] + "/"
@@ -98,18 +99,37 @@ class Compaction():
     def growth_rate(self, time):
         return growth_rate(time, self.options)
 
+    def print_param(self):
+        output_folder = self.options["output"] + "/"
+        if not os.path.isdir(output_folder):
+            os.makedirs(output_folder)
+        param_file = output_folder + self.options["filename"]+'_param.yaml'
+        with open(param_file, 'w') as f:
+            yaml.dump(self.options, f) # write parameter file with all input parameters
+
 
 class Compaction_Supercooling(Compaction):
 
     def verify_parameters(self):
         self.options = verify_parameters(self.options)
-
+        self.options["r0_supercooling"] = self.options["Ric_adim"]/self.options["time_max"]**self.options["growth_rate_exponent"]\
+                                            *(self.options["t0_supercooling"]+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
+        self.options["tic"] = self.options["time_max"]
+        self.options["time_max"] =+ -self.options["Dt_supercooling"]
 
     def radius(self, time):
+        if time<self.options["t0_supercooling"]:
+            radius = self.options["r0_supercooling"]/self.options["t0_supercooling"]*time
+        else:
+            radius = self.options["Ric_adim"]/self.options["tic"]**self.options["growth_rate_exponent"]\
+                                            *(time+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
 
     def growth_rate(self, time):
-
-
+        if time<self.options["t0_supercooling"]:
+            growth_rate = self.options["r0_supercooling"]/self.options["t0_supercooling"]
+        else:
+            growth_rate = self.options["Ric_adim"]/self.options["tic"]**self.options["growth_rate_exponent"]\
+                                            *self.options["growth_rate_exponent"]*(time)**(self.options["growth_rate_exponent"]-1)
 
 def compaction_column_growth(calcul_velocity, **options):
     """ Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
@@ -221,14 +241,16 @@ def verify_parameters(options):
         N = options["N_init"]
     except Exception:
         N=20
+    return options
 
+def print_param(options):
     output_folder = options["output"] + "/"
     if not os.path.isdir(output_folder):
          os.makedirs(output_folder)
     param_file = output_folder + options["filename"]+'_param.yaml'
     with open(param_file, 'w') as f:
         yaml.dump(options, f) # write parameter file with all input parameters
-    return options
+   
 
 
 if __name__ == "__main__":
