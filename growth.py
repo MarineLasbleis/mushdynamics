@@ -26,10 +26,10 @@ class Compaction():
 
     def run(self):
         self.initialisation()
-        while time < time_max and it < iter_max:
-            self.it =+ 1
-            self.time =+ self.dt
-            self.time_p =+ dt
+        while self.time < self.time_max and self.it < self.iter_max:
+            self.it += 1
+            self.time += self.dt
+            self.time_p += self.dt
             self.one_step()
             self.write_stat()
             self.write_profile()
@@ -40,17 +40,17 @@ class Compaction():
         self.R_init =  self.options["R_init"]
         self.N = self.options["N_init"]
         self.psi0 = 1 - self.options["phi_init"]
-        self.R = np.linspace(0, R_init, N + 1)
-        self.dr = R[1] - R[0]
-        self.psi = psi0 * np.ones(N)
-        self.dt_print = options["dt_print"]
-        self.time_p = time
-        self.time_max = options["time_max"]
+        self.R = np.linspace(0, self.R_init, self.N + 1)
+        self.dr = self.R[1] - self.R[0]
+        self.psi = self.psi0 * np.ones(self.N)
+        self.dt_print = self.options["dt_print"]
+        self.time_p = self.time
+        self.time_max = self.options["time_max"]
         # 1st run
-        velocity = calcul_velocity(1 - self.psi, self.R, self.options)
-        v_m = np.amax(np.abs(velocity))
+        self.velocity = self.calcul_velocity(1 - self.psi, self.R, self.options)
+        v_m = np.amax(np.abs(self.velocity))
         dt = min(0.5 * self.dr / (v_m), 0.5)
-        dt = min(dt, self.dr/self.growth_rate(self.time))
+        self.dt = min(dt, self.dr/self.growth_rate(self.time))
         # init stat file
         self.stat_file = self.output_folder + self.options["filename"]+'_statistics.txt'
         with open(self.stat_file, 'w') as f:
@@ -64,9 +64,9 @@ class Compaction():
     def one_step(self):
         if self.R[-1]+self.dr < self.radius(self.time):
             self.psi, self.R = append_radius(self.psi, self.R, self.options)
-        self.velocity = calcul_velocity(1 - self.psi, self.R, self.options)
+        self.velocity = self.calcul_velocity(1 - self.psi, self.R, self.options)
         self.psi = mush.update(self.velocity, self.psi, self.dt, self.R, self.options)
-        v_m = np.amax(np.abs(velocity))
+        v_m = np.amax(np.abs(self.velocity))
         dt = min(0.5, 0.001 * self.dr / (v_m))
         self.dt = min(dt, 0.5*self.dr/self.growth_rate(self.time))
 
@@ -91,7 +91,7 @@ class Compaction():
             data = {"radius": pd.Series(self.R), 'porosity': pd.Series(1-self.psi), 'velocity': pd.Series(self.velocity)}
             data = pd.DataFrame(data)
             mush.output(self.time, data, fig=False, file=True, output_folder=self.output_folder, ax=[])
-            self.time_p =+ -dt_print
+            self.time_p += -self.dt_print
 
     def radius(self, time):
         return radius(time, self.options)
@@ -115,7 +115,7 @@ class Compaction_Supercooling(Compaction):
         self.options["r0_supercooling"] = self.options["Ric_adim"]/self.options["time_max"]**self.options["growth_rate_exponent"]\
                                             *(self.options["t0_supercooling"]+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
         self.options["tic"] = self.options["time_max"]
-        self.options["time_max"] =+ -self.options["Dt_supercooling"]
+        self.options["time_max"] += -self.options["Dt_supercooling"]
 
     def radius(self, time):
         if time<self.options["t0_supercooling"]:
@@ -123,6 +123,7 @@ class Compaction_Supercooling(Compaction):
         else:
             radius = self.options["Ric_adim"]/self.options["tic"]**self.options["growth_rate_exponent"]\
                                             *(time+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
+        return radius
 
     def growth_rate(self, time):
         if time<self.options["t0_supercooling"]:
@@ -130,6 +131,7 @@ class Compaction_Supercooling(Compaction):
         else:
             growth_rate = self.options["Ric_adim"]/self.options["tic"]**self.options["growth_rate_exponent"]\
                                             *self.options["growth_rate_exponent"]*(time)**(self.options["growth_rate_exponent"]-1)
+        return growth_rate
 
 def compaction_column_growth(calcul_velocity, **options):
     """ Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
@@ -201,7 +203,7 @@ def growth_rate(time, options):
 
     Correspond to d(radius)/dt
     """
-    return options["coeff_velocity"]*time**(1-options["growth_rate_exponent"])
+    return options["coeff_velocity"]*time**(1-options["growth_rate_exponent"])/2.
 
 def append_radius(psi, R, options):
     """ Add one element in radius """
@@ -231,11 +233,11 @@ def verify_parameters(options):
     elif "t_init" in options:
         options["R_init"] = radius(options["t_init"], options)
     elif "R_init" in options:
-        options["t_init"] = (R_init/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
+        options["t_init"] = (options["R_init"]/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
     else:
         print("Please provide either t_init or R_init. R_init set to 0.1*R_ic_adim")
         options["R_init"] = 0.1*options["Ric_adim"]
-        options["t_init"] = (R_init/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
+        options["t_init"] = (options["R_init"]/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
 
     try:
         N = options["N_init"]

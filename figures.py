@@ -50,7 +50,7 @@ def fig_stat(filename, save=False, output="", print_all=True, print_list=[]):
             ax[i,1].set_ylim([0, maximum])
                 # ax[i,0].set_ylim([0, 10*data["radius"].iloc[-1]])
                 # ax[i,1].set_ylim([0, 10*data["radius"].iloc[-1]])
-        plt.savefig(output + filename[:-4]+".pdf")                           
+        plt.savefig(output + filename[:-4]+".pdf")
     else:
         n_col = len(print_list)
         fig, ax = plt.subplots(n_col, 2, figsize=[6, n_col*4])
@@ -175,15 +175,15 @@ def fig_thickness(folder_main):
 
 if __name__ == "__main__":
 
-    folder = "/home/marine/ownCloud/Research/Projets/output_mush/compaction_Sramek/"
+    folder = "/home/marine/ownCloud/Research/Projets/mush/compaction_supercooling/"
     list_folder = os.listdir(folder)
 
-    # for name in list_folder:
-    #    if name[:3] == "exp":
-    #        print(folder+name)
-    #        all_figures(folder+'/'+name)
+    for name in list_folder:
+       if name[:3] == "exp":
+           print(folder+name)
+           all_figures(folder+'/'+name)
 
-    fig_thickness(folder)
+    #fig_thickness(folder)
 
     # snippet for ordering dictionnary and print values.
     # from operator import itemgetter
