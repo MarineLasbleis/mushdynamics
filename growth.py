@@ -8,30 +8,141 @@ import pandas as pd
 from scipy.optimize import leastsq
 import numpy.ma as ma
 
-import mush
+import mush, data_analysis
+
+
+class Compaction():
+
+    def __init__(self, calcul_velocity, **options):
+        self.options = options
+        self.verify_parameters()
+        self.print_param()
+        self.iter_max = 100000000
+        self.calcul_velocity = calcul_velocity
+        self.output_folder = options["output"] + "/"
+
+    def verify_parameters(self):
+        self.options = verify_parameters(self.options)
+
+    def run(self):
+        self.initialisation()
+        while self.time < self.time_max and self.it < self.iter_max:
+            self.it += 1
+            self.time += self.dt
+            self.time_p += self.dt
+            self.one_step()
+            self.write_stat()
+            self.write_profile()
+
+    def initialisation(self):
+        self.it = 0
+        self.time = self.options["t_init"]
+        self.R_init =  self.options["R_init"]
+        self.N = self.options["N_init"]
+        self.psi0 = 1 - self.options["phi_init"]
+        self.R = np.linspace(0, self.R_init, self.N + 1)
+        self.dr = self.R[1] - self.R[0]
+        self.psi = self.psi0 * np.ones(self.N)
+        self.dt_print = self.options["dt_print"]
+        self.time_p = self.time
+        self.time_max = self.options["time_max"]
+        # 1st run
+        self.velocity = self.calcul_velocity(1 - self.psi, self.R, self.options)
+        v_m = np.amax(np.abs(self.velocity))
+        dt = min(0.5 * self.dr / (v_m), 0.5)
+        self.dt = min(dt, self.dr/self.growth_rate(self.time))
+        # init stat file
+        self.stat_file = self.output_folder + self.options["filename"]+'_statistics.txt'
+        with open(self.stat_file, 'w') as f:
+            f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary\n")
+            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
+                                                self.R[-1], len(self.R), data_analysis.average(1-self.psi, self.R[1:], \
+                                                self.options), self.growth_rate(self.time), self.velocity[-1], np.max(self.velocity), \
+                                                data_analysis.average(self.velocity, self.R[1:-1], self.options), \
+                                                data_analysis.thickness_boundary_layer(1-self.psi, self.R)))
+
+    def one_step(self):
+        if self.R[-1]+self.dr < self.radius(self.time):
+            self.psi, self.R = append_radius(self.psi, self.R, self.options)
+        self.velocity = self.calcul_velocity(1 - self.psi, self.R, self.options)
+        self.psi = mush.update(self.velocity, self.psi, self.dt, self.R, self.options)
+        v_m = np.amax(np.abs(self.velocity))
+        dt = min(0.5, 0.001 * self.dr / (v_m))
+        self.dt = min(dt, 0.5*self.dr/self.growth_rate(self.time))
+
+    def write_stat(self):
+        stat = False
+        if self.it > 1e3:
+            if self.it%100==0:
+                stat = True
+        else:
+            stat = True
+        if stat:
+            with open(self.stat_file, 'a') as f:
+                f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
+                                                self.R[-1], len(self.R), data_analysis.average(1-self.psi, self.R[1:], \
+                                                self.options), self.growth_rate(self.time), self.velocity[-1], np.max(self.velocity), \
+                                                data_analysis.average(self.velocity, self.R[1:-1], self.options), \
+                                                data_analysis.thickness_boundary_layer(1-self.psi, self.R)))
+
+    def write_profile(self):
+        if self.time_p > self.dt_print:
+            # if it % 100 == 0:
+            data = {"radius": pd.Series(self.R), 'porosity': pd.Series(1-self.psi), 'velocity': pd.Series(self.velocity)}
+            data = pd.DataFrame(data)
+            mush.output(self.time, data, fig=False, file=True, output_folder=self.output_folder, ax=[])
+            self.time_p += -self.dt_print
+
+    def radius(self, time):
+        return radius(time, self.options)
+
+    def growth_rate(self, time):
+        return growth_rate(time, self.options)
+
+    def print_param(self):
+        output_folder = self.options["output"] + "/"
+        if not os.path.isdir(output_folder):
+            os.makedirs(output_folder)
+        param_file = output_folder + self.options["filename"]+'_param.yaml'
+        with open(param_file, 'w') as f:
+            yaml.dump(self.options, f) # write parameter file with all input parameters
+
+
+class Compaction_Supercooling(Compaction):
+
+    def verify_parameters(self):
+        self.options = verify_parameters(self.options)
+        self.options["r0_supercooling"] = self.options["Ric_adim"]/self.options["time_max"]**self.options["growth_rate_exponent"]\
+                                            *(self.options["t0_supercooling"]+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
+        self.options["tic"] = self.options["time_max"]
+        self.options["time_max"] += -self.options["Dt_supercooling"]
+
+    def radius(self, time):
+        if time<self.options["t0_supercooling"]:
+            radius = self.options["r0_supercooling"]/self.options["t0_supercooling"]*time
+        else:
+            radius = self.options["Ric_adim"]/self.options["tic"]**self.options["growth_rate_exponent"]\
+                                            *(time+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
+        return radius
+
+    def growth_rate(self, time):
+        if time<self.options["t0_supercooling"]:
+            growth_rate = self.options["r0_supercooling"]/self.options["t0_supercooling"]
+        else:
+            growth_rate = self.options["Ric_adim"]/self.options["tic"]**self.options["growth_rate_exponent"]\
+                                            *self.options["growth_rate_exponent"]*(time)**(self.options["growth_rate_exponent"]-1)
+        return growth_rate
 
 def compaction_column_growth(calcul_velocity, **options):
     """ Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
 
-    output_folder = options["output"] + "/"
-    if not os.path.isdir(output_folder):
-         os.makedirs(output_folder)
-    options["Ric_adim"] = radius(options["time_max"], options)
-    param_file = output_folder + options["filename"]+'_param.yaml'
-    with open(param_file, 'w') as f:
-        yaml.dump(options, f) # write parameter file with all input parameters
+    options = verify_parameters(options)
 
+    time = options["t_init"]
+    R_init =  options["R_init"]
+    N = options["N_init"]
     psi0 = 1 - options["phi_init"]
-    try:
-        N = options["N_init"]
-    except Exception:
-        N=20
-    try:
-        R_init =  options["R_init"]
-        time = (R_init/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
-    except Exception as e:
-        R_init = radius(options["t_init"], options)
-        time = options["t_init"]
+
     R = np.linspace(0, R_init, N + 1)
     dr = R[1] - R[0]
     psi = psi0 * np.ones(N)
@@ -49,7 +160,7 @@ def compaction_column_growth(calcul_velocity, **options):
     stat_file = output_folder + options["filename"]+'_statistics.txt'
     with open(stat_file, 'w') as f:
         f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary\n")
-        f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options), thickness_boundary_layer(1-psi, R)))
+        f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), data_analysis.average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), data_analysis.average(velocity, R[1:-1], options), data_analysis.thickness_boundary_layer(1-psi, R)))
 
     while time < time_max and it < iter_max:
         # for it in range(0,10000):
@@ -66,14 +177,14 @@ def compaction_column_growth(calcul_velocity, **options):
         dt = min(dt, 0.5*dr/growth_rate(time, options))
 
         stat = False
-        if it > 1e3: 
+        if it > 1e3:
             if it%100==0:
                 stat = True
         else:
             stat = True
         if stat:
             with open(stat_file, 'a') as f:
-                f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), average(velocity, R[1:-1], options), thickness_boundary_layer(1-psi, R)))
+                f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), data_analysis.average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), data_analysis.average(velocity, R[1:-1], options), data_analysis.thickness_boundary_layer(1-psi, R)))
 
         if time_p > dt_print:
         # if it % 100 == 0:
@@ -92,7 +203,7 @@ def growth_rate(time, options):
 
     Correspond to d(radius)/dt
     """
-    return options["coeff_velocity"]*time**(1-options["growth_rate_exponent"])
+    return options["coeff_velocity"]*time**(1-options["growth_rate_exponent"])/2.
 
 def append_radius(psi, R, options):
     """ Add one element in radius """
@@ -101,84 +212,47 @@ def append_radius(psi, R, options):
     R = np.append(R, [R[-1] + dr])
     return psi, R
 
-def average(variable, R, options):
-    """ Average of a variable, weigthed by volume of elements. """
-    dr = R[1]-R[0] # constant steps in radius/heigth
-    if options["coordinates"] == "cartesian":
-        dV = dr*np.ones_like(R)
-    elif options["coordinates"] == "spherical":
-        dV = 4*np.pi*dr*R**2
-    return np.sum(variable*dV)/np.sum(dV) #in cartesian
+def verify_parameters(options):
+    """ Verify if the parameters given in options are compatible, then write param file. """
+    # calculate the missing Ric_adim, time_max, coeff velocity
+    if "Ric_adim" in options and "time_max" in options and "coeff_velocity" in options:
+        print("Ric_adim, time_max and coeff_velocity should not be given together as options. Coeff_velocity overwritten by the system.")
+        options["coeff_velocity"] = options["Ric_adim"]*options["time_max"]**(-options["growth_rate_exponent"])
+    elif not "Ric_adim" in options:
+        options["Ric_adim"] = options["coeff_velocity"]*options["time_max"]**options["growth_rate_exponent"]
+    elif not "time_max" in options:
+        options["time_max"] = (options["Ric_adim"]/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
+    elif not "coeff_velocity" in options:
+        options["coeff_velocity"] = options["Ric_adim"]/options["time_max"]**options["growth_rate_exponent"]
 
-def flux_top(phi, velocity):
-    """ Flux of solid from the top boundary """
-    return (1-phi[-1])*velocity[-1]
+    # calculate the R_init / N_init
+    if "t_init" in options and "R_init" in options:
+        if not radius(options["t_init"], options) == options["R_init"]:
+            options["R_init"] = radius(options["t_init"], options)
+            print("t_init and R_init should not be both given in options. R_init overwritten to value {}".format(options["R_init"]))
+    elif "t_init" in options:
+        options["R_init"] = radius(options["t_init"], options)
+    elif "R_init" in options:
+        options["t_init"] = (options["R_init"]/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
+    else:
+        print("Please provide either t_init or R_init. R_init set to 0.1*R_ic_adim")
+        options["R_init"] = 0.1*options["Ric_adim"]
+        options["t_init"] = (options["R_init"]/options["coeff_velocity"])**(1./options["growth_rate_exponent"])
 
-def thickness_boundary_layer_old(phi, R):
-    """ Thickness of the mushy zone at the top """
-    # find the first inflexion point (starting from top)
-    # of the porosity field
-    dr = R[1]-R[0]
-    dphi = phi[2:] - phi[:-2]
-    d2phi = phi[2:] + phi[:-2] -2*phi[1:-1]
-    find_it = False
-    it = 0
-    init_sign = np.sign(d2phi[-1])
-    while find_it == False and it <= len(phi)-2:
-        if it == len(phi)-2:
-            delta = 0.
-            it += 1
-        elif np.sign(d2phi[-it]) == init_sign:
-            it = it+1
-        else:
-            delta = - dr/dphi[it]
-            find_it = True
-    return delta
+    try:
+        N = options["N_init"]
+    except Exception:
+        N=20
+    return options
 
-def thickness_boundary_layer(phi, R):
-    """ Thickness of the mushy zone at the top """
-    def logistic4(x, A, B, C, D):
-        """4PL lgoistic equation."""
-        return ((A-D)/(1.0+((x/C)**B))) + D
-    def residuals(p, y, x):
-        """Deviations of data from fitted 4PL curve"""
-        A,B,C,D = p
-        err = y-logistic4(x, A, B, C, D)
-        return err
-    # find 1st minimum of function
-    min_phi = np.argmin(phi)
-    # fit with sigmoid function
-    dr = R[1] -R[0]
-    y_values = phi[min_phi:]
-    radius = R[min_phi:-1] +dr/2
-    # initial guess
-    p0 = [phi[min_phi], np.abs((phi[-1]-phi[min_phi])/(radius[-1]-radius[0])), (radius[-1]+radius[0])/2 , phi[-1]]
-    plsq = leastsq(residuals, p0, args=(y_values, radius))
-    # get the thickness of the sigmoid
-    A, B, C, D = plsq[0]
-    phi_c = logistic4(C, A, B, C, D)
-    return radius[-1]-C+phi_c*4*C/B/(D-A)
-
-
-def porosity_compacted_region(phi, R, delta, options):
-    """ Porosity in the compacted region
-
-    delta: thickness of mushy zone
-    """
-    if delta > R[-1]:
-        print("mushy zone larger than core. No compacted region.")
-        return 0.
-    R_max = R[-1]-delta
-    mask = R<R_max
-    return average(ma.masked_array(phi_comp, mask=mask), ma.masked_array(R_comp, mask=mask), options)
-
-def porosity_given_depth(phi, depth, R):
-    """ extract the porosity value at the given depth
-
-    if depth is larger than max radius, return 0.
-    """
-    index = np.argmin(np.abs(R-depth))
-    return phi[index]
+def print_param(options):
+    output_folder = options["output"] + "/"
+    if not os.path.isdir(output_folder):
+         os.makedirs(output_folder)
+    param_file = output_folder + options["filename"]+'_param.yaml'
+    with open(param_file, 'w') as f:
+        yaml.dump(options, f) # write parameter file with all input parameters
+   
 
 
 if __name__ == "__main__":
@@ -205,4 +279,3 @@ if __name__ == "__main__":
                'output': "compaction/"}
     print("Time to be computer: {}, dt for print: {}".format(t_max, dt))
     compaction_column_growth(mush.velocity_Sumita, **options)
-    # mush.fig_stat("compaction/IC_ref_statistics.txt")
