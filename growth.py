@@ -203,7 +203,7 @@ def growth_rate(time, options):
 
     Correspond to d(radius)/dt
     """
-    return options["coeff_velocity"]*time**(1-options["growth_rate_exponent"])/2.
+    return options["coeff_velocity"]*time**(1-options["growth_rate_exponent"])*options["growth_rate_exponent"]
 
 def append_radius(psi, R, options):
     """ Add one element in radius """

@@ -175,7 +175,7 @@ def fig_thickness(folder_main):
 
 if __name__ == "__main__":
 
-    folder = "/home/marine/ownCloud/Research/Projets/mush/compaction_supercooling/"
+    folder = "/home/marine/ownCloud/Research/Projets/mush/compaction_mathilde/compaction"
     list_folder = os.listdir(folder)
 
     for name in list_folder:
