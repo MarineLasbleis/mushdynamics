@@ -33,7 +33,7 @@ def thickness_boundary_layer_old(phi, R):
         elif np.sign(d2phi[-it]) == init_sign:
             it = it+1
         else:
-            delta = - dr/dphi[it]
+            delta = - dr/dphi[-it]    # -it???
             find_it = True
     return delta
 
@@ -61,6 +61,21 @@ def thickness_boundary_layer(phi, R):
     phi_c = logistic4(C, A, B, C, D)
     return radius[-1]-C+phi_c*4*C/B/(D-A)
 
+def thickness(phi, R):
+    phi_inverse = phi[::-1]
+    dr = R[1]-R[0]
+    min_phi = np.argmin(phi_inverse)
+    phi_inverse = phi_inverse[0:min_phi+1]
+    max_value = phi[-1]
+    mean_phi = (phi_inverse[-1] + phi_inverse[0])/2
+    if min_phi <3:
+        delta = 0.
+    else:
+        i_middle = np.argmin(np.abs(phi_inverse-mean_phi))
+        dphi = phi_inverse[1:] - phi_inverse[:-1]
+        slope = dphi[i_middle]/dr
+        delta = -mean_phi/slope
+    return delta
 
 def porosity_compacted_region(phi, R, delta, options):
     """ Porosity in the compacted region

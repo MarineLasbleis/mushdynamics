@@ -59,7 +59,7 @@ class Compaction():
                                                 self.R[-1], len(self.R), data_analysis.average(1-self.psi, self.R[1:], \
                                                 self.options), self.growth_rate(self.time), self.velocity[-1], np.max(self.velocity), \
                                                 data_analysis.average(self.velocity, self.R[1:-1], self.options), \
-                                                data_analysis.thickness_boundary_layer(1-self.psi, self.R)))
+                                                data_analysis.thickness(1-self.psi, self.R)))
 
     def one_step(self):
         if self.R[-1]+self.dr < self.radius(self.time):
@@ -67,8 +67,8 @@ class Compaction():
         self.velocity = self.calcul_velocity(1 - self.psi, self.R, self.options)
         self.psi = mush.update(self.velocity, self.psi, self.dt, self.R, self.options)
         v_m = np.amax(np.abs(self.velocity))
-        dt = min(0.5, 0.001 * self.dr / (v_m))
-        self.dt = min(dt, 0.5*self.dr/self.growth_rate(self.time))
+        dt = min(0.5, 0.05 * self.dr / (v_m))
+        self.dt = min(dt, 0.05*self.dr/self.growth_rate(self.time))
 
     def write_stat(self):
         stat = False
@@ -83,7 +83,7 @@ class Compaction():
                                                 self.R[-1], len(self.R), data_analysis.average(1-self.psi, self.R[1:], \
                                                 self.options), self.growth_rate(self.time), self.velocity[-1], np.max(self.velocity), \
                                                 data_analysis.average(self.velocity, self.R[1:-1], self.options), \
-                                                data_analysis.thickness_boundary_layer(1-self.psi, self.R)))
+                                                data_analysis.thickness(1-self.psi, self.R)))
 
     def write_profile(self):
         if self.time_p > self.dt_print:
@@ -173,8 +173,8 @@ def compaction_column_growth(calcul_velocity, **options):
         velocity = calcul_velocity(1 - psi, R, options)
         psi = mush.update(velocity, psi, dt, R, options)
         v_m = np.amax(np.abs(velocity))
-        dt = min(0.5, 0.001 * dr / (v_m))
-        dt = min(dt, 0.5*dr/growth_rate(time, options))
+        dt = min(0.5, 0.05 * dr / (v_m))
+        dt = min(dt, 0.05*dr/growth_rate(time, options))
 
         stat = False
         if it > 1e3:
