@@ -6,10 +6,10 @@ import growth
 
 if __name__ == "__main__":
 
-    r_max = [20.]# , 2., 5., 10., 20., 50., 100.]
+    r_max = [10]# , 2., 5., 10., 20., 50., 100.]
     N_fig = 20
-    exp_velocity = [.5] # , 0.5, 1./3.]
-    coeff_velocity = [0.1]# [0.05, 0.1, 1., 2., 5., 10., 20., 50., 100.]
+    exp_velocity = [1./3.] # , 0.5, 1./3.]
+    coeff_velocity = [1., 0.5, 0.1, 0.05]# [0.05, 0.1, 1., 2., 5., 10., 20., 50., 100.]
 
     def new_options(**param):
         r_max = 10.
@@ -33,7 +33,7 @@ if __name__ == "__main__":
                 'coeff_velocity': 2.,
                 'output': "compaction/",
                 "R_init": 0.01,
-                "N_init": min(5, int(1e3/r_max))}
+                "N_init": min(5, int(500/r_max))}
         options = {**options, **param}
         return options
 
@@ -51,9 +51,6 @@ if __name__ == "__main__":
                 print(folder_name)
                 print("Time to be computed: {:.2e}, dt for print: {:.2e}".format(t_max, dt))
                 #Model = growth.Compaction(mush.velocity_Sramek, **options)
-                options["output"] = "compaction_supercooling/exp_{:.2f}_coeff_{:.2f}_radius_{:.2f}".format(exp, coeff, r)
-                options["t0_supercooling"] = 1.
-                options["Dt_supercooling"] = 0.
-                options["output"] = "compaction_supercooling/exp_{:.2f}_coeff_{:.2f}_radius_{:.2f}_Dt_{:.2f}".format(exp, coeff, r, options["Dt_supercooling"])
-                Model = growth.Compaction_Supercooling(mush.velocity_Sramek, **options)
+                options["output"] = "compaction_exp/exp_{:.2f}_coeff_{:.2f}_radius_{:.2f}".format(exp, coeff, r)
+                Model = growth.Compaction(mush.velocity_Sramek, **options)
                 Model.run()
