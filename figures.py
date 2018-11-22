@@ -87,19 +87,23 @@ def make_figure(filename, save=False, output="", max_r=None):
 
 def all_lines(output_folder, save=False):
     list_files = os.listdir(output_folder)
-    fig, ax = plt.subplots(1,2, sharey=True)
-    ax[0].set_xlabel("Porosity")
-    ax[0].set_ylabel("Height (non-dim)")
-    ax[1].set_xlabel("Solid velocity (non-dim)")
-    for file in list_files:
+    #fig, ax = plt.subplots(1,2, sharey=True)
+    fig2, ax2 = plt.subplots()
+    ax2.set_xlabel("timestep_print")
+    ax2.set_ylabel("radius")
+    #ax[0].set_xlabel("Porosity")
+    #ax[0].set_ylabel("Height (non-dim)")
+    #ax[1].set_xlabel("Solid velocity (non-dim)")
+    for i, file in enumerate(list_files):
         #print(file[-9:])
         if file[-9:] == ".timestep":
             print(output_folder+file)
             data = pd.read_csv(output_folder +'/' + file, sep=" ")
             dr = data["radius"][1]-data["radius"][0]
             time = file[-14:-9]
-            ax[0].plot(data["porosity"], data["radius"] + dr / 2., label=time)
-            ax[1].plot(data["velocity"], data["radius"] + dr, label=time)
+            #ax[0].plot(data["porosity"], data["radius"] + dr / 2., label=time)
+            #ax[1].plot(data["velocity"], data["radius"] + dr, label=time)
+            ax2.scatter(i*np.ones(data.shape[0]), data["radius"] + dr / 2., c=data["porosity"], cmap=plt.cm.viridis)
     #ax[1].legend(loc="upper left", bbox_to_anchor=(1,1))
     #plt.tight_layout()
     if save:
@@ -129,26 +133,56 @@ def all_figures(folder):
     print("Figures with global statistics: {}".format(file_stat))
     fig_stat(file_stat, save=True)
     # preparation for the figure
-    fig, ax = plt.subplots(1,2, sharey=True)
-    ax[0].set_xlabel("Porosity")
-    ax[0].set_ylabel("Height (non-dim)")
-    ax[1].set_xlabel("Solid velocity (non-dim)")
+    fig2, ax2 = plt.subplots()
+    ax2.set_xlabel("timestep_print")
+    ax2.set_ylabel("radius")
     i = 0
     n_i = 1 # if too many figures
     n = int(len(timesteps)/n_i)
     colors = plt.cm.viridis(np.linspace(0,1,n))
-    for name, time in sorted(timesteps.items(), key = itemgetter(1)):
+    # print(timesteps)
+
+
+    name_max = max(timesteps.items(), key=itemgetter(1))[0]
+    #print(name_max)
+    data = pd.read_csv(name_max, sep=" ")
+    dr = data["radius"][1]-data["radius"][0]
+    Radius = np.array(data["radius"].values)+ dr / 2.
+    #print(Radius)
+    Time = np.array(sorted(timesteps.values()))
+    #print((Time))
+    X, Y = np.meshgrid(Time, Radius)
+    Z = np.ones_like(X)
+    print(Z.shape)
+
+    for i, (name, time) in enumerate(sorted(timesteps.items(), key = itemgetter(1))):
         print(name, time)
         # single figure
-        make_figure(name, save=True, output="", max_r=options["Ric_adim"])
+        # make_figure(name, save=True, output="", max_r=options["Ric_adim"])
         # figure with all timesteps
         data = pd.read_csv(name, sep=" ")
+
+        Porosity = np.array(data["porosity"].values)
+        N_r = len(Porosity)
+        print(N_r)
+        Z[:N_r, i] = Porosity
+
+
         dr = data["radius"][1]-data["radius"][0]
-        if i%n_i ==0:
-            ax[0].plot(data["porosity"], data["radius"] + dr / 2.,color=colors[i], label=time)
-            ax[1].plot(data["velocity"], data["radius"] + dr, color=colors[i], label=time)
+        # if i%n_i ==0:
+            #ax[0].plot(data["porosity"], data["radius"] + dr / 2.,color=colors[i], label=time)
+            #ax[1].plot(data["velocity"], data["radius"] + dr, color=colors[i], label=time)
+            #ax2.scatter(i*np.ones(data.shape[0]), data["radius"] + dr / 2., c=data["porosity"], cmap=plt.cm.viridis)
         i += 1
-    plt.savefig(folder+"/all_figs.pdf")
+    levels = np.linspace(0, 0.4, 100) # [0., 0.1, 0.2, 0.3, 0.4]
+    sc = ax2.contourf(X, Y, Z, levels=levels, extend="max")
+    cbar = plt.colorbar(sc)
+    cbar.set_label("Porosity")
+    cbar.set_clim([0., 0.4])
+    #plt.figure(fig.number)
+    #plt.savefig(folder+"/all_figs.pdf")
+    plt.figure(fig2.number)
+    plt.savefig(folder+"/all_figs_test.pdf")
 
 
 
@@ -165,17 +199,23 @@ def fig_thickness(folder_main):
                     with open(folder_main + "/" + subfolder_name + "/" + file, 'r') as stream:
                         try:
                             param = yaml.safe_load(stream)
+                            print(param)
                         except yaml.YAMLError as exc:
                             print(exc)
             data = pd.read_csv(file_stat, sep=" ", index_col=False)
-            ax.plot(data["radius"], data["thickness_boundary"] /param["Ric_adim"])
-        ax.set_ylim([0, 100])
-        ax.set_xlim([0, 10])
+            ax.plot(data["radius"], data["thickness_boundary"], label=param['coeff_velocity'])
+        ax.set_ylim([0, 1000])
+        #ax.set_xlim([0, 10])
+        ax.legend()
         plt.show()
+
+
+
+
 
 if __name__ == "__main__":
 
-    folder = "/home/marine/ownCloud/Research/Projets/mush/compaction_test_thickness/"
+    folder = "/home/marine/ownCloud/Research/Projets/output_mush/compaction/"
     list_folder = os.listdir(folder)
 
     for name in list_folder:
