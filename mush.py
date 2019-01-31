@@ -75,7 +75,7 @@ def fluxlimiterscheme(velocity, variable, dr, options):
         lambdam[1:-1] = np.fmax(0., np.minimum(1., Rm))
         # at the points [0], [-1]: lambda =0.
     else:
-        print("Problem with the choosen scheme for advection. Default is upwind.")
+        print("Problem with the requested scheme for advection({}). Default is set to upwind.".format(option))
 
     if len(velocity) == 1:
         if velocity > 0: vp[:] = velocity
@@ -347,6 +347,7 @@ def velocity_Sumita(variable, radius, options, verbose=False):
 def source_spherical_advection(psi, velocity, radius, options):
     """ Source term for advection in spherical coordiantes
 
+    (1-\phi)v_m 2/r
     Equation 3.60 in Sramek PhD thesis
     psi: (1-porosity) np.array length: N
     velocity: np.array length: N-1

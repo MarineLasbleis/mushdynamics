@@ -20,6 +20,7 @@ class Compaction():
         self.iter_max = 100000000
         self.calcul_velocity = calcul_velocity
         self.output_folder = options["output"] + "/"
+        self.initialisation()
 
     def verify_parameters(self):
         self.options = verify_parameters(self.options)
@@ -112,8 +113,10 @@ class Compaction_Supercooling(Compaction):
 
     def verify_parameters(self):
         self.options = verify_parameters(self.options)
-        self.options["r0_supercooling"] = self.options["Ric_adim"]/self.options["time_max"]**self.options["growth_rate_exponent"]\
-                                            *(self.options["t0_supercooling"]+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
+        #self.options["r0_supercooling"] = self.options["Ric_adim"]/self.options["time_max"]**self.options["growth_rate_exponent"]\
+        #                                    *(self.options["t0_supercooling"]+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
+        self.options["Dt_supercooling"] = (self.options["r0_supercooling"]/self.options["Ric_adim"])**(1./self.options["growth_rate_exponent"])\
+                                            *self.options["time_max"] - self.options["t0_supercooling"]
         self.options["tic"] = self.options["time_max"]
         self.options["time_max"] += -self.options["Dt_supercooling"]
 
@@ -130,8 +133,11 @@ class Compaction_Supercooling(Compaction):
             growth_rate = self.options["r0_supercooling"]/self.options["t0_supercooling"]
         else:
             growth_rate = self.options["Ric_adim"]/self.options["tic"]**self.options["growth_rate_exponent"]\
-                                            *self.options["growth_rate_exponent"]*(time)**(self.options["growth_rate_exponent"]-1)
+                                            *(time+self.options["Dt_supercooling"])**(self.options["growth_rate_exponent"]-1)* self.options["growth_rate_exponent"]
+            #growth_rate = self.options["Ric_adim"]/self.options["tic"]**self.options["growth_rate_exponent"]\
+            #                                *self.options["growth_rate_exponent"]*(time)**(self.options["growth_rate_exponent"]-1)
         return growth_rate
+
 
 def compaction_column_growth(calcul_velocity, **options):
     """ Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
@@ -203,7 +209,9 @@ def growth_rate(time, options):
 
     Correspond to d(radius)/dt
     """
-    return options["coeff_velocity"]*time**(1-options["growth_rate_exponent"])*options["growth_rate_exponent"]
+    #return options["Ric_adim"]/options["tic"]**options["growth_rate_exponent"]\
+    #                                        *options["growth_rate_exponent"]*(time)**(options["growth_rate_exponent"]-1)
+    return options["coeff_velocity"]*time**(options["growth_rate_exponent"]-1)*options["growth_rate_exponent"]
 
 def append_radius(psi, R, options):
     """ Add one element in radius """
@@ -254,28 +262,81 @@ def print_param(options):
         yaml.dump(options, f) # write parameter file with all input parameters
    
 
+def plot_growth():
+
+
+    # we need to provide some options, but the only ones we will use are the growth history's ones!
+    def options(r, t_max, exp):
+        coeff = r/(t_max**exp)
+        print(coeff)
+        #t_max **exp = r/coeff
+        #t_max = (r/coeff)**(1/exp)
+        opt = {     'output': " ",
+                    'filename': "",
+                    'coordinates': "spherical",
+                    "growth_rate_exponent": exp,
+                    'time_max': t_max,
+                    'coeff_velocity': coeff, 
+                    'N_init':4,
+                    "R_init": 1., 
+                    "phi_init": 0., 
+                    "phi_0": 0., 
+                    "dt_print": 0.,
+                    "BC": ""
+                    }
+        return opt
+
+
+    Model_t1 = Compaction(mush.velocity_Sramek, **options(10., 1., 1.))
+    Model_t05 = Compaction(mush.velocity_Sramek, **options(10., 1., 0.5))
+    Model_t03 = Compaction(mush.velocity_Sramek, **options(10., 1., 1./3.))
+
+    opt = options(10., 1., 1./3)
+    opt["t0_supercooling"] = 1e-3
+    opt["r0_supercooling"] = 7.
+    Model_supercooling = Compaction_Supercooling(mush.velocity_Sramek, **opt)
+
+    models = [Model_t1, Model_t05, Model_t03] # , Model_supercooling]
+    labels = ["Linear growth", "$r \sim t^{1/2}$", "$r \sim t^{1/3}$"]
+    lines = ["-", ":", "--"]
+
+    fig, ax = plt.subplots(2, 1, figsize=[6, 5], sharex=True)
+    for j, mod in enumerate(models): 
+        tmax = mod.time_max
+        time = np.linspace(0, tmax, 100)
+        radius = np.zeros_like(time)
+        growth = np.zeros_like(time)
+        for i, t in enumerate(time):
+            radius[i] = mod.radius(t)
+            growth[i] = mod.growth_rate(t)
+        ax[0].plot(time, radius, lines[j], label=labels[j])
+        ax[1].plot(time, growth, lines[j], label=labels[j])
+
+    mod = Model_supercooling
+    tmax = mod.time_max
+    time = np.linspace(0, tmax, 100)
+    radius = np.zeros_like(time)
+    growth = np.zeros_like(time)
+    for i, t in enumerate(time):
+            radius[i] = mod.radius(t)
+            growth[i] = mod.growth_rate(t)
+    ax[0].plot(time+mod.options["Dt_supercooling"], radius, "-.", label="Delayed nucleation")
+    ax[1].plot(time+mod.options["Dt_supercooling"], growth, "-.", label="Delayed nucleation")
+    #self.options["Dt_supercooling"] 
+
+    ax[1].set_ylim([0,15])
+    ax[0].set_ylim([0,10])
+    ax[0].set_xlim([0,1])
+    ax[0].legend()
+    ax[1].legend()
+
+    ax[1].set_xlabel("Time")
+    ax[0].set_ylabel("Radius")
+    ax[1].set_ylabel("Growth rate")
+    plt.savefig("growth.pdf")
+    plt.show()
 
 if __name__ == "__main__":
 
-    r_max = 10.
-    t_max = (10/2.)**2
-    dt = t_max/20
-
-    options = {'advection': "FLS",
-               'delta': 1.,
-               'eta': 1.,
-               'psi0': 1.,
-               'psiN': 0.6,
-               'phi_init': 0.4,
-               'sign': 1,
-               'BC': "dVdz==0",
-               'coordinates': "spherical",
-               "t_init": 0.01,
-               "growth_rate_exponent": 0.5,
-               'filename': 'IC_ref',
-               'time_max': t_max,
-               'dt_print': dt,
-               'coeff_velocity': 2., 
-               'output': "compaction/"}
-    print("Time to be computer: {}, dt for print: {}".format(t_max, dt))
-    compaction_column_growth(mush.velocity_Sumita, **options)
+    
+    plot_growth()
