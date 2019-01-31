@@ -112,8 +112,10 @@ class Compaction_Supercooling(Compaction):
 
     def verify_parameters(self):
         self.options = verify_parameters(self.options)
-        self.options["r0_supercooling"] = self.options["Ric_adim"]/self.options["time_max"]**self.options["growth_rate_exponent"]\
-                                            *(self.options["t0_supercooling"]+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
+        # self.options["r0_supercooling"] = self.options["Ric_adim"]/self.options["time_max"]**self.options["growth_rate_exponent"]\
+         #                                    *(self.options["t0_supercooling"]+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
+        self.options["Dt_supercooling"] = (self.options["r0_supercooling"]/self.options["Ric_adim"])**(1./self.options["growth_rate_exponent"])\
+                                            *self.options["time_max"] - self.options["t0_supercooling"]
         self.options["tic"] = self.options["time_max"]
         self.options["time_max"] += -self.options["Dt_supercooling"]
 
