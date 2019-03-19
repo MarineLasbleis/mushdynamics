@@ -9,6 +9,7 @@ from operator import itemgetter
 import pandas as pd
 import yaml
 from scipy import optimize
+import matplotlib.colors as colors
 
 import mush
 
@@ -135,13 +136,16 @@ def all_figures(folder):
     print("Figures with global statistics: {}".format(file_stat))
     fig_stat(file_stat, save=True)
     # preparation for the figure
-    fig, ax = plt.subplots(2,1,figsize=[5,3])
-    fig2, ax2 = plt.subplots()
+    fig, ax = plt.subplots(3,1,figsize=[5,3]) #fig with lines
+    fig2, ax2 = plt.subplots() # fig with contourf
+    fig3, ax3 = plt.subplots(3,1,figsize=[5,3]) #fig with lines, but X-axis modified
     ax2.set_xlabel("timestep_print")
     ax2.set_ylabel("radius")
     i = 0
-    n_i = 10 # if too many figures
+    n_i = 1# if too many figures
     n = int(len(timesteps))
+    #n_i = int(n/min(10, (n/n_i)))
+    # print("number of figures ", n)
     colors = plt.cm.viridis(np.linspace(0,1,int(n)+1))
     # print(timesteps)
 
@@ -156,7 +160,7 @@ def all_figures(folder):
     #print((Time))
     X, Y = np.meshgrid(Time, Radius)
     Z = np.ones_like(X)
-    print(Z.shape)
+    #print(Z.shape)
 
     for i, (name, time) in enumerate(sorted(timesteps.items(), key = itemgetter(1))):
         print(name, time)
@@ -167,34 +171,46 @@ def all_figures(folder):
 
         Porosity = np.array(data["porosity"].values)
         N_r = len(Porosity)
-        print(N_r)
+        #print(N_r)
         Z[:N_r, i] = Porosity
-
-
         dr = data["radius"][1]-data["radius"][0]
-        i += 1
+        #i += 1
         if i%n_i ==0:
-            ax[0].plot(data["radius"] + dr / 2.,data["porosity"], color=colors[i], label=time)
-            ax[1].plot(data["radius"] + dr,data["velocity"], color=colors[i], label=time)
+            ax[0].plot(data["radius"] + dr / 2., data["porosity"], color=colors[i], label=time)
+            ax[1].plot(data["radius"] + dr, data["velocity"], color=colors[i], label=time)
+            r2v = data["radius"]**2 * data["velocity"]
+            pressure = 1/data["porosity"]/data["radius"]**2 * r2v.diff()
+            ax[2].plot(data["radius"] + dr, pressure, color=colors[i], label=time)
+
+            #print(data["radius"].iloc[-1])
+            #print(data["radius"]/data["radius"].iloc[-1])
+            max_porosity = data["porosity"].max()
+            min_porosity = data["porosity"].min()
+            ax3[0].plot((data["radius"]+ dr / 2.)-(data["radius"].iloc[-1]+ dr / 2.), (data["porosity"]), color=colors[i], label=time)
+            ax3[1].plot((data["radius"]+ dr / 2.)-(data["radius"].iloc[-1]+ dr / 2.), data["velocity"], color=colors[i], label=time)
+            ax3[2].plot((data["radius"]+ dr / 2.)-(data["radius"].iloc[-1]+ dr / 2.), pressure, color=colors[i], label=time)
+
             #ax2.scatter(i*np.ones(data.shape[0]), data["radius"] + dr / 2., c=data["porosity"], cmap=plt.cm.viridis)
         
     levels = np.linspace(0, 0.4, 100) # [0., 0.1, 0.2, 0.3, 0.4]
     sc = ax2.contourf(X, Y, Z, levels=levels, extend="max")
     sc2 = ax2.contour(X, Y, Z>=0.4, 1,colors='k')
-    cbar = plt.colorbar(sc)
+    cbar = plt.colorbar(sc, ax =ax2)
     cbar.set_label("Porosity")
     cbar.set_clim([0., 0.4])
     #plt.figure(fig.number)
     #plt.savefig(folder+"/all_figs.pdf")
-    ax[0].set_xlim([0,10])
-    ax[0].set_ylim([0,0.4])
+    #ax[0].set_xlim([0,10])
+    #ax[0].set_ylim([0,0.4])
     ax[0].set_xlabel("Radius")
     ax[0].set_ylabel("Porosity")
     plt.figure(fig2.number)
-    plt.savefig(folder+"/all_figs_test.pdf")
+    plt.savefig(folder+"/all_figs_contourf.pdf")
     plt.figure(fig.number)
     plt.tight_layout()
-    plt.savefig(folder+"/all_figs.pdf")
+    plt.savefig(folder+"/all_figs_lines.pdf")
+    plt.figure(fig3.number)
+    plt.savefig(folder+"/all_figs_lines_xaxis_2.pdf")
 
 
 
@@ -304,26 +320,30 @@ def fig_porosity_thickness(folder_main):
             return df
 
         list_subfolder = os.listdir(folder_main)
+        print("Looking through folder {}".format(folder_main))
         for subfolder_name in list_subfolder:
-            list_files = os.listdir(folder_main+"/"+subfolder_name)
-            for file in list_files:
-                if file[-14:] == "statistics.txt":
-                    file_stat = folder_main + "/" + subfolder_name + "/" + file
-                if file[-5:] == ".yaml":
-                    with open(folder_main + "/" + subfolder_name + "/" + file, 'r') as stream:
-                        try:
-                            param = yaml.safe_load(stream)
-                            #print(param)
-                        except yaml.YAMLError as exc:
-                            print(exc)
-            data = pd.read_csv(file_stat, sep=" ", index_col=False)
-            if data["radius"].iloc[-1] < 0.99*param["Ric_adim"]:
-                remarks = "run ended before completion. Radius {}/{}".format(data["radius"], param["Ric_adim"])
-            else:
-                remarks = ""
-            df = add_value(df, param["Ric_adim"], param['coeff_velocity'], param['growth_rate_exponent'], 
-                        data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1], remarks)
-
+            if os.path.isdir(folder_main + "/" + subfolder_name):
+                list_files = os.listdir(folder_main+"/"+subfolder_name)
+                for file in list_files:
+                    if file[-14:] == "statistics.txt":
+                        file_stat = folder_main + "/" + subfolder_name + "/" + file
+                    if file[-5:] == ".yaml":
+                        with open(folder_main + "/" + subfolder_name + "/" + file, 'r') as stream:
+                            try:
+                                param = yaml.safe_load(stream)
+                                #print(param)
+                            except yaml.YAMLError as exc:
+                                print(exc)
+                data = pd.read_csv(file_stat, sep=" ", index_col=False)
+                if data["radius"].iloc[-1] < 0.99*param["Ric_adim"]:
+                    remarks = "run ended before completion. Radius {}/{}".format(data["radius"], param["Ric_adim"])
+                else:
+                    remarks = ""
+                if data["thickness_boundary"].iloc[-1] < 1e-12:
+                    print("no boundary for {}, {}".format(param["Ric_adim"], param['coeff_velocity']))
+                df = add_value(df, param["Ric_adim"], param['coeff_velocity'], param['growth_rate_exponent'], 
+                            data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1], remarks)
+            else: print("oups, not a folder: {}".format(folder_main + "/" + subfolder_name))
         df.to_csv("data.csv")
 
         fig, ax = plt.subplots(3, 1, sharex=True, figsize=[6, 6])
@@ -377,6 +397,40 @@ def fig_porosity_thickness(folder_main):
         cbar.set_label("$R_{ic}$")
         #plt.tight_layout()
         plt.savefig("scaling_laws_2lines.pdf")
+
+
+        # contourf plots with delta and <phi> as function of Ric and \dot Ric
+        print(np)
+        x = np.log(np.array(df["coeff_velocity"].values).astype(float))/np.log(10.) # growth rate
+        # x = np.array(df["coeff_velocity"].values).astype(float)
+        y = np.log(np.array(df["Ric_adim"].values).astype(float))/np.log(10.) # radius IC
+        # y = np.array(df["Ric_adim"].values).astype(float)
+        #delta = np.array(df["delta"].values).astype(float) # 
+        delta = np.log(np.array(df["delta"].values).astype(float))/np.log(10.)
+        #phi = np.array(df["sum_phi"].values).astype(float) # 
+        phi = np.log(np.array(df["sum_phi"].values).astype(float))/np.log(10.)
+        print(len(x), len(y), len(delta))
+        fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 4])
+        cmap = plt.cm.magma
+        cntr1 = ax[0].tricontourf(x, y, delta, 20,  cmap=cmap)
+        ax[0].plot(x, y, 'ko', ms=3)
+        cntr2 = ax[1].tricontourf(x, y, phi, 20,  cmap=cmap)
+        ax[1].plot(x, y, 'ko', ms=3)
+        cbar1 = plt.colorbar(cntr1, ax=ax[0])
+        cbar2 = plt.colorbar(cntr2, ax=ax[1])
+        ax[0].set_title("Thickness of upper layer")
+        ax[1].set_title("Average porosity")
+        ax[0].set_xlabel("$\dot{R}_{\text{ic}}$")
+        ax[0].set_ylabel("$R_{\text{ic}}$")
+        ax[1].set_xlabel("$\dot{R}_{\text{ic}}$")
+        #ax[0].set_yscale('log')
+        #ax[0].set_xscale('log')
+        #ax[1].set_yscale('log')
+        #ax[1].set_xscale('log')
+
+        plt.savefig("scaling_contourf.pdf")
+
+
 
 
 def scaling_laws(file="data.csv"):
@@ -437,11 +491,104 @@ def scaling_laws(file="data.csv"):
         #print(df)
 
 
+
+
+
+def fig_5profiles(folder_base):
+
+    # preparation for the figures
+    fig, ax = plt.subplots(3,3,figsize=[8,6]) #fig with 5 lines per modele
+    #fig2, ax2 = plt.subplots(2, 3, figsize=[6, 8]) # fig with temporal evolution
+
+    folders = ["/exp_1.00_coeff_10.00_radius_0.10", "/exp_1.00_coeff_10.00_radius_10.00", "/exp_1.00_coeff_0.01_radius_10.00"]
+
+    for i_folder, folder in enumerate(folders):
+        list_files = os.listdir(folder_base+folder)
+        timesteps = {}
+        for file in list_files:
+            if file[-14:] == "statistics.txt":
+                file_stat = folder_base+folder + "/" + file
+            elif file[-9:] == ".timestep":
+                _name = folder_base+folder + "/" + file
+                _time = find_float(file)
+                timesteps[_name] = _time
+            elif file[-5:] == ".yaml":
+                parameter_file = folder_base+folder + "/" + file
+        with open(parameter_file, 'r') as stream:
+            try:
+                options = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+
+        i = 0
+        n_i = 10# if too many figures
+        n = int(len(timesteps))
+        #n_i = int(n/min(10, (n/n_i)))
+        print("number of lines: ", n)
+        colors = plt.cm.viridis(np.linspace(0,1,int(n)+1))
+        name_max = max(timesteps.items(), key=itemgetter(1))[0]
+        data = pd.read_csv(name_max, sep=" ")
+        dr = data["radius"][1]-data["radius"][0]
+        #Radius = np.array(data["radius"].values)+ dr / 2.
+        #Time = np.array(sorted(timesteps.values()))
+
+        for i, (name, time) in enumerate(sorted(timesteps.items(), key = itemgetter(1))):
+            
+            # single figure
+            # make_figure(name, save=True, output="", max_r=options["Ric_adim"])
+            # figure with all timesteps
+            data = pd.read_csv(name, sep=" ")
+            dr = data["radius"][1]-data["radius"][0]
+            i += 1
+            if i%n_i ==0:
+                print(name, time)
+                ax[0, i_folder].plot(data["radius"] + dr / 2., data["porosity"], color=colors[i], label=time)
+                ax[1, i_folder].plot(data["radius"] + dr, data["velocity"], color=colors[i], label=time)
+                r2v = data["radius"]**2 * data["velocity"]
+                pressure = -1./data["porosity"]/data["radius"]**2 * r2v.diff()
+                ax[2, i_folder].plot(data["radius"] + dr, pressure, color=colors[i], label=time)
+
+
+    #ax[0].set_xlim([0,10])
+    #ax[0].set_ylim([0,0.4])
+    ax[0, 0].set_ylabel("Porosity")
+    ax[1,0].set_ylabel("Matrix velocity")
+    ax[2,0].set_ylabel("Pressure gradient")
+    ax[2,0].set_xlabel("Radius")
+    ax[2,1].set_xlabel("Radius")
+    ax[2,2].set_xlabel("Radius")
+    #plt.figure(fig2.number)
+    plt.figure(fig.number)
+    ax[0,0].set_title("Radius {}, growth rate {}".format(0.1, 10))
+    ax[0,1].set_title("Radius {}, growth rate {}".format(10, 10))
+    ax[0,2].set_title("Radius {}, growth rate {}".format(10, 0.1))
+
+
+    plt.tight_layout()
+    plt.savefig(folder_base+"/all_with_lines.pdf")
+    
+    #plt.figure(fig.number)
+    #plt.tight_layout()
+    #plt.savefig(folder+"/all_figs_lines.pdf")
+    #plt.figure(fig3.number)
+    #plt.savefig(folder+"/all_figs_lines_xaxis_2.pdf")
+
+
+
+
+
+
+
+
 if __name__ == "__main__":
 
-    folder = "/home/marine/ownCloud/Research/Projets/output_mush/compaction/presentation"
-    #all_figures(folder+"/")
+    folder = "/home/marine/ownCloud/Research/Projets/mush/data_for_fig/"
+    #folder = "/home/marine/ownCloud/Research/Projets/output_mush/low_Vg"
+    # all_figures(folder+"/exp_1.00_coeff_1.00_radius_0.01/")
     
+    # fig_5profiles(folder)
+    fig_porosity_thickness(folder)
+    plt.show()
     list_folder = os.listdir(folder)
 
     for name in list_folder:
@@ -451,8 +598,8 @@ if __name__ == "__main__":
            plt.close("all")
 
     
-    fig_porosity_thickness(folder)
-    scaling_laws()
+    #fig_porosity_thickness(folder)
+    #scaling_laws()
     #fig_thickness(folder)
     #fig_porosity(folder)
     plt.show()

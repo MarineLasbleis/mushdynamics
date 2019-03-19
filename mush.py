@@ -411,7 +411,7 @@ def output(time, panda_frame, fig=False, file=False, output_folder="", ax=[]):
         ax[0].plot(panda_frame["porosity"], panda_frame["radius"] + dr / 2.)
         ax[1].plot(panda_frame["velocity"], panda_frame["radius"] + dr)
     if file:
-        file = output_folder+"/output_{:5.2f}.timestep".format(time)
+        file = output_folder+"/output_{:6.8f}.timestep".format(time)
         #_data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
         #data = pd.DataFrame(_data)
         panda_frame.to_csv(file, sep=" ")
