@@ -44,7 +44,7 @@ if __name__ == "__main__":
                 for coeff in coeff_velocity:
                     t_max = (r/coeff)**(1/exp)
                     dt = t_max/N_fig
-                    folder_name = "data_for_fig_05/exp_{:.2f}_coeff_{:.5f}_radius_{:.2f}".format(exp, coeff, r)
+                    folder_name = "test/exp_{:.2f}_coeff_{:.5f}_radius_{:.2f}".format(exp, coeff, r)
                     options = new_options(growth_rate_exponent=exp,
                                             time_max=t_max,
                                             dt_print=dt,

@@ -582,17 +582,17 @@ def fig_5profiles(folder_base):
 
 if __name__ == "__main__":
 
-    folder = "/home/marine/ownCloud/Research/Projets/mush/data_for_fig/"
+    folder = "/home/marine/ownCloud/Research/Projets/output_mush/compaction_no_growth/"
     #folder = "/home/marine/ownCloud/Research/Projets/output_mush/low_Vg"
     # all_figures(folder+"/exp_1.00_coeff_1.00_radius_0.01/")
     
     # fig_5profiles(folder)
-    fig_porosity_thickness(folder)
-    plt.show()
+    #fig_porosity_thickness(folder)
+    #plt.show()
     list_folder = os.listdir(folder)
 
     for name in list_folder:
-       if name[:3] == "exp":
+       if name[:3] == "out":
            print(folder+name)
            all_figures(folder+'/'+name)
            plt.close("all")
