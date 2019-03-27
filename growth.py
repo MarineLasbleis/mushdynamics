@@ -131,12 +131,14 @@ class Non_Compaction(Compaction):
         # init stat file
         self.stat_file = self.output_folder + self.options["filename"]+'_statistics.txt'
         with open(self.stat_file, 'w') as f:
-            f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary\n")
-            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
+            delta = data_analysis.thickness_boundary_layer(1-self.psi, self.R)
+            f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary phi_center\n")
+            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
                                                 self.R[-1], len(self.R), data_analysis.average(1-self.psi, self.R[1:], \
                                                 self.options), self.growth_rate(self.time), self.velocity[-1], np.max(self.velocity), \
                                                 data_analysis.average(self.velocity, self.R[1:-1], self.options), \
-                                                data_analysis.thickness(1-self.psi, self.R)))
+                                                data_analysis.thickness(1-self.psi, self.R), 
+                                                data_analysis.porosity_compacted_region(1-self.psi, self.R, delta, self.options)))
 
 
 
@@ -197,8 +199,9 @@ def compaction_column_growth(calcul_velocity, **options):
 
     stat_file = output_folder + options["filename"]+'_statistics.txt'
     with open(stat_file, 'w') as f:
+        delta = data_analysis.thickness_boundary_layer(1-psi, R)
         f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary\n")
-        f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), data_analysis.average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), data_analysis.average(velocity, R[1:-1], options), data_analysis.thickness_boundary_layer(1-psi, R)))
+        f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), data_analysis.average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), data_analysis.average(velocity, R[1:-1], options), delta , data_analysis.porosity_compacted_region(1-psi, R, delta, options)))
 
     while time < time_max and it < iter_max:
         # for it in range(0,10000):
