@@ -197,7 +197,13 @@ def velocity_Sramek(variable, radius, options, verbose=False):
         if verbose:
             print("Delta (compaction length) was not defined, please consider defining it for later. Default value is {}".format(delta))
 
-
+    try:
+        n = options["n"]
+    except KeyError:
+        n = 2.
+        if verbose:
+            print("The value for n was not choose. Default is 2 (similar to Sramek)")
+        
     _inter = (K0 + 4. / 3. * variable) * (1. - variable) / variable
 
     if options["coordinates"] == "cartesian":
@@ -208,7 +214,7 @@ def velocity_Sramek(variable, radius, options, verbose=False):
         _c = _inter[1:] / dr**2 * variable[:-1] * variable[1:]
         _d = s * \
             (1 - np.sqrt(variable[:-1] * variable[1:])) * \
-            variable[:-1] * variable[1:]
+            (variable[:-1] * variable[1:])**(n/2.)
     elif options["coordinates"] == "spherical":
         _a = _inter[:-1] / dr**2 * variable[:-1] * variable[1:] * \
             radius[:-2]**2 / (radius[0:-2] + dr / 2)**2
@@ -219,9 +225,10 @@ def velocity_Sramek(variable, radius, options, verbose=False):
         _c = _inter[1:] / dr**2 * variable[:-1] * variable[1:] * \
             radius[2:]**2 / (radius[1:-1] + dr / 2)**2
         # TODO add a version if no time max (so no growth)
-        _d = s / options["Ric_adim"] \
-            * (1 - np.sqrt(variable[:-1] * variable[1:])) * \
-            variable[:-1] * variable[1:] * radius[1:-1]
+        _d = s * radius[1:-1] / options["Ric_adim"] *\
+            (1 - np.sqrt(variable[:-1] * variable[1:])) *\
+            (variable[:-1] * variable[1:])**(n/2.)
+
         # correction with the term in 4\mu dphi/dr /r
         correction = + 4.*(variable[1:]-variable[:-1])*variable[1:]*variable[:-1]/dr/radius[1:-1]
         _b = _b + correction
