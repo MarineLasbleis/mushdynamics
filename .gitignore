@@ -102,8 +102,8 @@ ENV/
 
 
 #figures
-.pdf
-/fig
+*.pdf
+/fig/*
 /output/*
 /output_supercooling/*
 /compaction/*
