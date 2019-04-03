@@ -16,6 +16,7 @@ class Compaction():
     def __init__(self, calcul_velocity, **options):
         self.options = options
         self.verify_parameters()
+        print(self.options)
         self.print_param()
         self.iter_max = 100000000
         self.calcul_velocity = calcul_velocity
@@ -106,40 +107,7 @@ class Compaction():
             os.makedirs(output_folder)
         param_file = output_folder + self.options["filename"]+'_param.yaml'
         with open(param_file, 'w') as f:
-            yaml.dump(self.options, f) # write parameter file with all input parameters
-
-
-class Non_Compaction(Compaction):
-    
-    def initialisation(self):
-        self.it = 0
-        self.time = self.options["t_init"]
-        self.R_init =  self.options["R_init"]
-        self.N = self.options["N_init"]
-        self.psi0 = 1 - self.options["phi_init"]
-        self.R = np.linspace(0, self.R_init, self.N + 1)
-        self.dr = self.R[1] - self.R[0]
-        self.psi = self.psi0 * np.ones(self.N)
-        self.dt_print = self.options["dt_print"]
-        self.time_p = self.time
-        self.time_max = self.options["time_max"]
-        # 1st run
-        self.velocity = self.calcul_velocity(1 - self.psi, self.R, self.options)
-        v_m = np.amax(np.abs(self.velocity))
-        dt = min(0.5 * self.dr / (v_m), 0.5)
-        self.dt = min(dt, self.dr/self.growth_rate(self.time))
-        # init stat file
-        self.stat_file = self.output_folder + self.options["filename"]+'_statistics.txt'
-        with open(self.stat_file, 'w') as f:
-            delta = data_analysis.thickness_boundary_layer(1-self.psi, self.R)
-            f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary phi_center\n")
-            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
-                                                self.R[-1], len(self.R), data_analysis.average(1-self.psi, self.R[1:], \
-                                                self.options), self.growth_rate(self.time), self.velocity[-1], np.max(self.velocity), \
-                                                data_analysis.average(self.velocity, self.R[1:-1], self.options), \
-                                                data_analysis.thickness(1-self.psi, self.R), 
-                                                data_analysis.porosity_compacted_region(1-self.psi, self.R, delta, self.options)))
-
+            yaml.dump(self.options, f, default_flow_style=False) # write parameter file with all input parameters
 
 
 class Compaction_Supercooling(Compaction):
