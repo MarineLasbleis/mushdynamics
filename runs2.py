@@ -164,8 +164,8 @@ def run_growth_random(Nr=20, Nc=20):
             if coeff < 1.:
                 if r>900: N_max = 15000
                 elif r> 200.: N_max = 5000
-            options = param_growth(r, exp, coeff, n=n, basefolder="./random_n2/", R_init=5e-3, N_max=N_max)
-            #run(options)
+            options = param_growth(r, exp, coeff, n=n, basefolder="./diag_random_n2/", R_init=5e-3, N_max=N_max)
+            run(options)
 
 
 
