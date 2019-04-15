@@ -83,11 +83,11 @@ def porosity_compacted_region(phi, R, delta, options):
     delta: thickness of mushy zone
     """
     if 1.5*delta > R[-1]:
-        print("mushy zone larger than core. No compacted region.")
-        return 0.
+        #print("mushy zone larger than core. No compacted region.")
+        return average(phi, R, options)
     R_max = R[-1]-1.5*delta
     mask = R<R_max
-    return average(ma.masked_array(phi_comp, mask=mask), ma.masked_array(R_comp, mask=mask), options)
+    return average(ma.masked_array(phi, mask=mask), ma.masked_array(R, mask=mask), options)
 
 def porosity_given_depth(phi, depth, R):
     """ extract the porosity value at the given depth
