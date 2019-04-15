@@ -5,6 +5,7 @@ import sys
 import argparse
 import yaml
 import numpy as np
+import numpy.random as random
 
 import mush
 import growth
@@ -128,15 +129,39 @@ def run_no_growth():
 
 
 def run_growth():
-    radius = 10**np.linspace(-1, 2, 8)# [100., 200., 300.]
-    exponents = [1.]
-    coefficients = 10**np.linspace(-2, 2, 5)#[1.]
+    radius = 10**np.linspace(-1, 2, 1)# [100., 200., 300.]
+    exponents = [1., 1.]
+    coefficients = [1., 1.] #10**np.linspace(-2, 2, 5)#[1.]
 
     for r in radius:
         for exp in exponents:
             for coeff in coefficients:
-                options = param_growth(r, exp, coeff, basefolder="./exploration/", R_init=5e-3, N_max=2000)
+                options = param_growth(r.item(), exp, coeff, basefolder="./test_param/", R_init=5e-3, N_max=2000)
                 run(options)
+
+
+def run_growth_random(Nr=20, Nc=20):
+    random.seed()
+    
+    logradius = np.linspace(-3, 3, Nr)# [100., 200., 300.]
+    dr = np.abs(np.diff(logradius)[0])
+    exp= 1.
+    logcoefficients = np.linspace(3, -4, Nc)#[1.]
+    dc = np.abs(np.diff(logcoefficients)[0])
+
+    for r in logradius:
+        for coeff in logcoefficients:
+            rand = random.normal([0.,0.], [dr/2., dc/2.])
+            r = 10**(r+rand[0])
+            coeff = 10**(coeff+rand[1])
+            N_max = 2000
+            if coeff < 1.:
+                if r>900: N_max = 15000
+                elif r> 200.: N_max = 5000
+            options = param_growth(r.item(), exp, coeff, basefolder="./random/", R_init=5e-3, N_max=N_max)
+            run(options)
+
+
 
 
 
@@ -154,4 +179,4 @@ if __name__ == "__main__":
     #if args.verbose:
     #    print("verbosity turned on")
 
-    run_growth()
+    run_growth_random()
