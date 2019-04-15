@@ -144,15 +144,13 @@ def run_growth():
 
 def run_growth_random(Nr=20, Nc=20):
     random.seed()
-    
     logradius = np.linspace(-3, 3, Nr)# [100., 200., 300.]
     dr = np.abs(np.diff(logradius)[0])
 
     exp= 1.
     logcoefficients = np.linspace(3, -4, Nc)#[1.]
     dc = np.abs(np.diff(logcoefficients)[0])
-    print("dr, dc: ", dr, dc)
-    
+
     n = 2
 
     for r in logradius:
