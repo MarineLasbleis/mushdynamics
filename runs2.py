@@ -67,11 +67,12 @@ def default_yaml():
 def modify_param(options, new_options):
     return {**options, **new_options}
 
-def param_growth(r, exp, coeff, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
+def param_growth(r, exp, coeff, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
     t_max = (r/coeff)**(1/exp)
     dt = t_max/N_fig
     folder_name = basefolder+"/exp_{:.2e}_coeff_{:.2e}_radius_{:.2e}".format(exp, coeff, r)
     options = {'advection': "FLS",
+                'n': n,
                 'delta': 1.,
                 'eta': 1.,
                 'psi0': 1.,
@@ -91,9 +92,10 @@ def param_growth(r, exp, coeff, N_fig=20, basefolder="", R_init=1e-3, N_max=5000
                 "N_init": max(5, int(N_max*R_init))}
     return options
 
-def param_no_growth(R, t_max, N_time, N=2000, output="output/"):
+def param_no_growth(R, t_max, N_time, n=2, N=2000, output="output/"):
     coeff = 0. # no growth
     options = {'advection': "FLS",
+                'n': 2,
                 'delta': 1.,
                 'eta': 1.,
                 'psi0': 1.,
@@ -149,6 +151,8 @@ def run_growth_random(Nr=20, Nc=20):
     logcoefficients = np.linspace(3, -4, Nc)#[1.]
     dc = np.abs(np.diff(logcoefficients)[0])
 
+    n = 2
+
     for r in logradius:
         for coeff in logcoefficients:
             rand = random.normal([0.,0.], [dr/2., dc/2.])
@@ -158,7 +162,7 @@ def run_growth_random(Nr=20, Nc=20):
             if coeff < 1.:
                 if r>900: N_max = 15000
                 elif r> 200.: N_max = 5000
-            options = param_growth(r.item(), exp, coeff, basefolder="./random/", R_init=5e-3, N_max=N_max)
+            options = param_growth(r.item(), exp, coeff, n=n, basefolder="./random_n2/", R_init=5e-3, N_max=N_max)
             run(options)
 
 
