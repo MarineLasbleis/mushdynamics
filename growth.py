@@ -51,17 +51,19 @@ class Compaction():
         # 1st run
         self.velocity = self.calcul_velocity(1 - self.psi, self.R, self.options)
         v_m = np.amax(np.abs(self.velocity))
-        dt = min(0.5 * self.dr / (v_m), 0.5)
-        self.dt = min(dt, self.dr/self.growth_rate(self.time))
+        dt = min(0.1 * self.dr / (v_m), 0.5)
+        self.dt = min(dt, 0.1*self.dr/self.growth_rate(self.time))
         # init stat file
         self.stat_file = self.output_folder + self.options["filename"]+'_statistics.txt'
         with open(self.stat_file, 'w') as f:
-            f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary\n")
-            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
+            delta = data_analysis.thickness(1-self.psi, self.R)
+            f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary porosity_center\n")
+            f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
                                                 self.R[-1], len(self.R), data_analysis.average(1-self.psi, self.R[1:], \
                                                 self.options), self.growth_rate(self.time), self.velocity[-1], np.max(self.velocity), \
                                                 data_analysis.average(self.velocity, self.R[1:-1], self.options), \
-                                                data_analysis.thickness(1-self.psi, self.R)))
+                                                delta, \
+                                                data_analysis.porosity_compacted_region(1-self.psi, self.R[1:], delta, self.options)))
 
     def one_step(self):
         if self.R[-1]+self.dr < self.radius(self.time):
@@ -69,8 +71,8 @@ class Compaction():
         self.velocity = self.calcul_velocity(1 - self.psi, self.R, self.options)
         self.psi = mush.update(self.velocity, self.psi, self.dt, self.R, self.options)
         v_m = np.amax(np.abs(self.velocity))
-        dt = min(0.5, 0.05 * self.dr / (v_m))
-        self.dt = min(dt, 0.05*self.dr/self.growth_rate(self.time))
+        dt = min(0.5, 0.1 * self.dr / (v_m))
+        self.dt = min(dt, 0.1*self.dr/self.growth_rate(self.time))
 
     def write_stat(self):
         stat = False
@@ -81,11 +83,13 @@ class Compaction():
             stat = True
         if stat:
             with open(self.stat_file, 'a') as f:
-                f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
+                delta = data_analysis.thickness(1-self.psi, self.R)
+                f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(self.it, self.time,\
                                                 self.R[-1], len(self.R), data_analysis.average(1-self.psi, self.R[1:], \
                                                 self.options), self.growth_rate(self.time), self.velocity[-1], np.max(self.velocity), \
                                                 data_analysis.average(self.velocity, self.R[1:-1], self.options), \
-                                                data_analysis.thickness(1-self.psi, self.R)))
+                                                delta, \
+                                                data_analysis.porosity_compacted_region(1-self.psi, self.R[1:], delta, self.options)))
 
     def write_profile(self):
         if self.time_p > self.dt_print:
@@ -299,7 +303,7 @@ def plot_growth():
     Model_t05 = Compaction(mush.velocity_Sramek, **options(10., 1., 0.5))
     Model_t03 = Compaction(mush.velocity_Sramek, **options(10., 1., 1./3.))
 
-    opt = options(10., 1., 1./3)
+    opt = options(10., 1., 1./2)
     opt["t0_supercooling"] = 1e-3
     opt["r0_supercooling"] = 7.
     Model_supercooling = Compaction_Supercooling(mush.velocity_Sramek, **opt)
