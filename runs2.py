@@ -146,25 +146,26 @@ def run_growth_random(Nr=20, Nc=20):
     random.seed()
     logradius = np.linspace(-3, 3, Nr)# [100., 200., 300.]
     dr = np.abs(np.diff(logradius)[0])
-
+    print(logradius)
     exp= 1.
     logcoefficients = np.linspace(3, -4, Nc)#[1.]
     dc = np.abs(np.diff(logcoefficients)[0])
 
     n = 2
 
-    for r in logradius:
-        for coeff in logcoefficients:
+    for logr in logradius:
+        for logcoeff in logcoefficients:
             rand = random.normal([0.,0.], [dr/8., dc/8.])
-            print(rand)
-            r = 10**(r+min(rand[0], dr/2. ))
-            coeff = 10**(coeff+min(rand[1], dc/2.))
+            print(logr, logcoeff)
+            r = 10**(logr+min(rand[0], dr/2. ))
+            coeff = 10**(logcoeff+min(rand[1], dc/2.))
+            print(r, coeff, rand)
             N_max = 2000
             if coeff < 1.:
                 if r>900: N_max = 15000
                 elif r> 200.: N_max = 5000
-            options = param_growth(r.item(), exp, coeff, n=n, basefolder="./random_n2/", R_init=5e-3, N_max=N_max)
-            run(options)
+            options = param_growth(r, exp, coeff, n=n, basefolder="./random_n2/", R_init=5e-3, N_max=N_max)
+            #run(options)
 
 
 
