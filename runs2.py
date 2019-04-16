@@ -121,7 +121,8 @@ def param_no_growth(R, t_max, N_time, n=2, N=2000, output="output/"):
 def param_supercooling(r, exp, coeff, r0_supercooling, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
     t_max = (r/coeff)**(1/exp)
     dt = t_max/N_fig
-    folder_name = basefolder+"/exp_{:.2e}_coeff_{:.2e}_radius_{:.2e}_r0_{:.2e}".format(exp, coeff, r, r0_supercooling)
+    # r0 is the percentage of radius, not the actual radius!
+    folder_name = basefolder+"/exp_{:.2e}_coeff_{:.2e}_radius_{:.2e}_r0_{}".format(exp, coeff, r, r0_supercooling)
     options = {'advection': "FLS",
                 'n': n,
                 'delta': 1.,
@@ -142,7 +143,7 @@ def param_supercooling(r, exp, coeff, r0_supercooling, n=2, N_fig=20, basefolder
                 "R_init": R_init*r,
                 "N_init": max(5, int(N_max*R_init))}
     options["t0_supercooling"] = 1e-3*t_max
-    options["r0_supercooling"] = r0_supercooling
+    options["r0_supercooling"] = r0_supercooling/100.*r     # r0 is the percentage of radius, not the actual radius!
     return options
 
 
@@ -193,30 +194,25 @@ def run_growth_random(Nr=20, Nc=20):
 
 
 
-def run_supercooling(Nr=5, Nc=5):
-    #random.seed()
-    logradius = np.linspace(-3, 3, Nr)# [100., 200., 300.]
-    #dr = np.abs(np.diff(logradius)[0])
-    #print(logradius)
+def run_supercooling(Nr=5, Nc=5, N_r0=10):
+
+    logradius = np.linspace(-3, 3, Nr)
     exp= 0.5
     logcoefficients = np.linspace(3, -4, Nc)#[1.]
-    #dc = np.abs(np.diff(logcoefficients)[0])
-
+    list_r0 = np.linspace(10, 100, N_r0, endpoint=False)
     n = 3
 
     for logr in logradius:
         for logcoeff in logcoefficients:
-            #rand = random.normal([0.,0.], [dr/8., dc/8.])
-            #print(logr, logcoeff)
-            r = 10**(logr) #+min(rand[0], dr/2. ))
-            coeff = 10**(logcoeff) #+min(rand[1], dc/2.))
-            #print(r, coeff, rand)
-            N_max = 2000
-            if coeff < 1.:
-                if r>900: N_max = 15000
-                elif r> 200.: N_max = 5000
-            options = param_growth(r, exp, coeff, n=n, basefolder="./supercooling/", R_init=5e-3, N_max=N_max)
-            run(options)
+            for r0 in list_r0:
+                r = 10**(logr)
+                coeff = 10**(logcoeff)
+                N_max = 2000
+                if coeff < 1.:
+                    if r>900: N_max = 15000
+                    elif r> 200.: N_max = 5000
+                options = param_supercooling(r, exp, coeff, r0, n=n, basefolder="./supercooling/", R_init=5e-3, N_max=N_max)
+                run(options)
 
 
 
