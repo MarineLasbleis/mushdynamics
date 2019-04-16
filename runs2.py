@@ -113,13 +113,37 @@ def param_no_growth(R, t_max, N_time, n=2, N=2000, output="output/"):
                 'coeff_velocity': coeff,
                 'output': output,
                 "R_init": R,
-                "N_init": N, 
-                "t_init": 0., 
+                "N_init": N,
+                "t_init": 0.,
                 "Ric_adim": R}
     return options
 
-def param_supercooling():
-    return {}
+def param_supercooling(r, exp, coeff, r0_supercooling, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
+    t_max = (r/coeff)**(1/exp)
+    dt = t_max/N_fig
+    folder_name = basefolder+"/exp_{:.2e}_coeff_{:.2e}_radius_{:.2e}_r0_{:.2e}".format(exp, coeff, r, r0_supercooling)
+    options = {'advection': "FLS",
+                'n': n,
+                'delta': 1.,
+                'eta': 1.,
+                'psi0': 1.,
+                'psiN': 0.6,
+                'phi_init': 0.4,
+                'K0': 1.,
+                'sign': 1.,
+                'BC': "dVdz==0",
+                'coordinates': "spherical",
+                "growth_rate_exponent": exp,
+                'filename': 'IC',
+                'time_max': t_max,
+                'dt_print': dt,
+                'coeff_velocity': coeff,
+                'output': folder_name,
+                "R_init": R_init*r,
+                "N_init": max(5, int(N_max*R_init))}
+    options["t0_supercooling"] = 1e-3*t_max
+    options["r0_supercooling"] = r0_supercooling
+    return options
 
 
 def run_no_growth():
@@ -169,6 +193,32 @@ def run_growth_random(Nr=20, Nc=20):
 
 
 
+def run_supercooling(Nr=5, Nc=5):
+    #random.seed()
+    logradius = np.linspace(-3, 3, Nr)# [100., 200., 300.]
+    #dr = np.abs(np.diff(logradius)[0])
+    #print(logradius)
+    exp= 0.5
+    logcoefficients = np.linspace(3, -4, Nc)#[1.]
+    #dc = np.abs(np.diff(logcoefficients)[0])
+
+    n = 3
+
+    for logr in logradius:
+        for logcoeff in logcoefficients:
+            #rand = random.normal([0.,0.], [dr/8., dc/8.])
+            #print(logr, logcoeff)
+            r = 10**(logr) #+min(rand[0], dr/2. ))
+            coeff = 10**(logcoeff) #+min(rand[1], dc/2.))
+            #print(r, coeff, rand)
+            N_max = 2000
+            if coeff < 1.:
+                if r>900: N_max = 15000
+                elif r> 200.: N_max = 5000
+            options = param_growth(r, exp, coeff, n=n, basefolder="./supercooling/", R_init=5e-3, N_max=N_max)
+            run(options)
+
+
 
 
 if __name__ == "__main__":
@@ -185,4 +235,4 @@ if __name__ == "__main__":
     #if args.verbose:
     #    print("verbosity turned on")
 
-    run_growth_random()
+    run_supercooling()
