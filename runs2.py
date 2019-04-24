@@ -205,13 +205,14 @@ def run_supercooling(Nr=5, Nc=5, N_r0=10):
     for logr in logradius:
         for logcoeff in logcoefficients:
             for r0 in list_r0:
-                r = 10**(logr)
-                coeff = 10**(logcoeff)
+                print(logr, logcoeff, r0, type(logr.item()))
+                r = 10**(logr.item())
+                coeff = 10**(logcoeff.item())
                 N_max = 2000
                 if coeff < 1.:
                     if r>900: N_max = 15000
                     elif r> 200.: N_max = 5000
-                options = param_supercooling(r, exp, coeff, r0, n=n, basefolder="./supercooling/", R_init=5e-3, N_max=N_max)
+                options = param_supercooling(r, exp, coeff, r0.item(), n=n, basefolder="./supercooling/", R_init=5e-3, N_max=N_max)
                 run(options)
 
 
