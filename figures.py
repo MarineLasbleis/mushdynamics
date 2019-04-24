@@ -310,11 +310,11 @@ def fig_porosity(folder_main):
 
 
 def diagram_data(folder_main, output="data.csv"):
-        columns = ["Ric_adim", "coeff_velocity", "exp", "sum_phi", "delta", "remarks"]
+        columns = ["Ric_adim", "coeff_velocity", "exp", "sum_phi", "delta"]
         df = pd.DataFrame(columns=columns)
 
         def add_value(df, ric, coeff, exp, phi, delta, remarks=""):
-            df_add = pd.DataFrame({"Ric_adim":[ric], "coeff_velocity":[coeff], "exp":[exp], "sum_phi":[phi], "delta":[delta], "remarks":[remarks]})
+            df_add = pd.DataFrame({"Ric_adim":[ric], "coeff_velocity":[coeff], "exp":[exp], "sum_phi":[phi], "delta":[delta]})
             df = df.append(df_add)
             return df
 
@@ -334,14 +334,14 @@ def diagram_data(folder_main, output="data.csv"):
                             except yaml.YAMLError as exc:
                                 print(exc)
                 data = pd.read_csv(file_stat, sep=" ", index_col=False)
-                if data["radius"].iloc[-1] < 0.99*param["Ric_adim"]:
-                    remarks = "run ended before completion. Radius {}/{}".format(data["radius"], param["Ric_adim"])
-                else:
-                    remarks = ""
+                #if data["radius"].iloc[-1] < 0.99*param["Ric_adim"]:
+                #    remarks = "run ended before completion. Radius {}/{}".format(data["radius"], param["Ric_adim"])
+                #else:
+                #    remarks = ""
                 if data["thickness_boundary"].iloc[-1] < 1e-12:
                     print("no boundary for R {}, dot_R {}: folder {}".format(param["Ric_adim"], param['coeff_velocity'], folder_main + "/" +subfolder_name))
                 df = add_value(df, param["Ric_adim"], param['coeff_velocity'], param['growth_rate_exponent'], 
-                            data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1], remarks)
+                            data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1])
             else: print("oups, not a folder: {}".format(folder_main + "/" + subfolder_name))
         df.to_csv(folder_main+"data.csv")
         return df
