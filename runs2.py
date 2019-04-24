@@ -167,7 +167,7 @@ def run_growth():
                 run(options)
 
 
-def run_growth_random(Nr=20, Nc=20):
+def run_growth_random(n=2, Nr=20, Nc=20):
     random.seed()
     logradius = np.linspace(-3, 3, Nr)# [100., 200., 300.]
     dr = np.abs(np.diff(logradius)[0])
@@ -175,8 +175,6 @@ def run_growth_random(Nr=20, Nc=20):
     exp= 1.
     logcoefficients = np.linspace(3, -4, Nc)#[1.]
     dc = np.abs(np.diff(logcoefficients)[0])
-
-    n = 2
 
     for logr in logradius:
         for logcoeff in logcoefficients:
@@ -189,7 +187,7 @@ def run_growth_random(Nr=20, Nc=20):
             if coeff < 1.:
                 if r>900: N_max = 15000
                 elif r> 200.: N_max = 5000
-            options = param_growth(r, exp, coeff, n=n, basefolder="./diag_random_n2/", R_init=5e-3, N_max=N_max)
+            options = param_growth(r.item(), exp, coeff.item(), n=n, basefolder="./diag_random_n{}/".format(n), R_init=5e-3, N_max=N_max)
             run(options)
 
 
@@ -232,4 +230,4 @@ if __name__ == "__main__":
     #if args.verbose:
     #    print("verbosity turned on")
 
-    run_supercooling()
+    run_growth_random(2)
