@@ -346,206 +346,206 @@ def diagram_data(folder_main, output="data.csv"):
     return df
 
 def diagram(df, ylim=[-2, 2.5], xlim=[-4, 3]):
-        x = np.log(np.array(df["coeff_velocity"].values).astype(float))/np.log(10.) # growth rate
-        y = np.log(np.array(df["Ric_adim"].values).astype(float))/np.log(10.) # radius IC
-        #delta = np.array(df["delta"].values).astype(float) # 
-        delta = np.log(np.array(df["delta"].values).astype(float))/np.log(10.)
-        #delta = np.log(np.array(df["delta"].values).astype(float)*np.array(df["Ric_adim"].values).astype(float))/np.log(10.)
-        phi = np.array(df["sum_phi"].values).astype(float) # 
-        phi = np.log(np.array(df["sum_phi"].values).astype(float))/np.log(10.)
-        fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 4])
-        cmap = plt.cm.magma
-        cntr1 = ax[0].tricontourf(x, y, delta, 20,  cmap=cmap)
-        cntr2 = ax[1].tricontourf(x, y, phi, 30,  cmap=cmap)
-        cbar1 = plt.colorbar(cntr1, ax=ax[0])
-        cbar2 = plt.colorbar(cntr2, ax=ax[1])
-        ax[0].set_title("Thickness of upper layer")
-        ax[1].set_title("Average porosity")
-        ax[0].set_xlabel("$\dot{R}_{\text{ic}}$")
-        ax[0].set_ylabel("$R_{\text{ic}}$")
-        ax[1].set_xlabel("$\dot{R}_{\text{ic}}$")
-        ax[0].set_ylim(ylim)
-        ax[0].set_xlim(xlim)
-    
+    x = np.log(np.array(df["coeff_velocity"].values).astype(float))/np.log(10.) # growth rate
+    y = np.log(np.array(df["Ric_adim"].values).astype(float))/np.log(10.) # radius IC
+    #delta = np.array(df["delta"].values).astype(float) # 
+    delta = np.log(np.array(df["delta"].values).astype(float))/np.log(10.)
+    #delta = np.log(np.array(df["delta"].values).astype(float)*np.array(df["Ric_adim"].values).astype(float))/np.log(10.)
+    phi = np.array(df["sum_phi"].values).astype(float) # 
+    phi = np.log(np.array(df["sum_phi"].values).astype(float))/np.log(10.)
+    fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 4])
+    cmap = plt.cm.magma
+    cntr1 = ax[0].tricontourf(x, y, delta, 20,  cmap=cmap)
+    cntr2 = ax[1].tricontourf(x, y, phi, 30,  cmap=cmap)
+    cbar1 = plt.colorbar(cntr1, ax=ax[0])
+    cbar2 = plt.colorbar(cntr2, ax=ax[1])
+    ax[0].set_title("Thickness of upper layer")
+    ax[1].set_title("Average porosity")
+    ax[0].set_xlabel("$\dot{R}_{\text{ic}}$")
+    ax[0].set_ylabel("$R_{\text{ic}}$")
+    ax[1].set_xlabel("$\dot{R}_{\text{ic}}$")
+    ax[0].set_ylim(ylim)
+    ax[0].set_xlim(xlim)
+
 def fig_porosity_thickness(folder_main):
-        columns = ["Ric_adim", "coeff_velocity", "exp", "sum_phi", "delta", "remarks"]
-        df = pd.DataFrame(columns=columns)
+    columns = ["Ric_adim", "coeff_velocity", "exp", "sum_phi", "delta", "remarks"]
+    df = pd.DataFrame(columns=columns)
 
-        def add_value(df, ric, coeff, exp, phi, delta, remarks=""):
-            df_add = pd.DataFrame({"Ric_adim":[ric], "coeff_velocity":[coeff], "exp":[exp], "sum_phi":[phi], "delta":[delta], "remarks":[remarks]})
-            df = df.append(df_add)
-            return df
+    def add_value(df, ric, coeff, exp, phi, delta, remarks=""):
+        df_add = pd.DataFrame({"Ric_adim":[ric], "coeff_velocity":[coeff], "exp":[exp], "sum_phi":[phi], "delta":[delta], "remarks":[remarks]})
+        df = df.append(df_add)
+        return df
 
-        list_subfolder = os.listdir(folder_main)
-        print("Looking through folder {}".format(folder_main))
-        for subfolder_name in list_subfolder:
-            if os.path.isdir(folder_main + "/" + subfolder_name):
-                list_files = os.listdir(folder_main+"/"+subfolder_name)
-                for file in list_files:
-                    if file[-14:] == "statistics.txt":
-                        file_stat = folder_main + "/" + subfolder_name + "/" + file
-                    if file[-5:] == ".yaml":
-                        with open(folder_main + "/" + subfolder_name + "/" + file, 'r') as stream:
-                            try:
-                                param = yaml.safe_load(stream)
-                                #print(param)
-                            except yaml.YAMLError as exc:
-                                print(exc)
-                data = pd.read_csv(file_stat, sep=" ", index_col=False)
-                if data["radius"].iloc[-1] < 0.99*param["Ric_adim"]:
-                    remarks = "run ended before completion. Radius {}/{}".format(data["radius"], param["Ric_adim"])
-                else:
-                    remarks = ""
-                if data["thickness_boundary"].iloc[-1] < 1e-12:
-                    print("no boundary for {}, {}".format(param["Ric_adim"], param['coeff_velocity']))
-                df = add_value(df, param["Ric_adim"], param['coeff_velocity'], param['growth_rate_exponent'], 
-                            data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1], remarks)
-            else: print("oups, not a folder: {}".format(folder_main + "/" + subfolder_name))
-        df.to_csv("data.csv")
+    list_subfolder = os.listdir(folder_main)
+    print("Looking through folder {}".format(folder_main))
+    for subfolder_name in list_subfolder:
+        if os.path.isdir(folder_main + "/" + subfolder_name):
+            list_files = os.listdir(folder_main+"/"+subfolder_name)
+            for file in list_files:
+                if file[-14:] == "statistics.txt":
+                    file_stat = folder_main + "/" + subfolder_name + "/" + file
+                if file[-5:] == ".yaml":
+                    with open(folder_main + "/" + subfolder_name + "/" + file, 'r') as stream:
+                        try:
+                            param = yaml.safe_load(stream)
+                            #print(param)
+                        except yaml.YAMLError as exc:
+                            print(exc)
+            data = pd.read_csv(file_stat, sep=" ", index_col=False)
+            if data["radius"].iloc[-1] < 0.99*param["Ric_adim"]:
+                remarks = "run ended before completion. Radius {}/{}".format(data["radius"], param["Ric_adim"])
+            else:
+                remarks = ""
+            if data["thickness_boundary"].iloc[-1] < 1e-12:
+                print("no boundary for {}, {}".format(param["Ric_adim"], param['coeff_velocity']))
+            df = add_value(df, param["Ric_adim"], param['coeff_velocity'], param['growth_rate_exponent'], 
+                        data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1], remarks)
+        else: print("oups, not a folder: {}".format(folder_main + "/" + subfolder_name))
+    df.to_csv("data.csv")
 
-        fig, ax = plt.subplots(3, 1, sharex=True, figsize=[6, 6])
-        cmap = plt.cm.viridis
-        sc = ax[0].scatter(df["coeff_velocity"], df["delta"], c=df["Ric_adim"], marker='+', cmap=cmap)
-        ax[1].scatter(df["coeff_velocity"], df["delta"]/df["Ric_adim"], c=df["Ric_adim"], marker='+', cmap=cmap)
-        ax[2].scatter(df["coeff_velocity"], df["sum_phi"], c=df["Ric_adim"], marker='+', cmap=cmap)
-        ax[0].set_yscale("log")
-        ax[0].set_xscale("log")
-        ax[1].set_yscale("log")
-        ax[1].set_xscale("log")
-        ax[2].set_yscale("log")
-        ax[2].set_xscale("log")
-        ax[0].set_ylim([1e-2, 1e4])
-        ax[1].set_ylim([1e-4, 1e2])
-        ax[2].set_ylim([1e-3, 0.5])
-        ax[0].set_xlim([0.9e-3, 1.1e1])
-        ax[0].set_ylabel("$\delta$")
-        ax[1].set_ylabel("$\delta$/$R_{ic}$")
-        ax[2].set_ylabel("<$\phi$>")
-        ax[2].set_xlabel("Growth rate")
-        #fig.subplots_adjust(right=0.8)
-        #cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
-        cbar = plt.colorbar(sc, ax=ax.ravel().tolist())
-        cbar.set_label("$R_{ic}$")
-        #plt.tight_layout()
-        #plt.savefig(folder_main+"scaling_laws.pdf")
+    fig, ax = plt.subplots(3, 1, sharex=True, figsize=[6, 6])
+    cmap = plt.cm.viridis
+    sc = ax[0].scatter(df["coeff_velocity"], df["delta"], c=df["Ric_adim"], marker='+', cmap=cmap)
+    ax[1].scatter(df["coeff_velocity"], df["delta"]/df["Ric_adim"], c=df["Ric_adim"], marker='+', cmap=cmap)
+    ax[2].scatter(df["coeff_velocity"], df["sum_phi"], c=df["Ric_adim"], marker='+', cmap=cmap)
+    ax[0].set_yscale("log")
+    ax[0].set_xscale("log")
+    ax[1].set_yscale("log")
+    ax[1].set_xscale("log")
+    ax[2].set_yscale("log")
+    ax[2].set_xscale("log")
+    ax[0].set_ylim([1e-2, 1e4])
+    ax[1].set_ylim([1e-4, 1e2])
+    ax[2].set_ylim([1e-3, 0.5])
+    ax[0].set_xlim([0.9e-3, 1.1e1])
+    ax[0].set_ylabel("$\delta$")
+    ax[1].set_ylabel("$\delta$/$R_{ic}$")
+    ax[2].set_ylabel("<$\phi$>")
+    ax[2].set_xlabel("Growth rate")
+    #fig.subplots_adjust(right=0.8)
+    #cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+    cbar = plt.colorbar(sc, ax=ax.ravel().tolist())
+    cbar.set_label("$R_{ic}$")
+    #plt.tight_layout()
+    #plt.savefig(folder_main+"scaling_laws.pdf")
 
-        fig, ax = plt.subplots(2, 1, sharex=True, figsize=[6, 4])
-        cmap = plt.cm.viridis
-        sc = ax[0].scatter(df["coeff_velocity"], df["delta"], c=df["Ric_adim"], marker='+', cmap=cmap)
-        ax[1].scatter(df["coeff_velocity"], df["delta"]/df["Ric_adim"], c=df["Ric_adim"], marker='+', cmap=cmap)
-        #ax[2].scatter(df["coeff_velocity"], df["sum_phi"], c=df["Ric_adim"], marker='+', cmap=cmap)
-        ax[0].set_yscale("log")
-        ax[0].set_xscale("log")
-        ax[1].set_yscale("log")
-        ax[1].set_xscale("log")
-        #ax[2].set_yscale("log")
-        #ax[2].set_xscale("log")
-        ax[0].set_ylim([1e-2, 1e4])
-        ax[1].set_ylim([1e-4, 1e2])
-        #ax[2].set_ylim([1e-3, 0.5])
-        ax[0].set_xlim([0.2e-3, 1.1e-1])
-        ax[0].set_ylabel("$\delta$")
-        ax[1].set_ylabel("$\delta$/$R_{ic}$")
-        #ax[2].set_ylabel("<$\phi$>")
-        #ax[2].set_xlabel("Growth rate")
-        #fig.subplots_adjust(right=0.8)
-        #cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
-        cbar = plt.colorbar(sc, ax=ax.ravel().tolist())
-        cbar.set_label("$R_{ic}$")
-        #plt.tight_layout()
-        #plt.savefig(folder_main+"scaling_laws_2lines.pdf")
+    fig, ax = plt.subplots(2, 1, sharex=True, figsize=[6, 4])
+    cmap = plt.cm.viridis
+    sc = ax[0].scatter(df["coeff_velocity"], df["delta"], c=df["Ric_adim"], marker='+', cmap=cmap)
+    ax[1].scatter(df["coeff_velocity"], df["delta"]/df["Ric_adim"], c=df["Ric_adim"], marker='+', cmap=cmap)
+    #ax[2].scatter(df["coeff_velocity"], df["sum_phi"], c=df["Ric_adim"], marker='+', cmap=cmap)
+    ax[0].set_yscale("log")
+    ax[0].set_xscale("log")
+    ax[1].set_yscale("log")
+    ax[1].set_xscale("log")
+    #ax[2].set_yscale("log")
+    #ax[2].set_xscale("log")
+    ax[0].set_ylim([1e-2, 1e4])
+    ax[1].set_ylim([1e-4, 1e2])
+    #ax[2].set_ylim([1e-3, 0.5])
+    ax[0].set_xlim([0.2e-3, 1.1e-1])
+    ax[0].set_ylabel("$\delta$")
+    ax[1].set_ylabel("$\delta$/$R_{ic}$")
+    #ax[2].set_ylabel("<$\phi$>")
+    #ax[2].set_xlabel("Growth rate")
+    #fig.subplots_adjust(right=0.8)
+    #cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+    cbar = plt.colorbar(sc, ax=ax.ravel().tolist())
+    cbar.set_label("$R_{ic}$")
+    #plt.tight_layout()
+    #plt.savefig(folder_main+"scaling_laws_2lines.pdf")
 
 
-        # contourf plots with delta and <phi> as function of Ric and \dot Ric
-        print(np)
-        x = np.log(np.array(df["coeff_velocity"].values).astype(float))/np.log(10.) # growth rate
-        # x = np.array(df["coeff_velocity"].values).astype(float)
-        y = np.log(np.array(df["Ric_adim"].values).astype(float))/np.log(10.) # radius IC
-        # y = np.array(df["Ric_adim"].values).astype(float)
-        #delta = np.array(df["delta"].values).astype(float) # 
-        delta = np.log(np.array(df["delta"].values).astype(float))/np.log(10.)
-        phi = np.array(df["sum_phi"].values).astype(float) # 
-        #phi = np.log(np.array(df["sum_phi"].values).astype(float))/np.log(10.)
-        print(len(x), len(y), len(delta))
-        fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 4])
-        cmap = plt.cm.magma
-        cntr1 = ax[0].tricontourf(x, y, delta, 20,  cmap=cmap)
-        ax[0].plot(x, y, 'ko', ms=3)
-        cntr2 = ax[1].tricontourf(x, y, phi, 30,  cmap=cmap)
-        ax[1].plot(x, y, 'ko', ms=3)
-        cbar1 = plt.colorbar(cntr1, ax=ax[0])
-        cbar2 = plt.colorbar(cntr2, ax=ax[1])
-        ax[0].set_title("Thickness of upper layer")
-        ax[1].set_title("Average porosity")
-        ax[0].set_xlabel("$\dot{R}_{\text{ic}}$")
-        ax[0].set_ylabel("$R_{\text{ic}}$")
-        ax[1].set_xlabel("$\dot{R}_{\text{ic}}$")
-        #ax[0].set_yscale('log')
-        #ax[0].set_xscale('log')
-        #ax[1].set_yscale('log')
-        #ax[1].set_xscale('log')
+    # contourf plots with delta and <phi> as function of Ric and \dot Ric
+    print(np)
+    x = np.log(np.array(df["coeff_velocity"].values).astype(float))/np.log(10.) # growth rate
+    # x = np.array(df["coeff_velocity"].values).astype(float)
+    y = np.log(np.array(df["Ric_adim"].values).astype(float))/np.log(10.) # radius IC
+    # y = np.array(df["Ric_adim"].values).astype(float)
+    #delta = np.array(df["delta"].values).astype(float) # 
+    delta = np.log(np.array(df["delta"].values).astype(float))/np.log(10.)
+    phi = np.array(df["sum_phi"].values).astype(float) # 
+    #phi = np.log(np.array(df["sum_phi"].values).astype(float))/np.log(10.)
+    print(len(x), len(y), len(delta))
+    fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 4])
+    cmap = plt.cm.magma
+    cntr1 = ax[0].tricontourf(x, y, delta, 20,  cmap=cmap)
+    ax[0].plot(x, y, 'ko', ms=3)
+    cntr2 = ax[1].tricontourf(x, y, phi, 30,  cmap=cmap)
+    ax[1].plot(x, y, 'ko', ms=3)
+    cbar1 = plt.colorbar(cntr1, ax=ax[0])
+    cbar2 = plt.colorbar(cntr2, ax=ax[1])
+    ax[0].set_title("Thickness of upper layer")
+    ax[1].set_title("Average porosity")
+    ax[0].set_xlabel("$\dot{R}_{\text{ic}}$")
+    ax[0].set_ylabel("$R_{\text{ic}}$")
+    ax[1].set_xlabel("$\dot{R}_{\text{ic}}$")
+    #ax[0].set_yscale('log')
+    #ax[0].set_xscale('log')
+    #ax[1].set_yscale('log')
+    #ax[1].set_xscale('log')
 
-        plt.savefig(folder_main+"scaling_contourf.pdf")
+    plt.savefig(folder_main+"scaling_contourf.pdf")
 
 
 
 
 def scaling_laws(file="data.csv"):
-        df = pd.read_csv(file)
+    df = pd.read_csv(file)
 
-        small_v = df[df["coeff_velocity"]<3e-2]
-        large_v = df[df["coeff_velocity"]>1e0]
-        fig, ax = plt.subplots(1,2)
-        ax[0].scatter(small_v["coeff_velocity"], small_v["delta"])
-        ax[1].scatter(large_v["coeff_velocity"], large_v["delta"]/large_v["Ric_adim"])
-        ax[0].set_yscale("log")
-        ax[0].set_xscale("log")
-        ax[1].set_yscale("log")
-        ax[1].set_xscale("log")
-        ax[0].set_xlim([1e-3, 1e-1])
-        ax[0].set_ylim([1e-2, 1e0])
-        ax[1].set_xlim([1e0, 1e2])
-        ax[1].set_ylim([1e0, 1e2])
+    small_v = df[df["coeff_velocity"]<3e-2]
+    large_v = df[df["coeff_velocity"]>1e0]
+    fig, ax = plt.subplots(1,2)
+    ax[0].scatter(small_v["coeff_velocity"], small_v["delta"])
+    ax[1].scatter(large_v["coeff_velocity"], large_v["delta"]/large_v["Ric_adim"])
+    ax[0].set_yscale("log")
+    ax[0].set_xscale("log")
+    ax[1].set_yscale("log")
+    ax[1].set_xscale("log")
+    ax[0].set_xlim([1e-3, 1e-1])
+    ax[0].set_ylim([1e-2, 1e0])
+    ax[1].set_xlim([1e0, 1e2])
+    ax[1].set_ylim([1e0, 1e2])
 
-        powerlaw = lambda x, amp, index: amp * (x**index)
+    powerlaw = lambda x, amp, index: amp * (x**index)
 
-        def power_law_fit(xdata, ydata):
-            logx = np.log10(xdata)
-            logy = np.log10(ydata)
-            logyerr = 0.2
-            # define our (line) fitting function
-            fitfunc = lambda p, x: p[0] + p[1] * x
-            errfunc = lambda p, x, y, err: (y - fitfunc(p, x)) / err
-            pinit = [1.0, -1.0]
-            out = optimize.leastsq(errfunc, pinit,
-                                args=(logx, logy, logyerr), full_output=1)
-            pfinal = out[0]
-            covar = out[1]
+    def power_law_fit(xdata, ydata):
+        logx = np.log10(xdata)
+        logy = np.log10(ydata)
+        logyerr = 0.2
+        # define our (line) fitting function
+        fitfunc = lambda p, x: p[0] + p[1] * x
+        errfunc = lambda p, x, y, err: (y - fitfunc(p, x)) / err
+        pinit = [1.0, -1.0]
+        out = optimize.leastsq(errfunc, pinit,
+                            args=(logx, logy, logyerr), full_output=1)
+        pfinal = out[0]
+        covar = out[1]
 
-            index = pfinal[1]
-            amp = 10.0**pfinal[0]
+        index = pfinal[1]
+        amp = 10.0**pfinal[0]
 
-            return pfinal, covar, index, amp
+        return pfinal, covar, index, amp
 
-        #large = power_law_fit(large_v["coeff_velocity"].values, large_v["delta"].values)
-        small = power_law_fit(small_v["coeff_velocity"].values, small_v["delta"].values)
+    #large = power_law_fit(large_v["coeff_velocity"].values, large_v["delta"].values)
+    small = power_law_fit(small_v["coeff_velocity"].values, small_v["delta"].values)
 
-        fig, ax = plt.subplots(2, 1)
-        #xdata = large_v["coeff_velocity"].values
-        #ydata = large_v["delta"]/large_v["Ric_adim"]
-        #ydata = ydata.values
-        #pfinal, covar, index, amp = power_law_fit(xdata, ydata)
-        #ax[0].loglog(xdata, powerlaw(xdata, amp, index))     # Fit
-        #ax[0].loglog(xdata, ydata, 'x')     # Fit
-        #print("exposant for >1e0: {}".format(index))
-        xdata = small_v["coeff_velocity"].values
-        ydata = small_v["delta"].values
-        pfinal, covar, index, amp = power_law_fit(xdata, ydata)
-        ax[1].loglog(xdata, powerlaw(xdata, amp, index))     # Fit
-        ax[1].loglog(xdata, ydata, 'x')     # Fit
-        print("exposant for <1e-1: {}".format(index))
+    fig, ax = plt.subplots(2, 1)
+    #xdata = large_v["coeff_velocity"].values
+    #ydata = large_v["delta"]/large_v["Ric_adim"]
+    #ydata = ydata.values
+    #pfinal, covar, index, amp = power_law_fit(xdata, ydata)
+    #ax[0].loglog(xdata, powerlaw(xdata, amp, index))     # Fit
+    #ax[0].loglog(xdata, ydata, 'x')     # Fit
+    #print("exposant for >1e0: {}".format(index))
+    xdata = small_v["coeff_velocity"].values
+    ydata = small_v["delta"].values
+    pfinal, covar, index, amp = power_law_fit(xdata, ydata)
+    ax[1].loglog(xdata, powerlaw(xdata, amp, index))     # Fit
+    ax[1].loglog(xdata, ydata, 'x')     # Fit
+    print("exposant for <1e-1: {}".format(index))
 
-        #print(df)
+    #print(df)
 
 
 
