@@ -256,15 +256,71 @@ def fig_thickness(folder_main):
 
 
 def fig_porosity(folder_main):
+    fig, ax = plt.subplots(2,1, figsize=[4,6])
 
-        fig, ax = plt.subplots(2,1, figsize=[4,6])
-
-        size = np.array([1, 10, 20, 50, 100, 200])
-        growth = np.array([1., 0., -1., -2.])
-        cm = plt.cm.viridis((growth+2)/4)
-        list_subfolder = os.listdir(folder_main)
+    size = np.array([1, 10, 20, 50, 100, 200])
+    growth = np.array([1., 0., -1., -2.])
+    cm = plt.cm.viridis((growth+2)/4)
+    list_subfolder = os.listdir(folder_main)
+    
+    for subfolder_name in list_subfolder:
+        list_files = os.listdir(folder_main+"/"+subfolder_name)
+        for file in list_files:
+            if file[-14:] == "statistics.txt":
+                file_stat = folder_main + "/" + subfolder_name + "/" + file
+            if file[-5:] == ".yaml":
+                with open(folder_main + "/" + subfolder_name + "/" + file, 'r') as stream:
+                    try:
+                        param = yaml.safe_load(stream)
+                        #print(param)
+                    except yaml.YAMLError as exc:
+                        print(exc)
+        data = pd.read_csv(file_stat, sep=" ", index_col=False)
+        index = np.argmin((10**growth-param["coeff_velocity"])**2)
+        if param["Ric_adim"] == 100:
+            marker = "--"
+        else: marker = "-"
+        if param["coeff_velocity"] == 1:
+            label = r"$R_{ic}$ = "+"{}".format(param["Ric_adim"])
+        else: label = ""
+        ax[0].plot(data["radius"]/param["Ric_adim"], data["sum_phi"], marker,   color=cm[index], label=label)
+        if param["Ric_adim"] == 10:
+            label = r"$\dot{R}_{ic}$ = "+ "{}".format(param["coeff_velocity"])
+        else: label = ""
+        ax[1].plot(data["radius"]/param["Ric_adim"], data["thickness_boundary"], marker,  color=cm[index], label=label)
         
-        for subfolder_name in list_subfolder:
+        #print(param['coeff_velocity'], data["thickness_boundary"].iloc[-1]/param["Ric_adim"])
+        #ax[1].scatter(param['coeff_velocity'], data["sum_phi"].iloc[-1], c=param["Ric_adim"], linewidths=0, vmin=1, vmax=200, marker=symbols[index_size])
+    #ax[0].set_ylim([0, 3])
+    #ax[]
+    ax[1].set_yscale("log")
+    #ax[1].set_xscale("log")
+    ax[1].set_ylim([1e-1, 1.e4])
+    ax[1].set_xlim([0, 1])
+    #ax[1].set_xlim([0.9e-2, 1])
+    ax[0].legend()
+    ax[1].legend()
+    ax[1].set_xlabel("Radius/$R_{ic}$")
+    ax[0].set_ylabel("<$\phi$>")
+    ax[1].set_ylabel("$\delta$")
+    plt.tight_layout()
+    plt.savefig("phi_delta.pdf")
+    #plt.show()
+
+
+def diagram_data(folder_main, output="data.csv"):
+    columns = ["Ric_adim", "coeff_velocity", "exp", "sum_phi", "delta"]
+    df = pd.DataFrame(columns=columns)
+
+    def add_value(df, ric, coeff, exp, phi, delta, remarks=""):
+        df_add = pd.DataFrame({"Ric_adim":[ric], "coeff_velocity":[coeff], "exp":[exp], "sum_phi":[phi], "delta":[delta]})
+        df = df.append(df_add)
+        return df
+
+    list_subfolder = os.listdir(folder_main)
+    print("Looking through folder {}".format(folder_main))
+    for subfolder_name in list_subfolder:
+        if os.path.isdir(folder_main + "/" + subfolder_name):
             list_files = os.listdir(folder_main+"/"+subfolder_name)
             for file in list_files:
                 if file[-14:] == "statistics.txt":
@@ -277,76 +333,40 @@ def fig_porosity(folder_main):
                         except yaml.YAMLError as exc:
                             print(exc)
             data = pd.read_csv(file_stat, sep=" ", index_col=False)
-            index = np.argmin((10**growth-param["coeff_velocity"])**2)
-            if param["Ric_adim"] == 100:
-                marker = "--"
-            else: marker = "-"
-            if param["coeff_velocity"] == 1:
-                label = r"$R_{ic}$ = "+"{}".format(param["Ric_adim"])
-            else: label = ""
-            ax[0].plot(data["radius"]/param["Ric_adim"], data["sum_phi"], marker,   color=cm[index], label=label)
-            if param["Ric_adim"] == 10:
-                label = r"$\dot{R}_{ic}$ = "+ "{}".format(param["coeff_velocity"])
-            else: label = ""
-            ax[1].plot(data["radius"]/param["Ric_adim"], data["thickness_boundary"], marker,  color=cm[index], label=label)
-            
-            #print(param['coeff_velocity'], data["thickness_boundary"].iloc[-1]/param["Ric_adim"])
-            #ax[1].scatter(param['coeff_velocity'], data["sum_phi"].iloc[-1], c=param["Ric_adim"], linewidths=0, vmin=1, vmax=200, marker=symbols[index_size])
-        #ax[0].set_ylim([0, 3])
-        #ax[]
-        ax[1].set_yscale("log")
-        #ax[1].set_xscale("log")
-        ax[1].set_ylim([1e-1, 1.e4])
-        ax[1].set_xlim([0, 1])
-        #ax[1].set_xlim([0.9e-2, 1])
-        ax[0].legend()
-        ax[1].legend()
-        ax[1].set_xlabel("Radius/$R_{ic}$")
-        ax[0].set_ylabel("<$\phi$>")
-        ax[1].set_ylabel("$\delta$")
-        plt.tight_layout()
-        plt.savefig("phi_delta.pdf")
-        #plt.show()
+            #if data["radius"].iloc[-1] < 0.99*param["Ric_adim"]:
+            #    remarks = "run ended before completion. Radius {}/{}".format(data["radius"], param["Ric_adim"])
+            #else:
+            #    remarks = ""
+            if data["thickness_boundary"].iloc[-1] < 1e-12:
+                print("no boundary for R {}, dot_R {}: folder {}".format(param["Ric_adim"], param['coeff_velocity'], folder_main + "/" +subfolder_name))
+            df = add_value(df, param["Ric_adim"], param['coeff_velocity'], param['growth_rate_exponent'], 
+                        data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1])
+        else: print("oups, not a folder: {}".format(folder_main + "/" + subfolder_name))
+    df.to_csv(folder_main+"data.csv")
+    return df
 
-
-def diagram_data(folder_main, output="data.csv"):
-        columns = ["Ric_adim", "coeff_velocity", "exp", "sum_phi", "delta"]
-        df = pd.DataFrame(columns=columns)
-
-        def add_value(df, ric, coeff, exp, phi, delta, remarks=""):
-            df_add = pd.DataFrame({"Ric_adim":[ric], "coeff_velocity":[coeff], "exp":[exp], "sum_phi":[phi], "delta":[delta]})
-            df = df.append(df_add)
-            return df
-
-        list_subfolder = os.listdir(folder_main)
-        print("Looking through folder {}".format(folder_main))
-        for subfolder_name in list_subfolder:
-            if os.path.isdir(folder_main + "/" + subfolder_name):
-                list_files = os.listdir(folder_main+"/"+subfolder_name)
-                for file in list_files:
-                    if file[-14:] == "statistics.txt":
-                        file_stat = folder_main + "/" + subfolder_name + "/" + file
-                    if file[-5:] == ".yaml":
-                        with open(folder_main + "/" + subfolder_name + "/" + file, 'r') as stream:
-                            try:
-                                param = yaml.safe_load(stream)
-                                #print(param)
-                            except yaml.YAMLError as exc:
-                                print(exc)
-                data = pd.read_csv(file_stat, sep=" ", index_col=False)
-                #if data["radius"].iloc[-1] < 0.99*param["Ric_adim"]:
-                #    remarks = "run ended before completion. Radius {}/{}".format(data["radius"], param["Ric_adim"])
-                #else:
-                #    remarks = ""
-                if data["thickness_boundary"].iloc[-1] < 1e-12:
-                    print("no boundary for R {}, dot_R {}: folder {}".format(param["Ric_adim"], param['coeff_velocity'], folder_main + "/" +subfolder_name))
-                df = add_value(df, param["Ric_adim"], param['coeff_velocity'], param['growth_rate_exponent'], 
-                            data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1])
-            else: print("oups, not a folder: {}".format(folder_main + "/" + subfolder_name))
-        df.to_csv(folder_main+"data.csv")
-        return df
-        
-
+def diagram(df, ylim=[-2, 2.5], xlim=[-4, 3]):
+        x = np.log(np.array(df["coeff_velocity"].values).astype(float))/np.log(10.) # growth rate
+        y = np.log(np.array(df["Ric_adim"].values).astype(float))/np.log(10.) # radius IC
+        #delta = np.array(df["delta"].values).astype(float) # 
+        delta = np.log(np.array(df["delta"].values).astype(float))/np.log(10.)
+        #delta = np.log(np.array(df["delta"].values).astype(float)*np.array(df["Ric_adim"].values).astype(float))/np.log(10.)
+        phi = np.array(df["sum_phi"].values).astype(float) # 
+        phi = np.log(np.array(df["sum_phi"].values).astype(float))/np.log(10.)
+        fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 4])
+        cmap = plt.cm.magma
+        cntr1 = ax[0].tricontourf(x, y, delta, 20,  cmap=cmap)
+        cntr2 = ax[1].tricontourf(x, y, phi, 30,  cmap=cmap)
+        cbar1 = plt.colorbar(cntr1, ax=ax[0])
+        cbar2 = plt.colorbar(cntr2, ax=ax[1])
+        ax[0].set_title("Thickness of upper layer")
+        ax[1].set_title("Average porosity")
+        ax[0].set_xlabel("$\dot{R}_{\text{ic}}$")
+        ax[0].set_ylabel("$R_{\text{ic}}$")
+        ax[1].set_xlabel("$\dot{R}_{\text{ic}}$")
+        ax[0].set_ylim(ylim)
+        ax[0].set_xlim(xlim)
+    
 def fig_porosity_thickness(folder_main):
         columns = ["Ric_adim", "coeff_velocity", "exp", "sum_phi", "delta", "remarks"]
         df = pd.DataFrame(columns=columns)
