@@ -216,43 +216,43 @@ def all_figures(folder):
 
 def fig_thickness(folder_main):
 
-        fig, ax = plt.subplots(2, 1, sharex=True)
+    fig, ax = plt.subplots(2, 1, sharex=True)
 
-        size = np.array([1, 10, 20, 50, 100, 200])
-        symbols = ["o", "v", "^", "s", "*", "d"]
-        cm = plt.cm.magma(size/200)
-        list_subfolder = os.listdir(folder_main)
-        for subfolder_name in list_subfolder:
-            list_files = os.listdir(folder_main+"/"+subfolder_name)
-            for file in list_files:
-                if file[-14:] == "statistics.txt":
-                    file_stat = folder_main + "/" + subfolder_name + "/" + file
-                if file[-5:] == ".yaml":
-                    with open(folder_main + "/" + subfolder_name + "/" + file, 'r') as stream:
-                        try:
-                            param = yaml.safe_load(stream)
-                            #print(param)
-                        except yaml.YAMLError as exc:
-                            print(exc)
-            data = pd.read_csv(file_stat, sep=" ", index_col=False)
-            index_size = np.argmin((size-param["Ric_adim"])**2)
-            ax[0].scatter(param['coeff_velocity'], data["thickness_boundary"].iloc[-1]/param["Ric_adim"], c=param["Ric_adim"], linewidths=0, vmin=1, vmax=200, marker=symbols[index_size])            
-            #print(param['coeff_velocity'], data["thickness_boundary"].iloc[-1]/param["Ric_adim"])
-            ax[1].scatter(param['coeff_velocity'], data["thickness_boundary"].iloc[-1], c=param["Ric_adim"], linewidths=0, vmin=1, vmax=200, marker=symbols[index_size])
-        #ax[0].set_ylim([0, 3])
-        #ax[]
-        ax[1].set_yscale("log")
-        ax[1].set_xscale("log")
-        ax[0].set_yscale("log")
-        ax[0].set_xscale("log")
-        ax[1].set_ylim([1e-4, 1e4])
-        ax[0].set_ylim([1e-4, 1e4])
-        ax[0].set_ylabel("$\delta$/$R_{ic}$")
-        ax[1].set_ylabel("$\delta$")
-        ax[1].set_xlabel("coeff growth velocity")
-        plt.tight_layout()
-        #ax[0].legend()
-        #plt.show()
+    size = np.array([1, 10, 20, 50, 100, 200])
+    symbols = ["o", "v", "^", "s", "*", "d"]
+    cm = plt.cm.magma(size/200)
+    list_subfolder = os.listdir(folder_main)
+    for subfolder_name in list_subfolder:
+        list_files = os.listdir(folder_main+"/"+subfolder_name)
+        for file in list_files:
+            if file[-14:] == "statistics.txt":
+                file_stat = folder_main + "/" + subfolder_name + "/" + file
+            if file[-5:] == ".yaml":
+                with open(folder_main + "/" + subfolder_name + "/" + file, 'r') as stream:
+                    try:
+                        param = yaml.safe_load(stream)
+                        #print(param)
+                    except yaml.YAMLError as exc:
+                        print(exc)
+        data = pd.read_csv(file_stat, sep=" ", index_col=False)
+        index_size = np.argmin((size-param["Ric_adim"])**2)
+        ax[0].scatter(param['coeff_velocity'], data["thickness_boundary"].iloc[-1]/param["Ric_adim"], c=param["Ric_adim"], linewidths=0, vmin=1, vmax=200, marker=symbols[index_size])            
+        #print(param['coeff_velocity'], data["thickness_boundary"].iloc[-1]/param["Ric_adim"])
+        ax[1].scatter(param['coeff_velocity'], data["thickness_boundary"].iloc[-1], c=param["Ric_adim"], linewidths=0, vmin=1, vmax=200, marker=symbols[index_size])
+    #ax[0].set_ylim([0, 3])
+    #ax[]
+    ax[1].set_yscale("log")
+    ax[1].set_xscale("log")
+    ax[0].set_yscale("log")
+    ax[0].set_xscale("log")
+    ax[1].set_ylim([1e-4, 1e4])
+    ax[0].set_ylim([1e-4, 1e4])
+    ax[0].set_ylabel("$\delta$/$R_{ic}$")
+    ax[1].set_ylabel("$\delta$")
+    ax[1].set_xlabel("coeff growth velocity")
+    plt.tight_layout()
+    #ax[0].legend()
+    #plt.show()
 
 
 def fig_porosity(folder_main):
@@ -342,7 +342,7 @@ def diagram_data(folder_main, output="data.csv"):
             df = add_value(df, param["Ric_adim"], param['coeff_velocity'], param['growth_rate_exponent'], 
                         data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1])
         else: print("oups, not a folder: {}".format(folder_main + "/" + subfolder_name))
-    df.to_csv(folder_main+"data.csv")
+    df.to_csv(folder_main+output)
     return df
 
 def diagram(df, ylim=[-2, 2.5], xlim=[-4, 3]):
@@ -352,13 +352,13 @@ def diagram(df, ylim=[-2, 2.5], xlim=[-4, 3]):
     delta = np.log(np.array(df["delta"].values).astype(float))/np.log(10.)
     #delta = np.log(np.array(df["delta"].values).astype(float)*np.array(df["Ric_adim"].values).astype(float))/np.log(10.)
     phi = np.array(df["sum_phi"].values).astype(float) # 
-    phi = np.log(np.array(df["sum_phi"].values).astype(float))/np.log(10.)
+    #phi = np.log(np.array(df["sum_phi"].values).astype(float))/np.log(10.)
     fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 4])
     cmap = plt.cm.magma
-    cntr1 = ax[0].tricontourf(x, y, delta, 20,  cmap=cmap)
-    cntr2 = ax[1].tricontourf(x, y, phi, 30,  cmap=cmap)
-    cbar1 = plt.colorbar(cntr1, ax=ax[0])
-    cbar2 = plt.colorbar(cntr2, ax=ax[1])
+    cntr1 = ax[0].tricontourf(x, y, delta, levels=np.linspace(-2, 7, 30),  cmap=cmap)
+    cntr2 = ax[1].tricontourf(x, y, phi, levels=np.linspace(0, 0.4, 30),  cmap=cmap)
+    cbar1 = plt.colorbar(cntr1, ax=ax[0], ticks=np.linspace(-2, 7, 10))
+    cbar2 = plt.colorbar(cntr2, ax=ax[1], ticks=[0., 0.1, 0.2, 0.3, 0.4])
     ax[0].set_title("Thickness of upper layer")
     ax[1].set_title("Average porosity")
     ax[0].set_xlabel("$\dot{R}_{\text{ic}}$")
@@ -664,19 +664,19 @@ def fig_5profiles(folder_base):
 
 if __name__ == "__main__":
 
-    folder = "/home/marine/ownCloud/Research/Projets/mush_projet/data_paper/diagram_n3/"
+    folder = "/home/marine/ownCloud/Research/Projets/mush_projet/data_paper/test_supercooling/"
     #folder = "/home/marine/ownCloud/Research/Projets/output_mush/low_Vg"
     # all_figures(folder+"/exp_1.00_coeff_1.00_radius_0.01/")
     
     #fig_5profiles(folder)
-    fig_porosity_thickness(folder)
+    #fig_porosity_thickness(folder)
     #plt.show()
-    #list_folder = os.listdir(folder)
+    list_folder = os.listdir(folder)
     #print(list_folder)
-    #for name in list_folder:
-    #   if name[:3] == "exo": #"exp":
+    for name in list_folder:
+       if name[:3] == "exp": #"exp":
     #       print(folder+name)
-    #       all_figures(folder+'/'+name)
+           all_figures(folder+'/'+name)
     #       plt.close("all")
 
     
@@ -684,7 +684,7 @@ if __name__ == "__main__":
     #scaling_laws()
     #fig_thickness(folder)
     #fig_porosity(folder)
-    plt.show()
+    #plt.show()
     # snippet for ordering dictionnary and print values.
     # from operator import itemgetter
     # for key, value in sorted(d.items(), key = itemgetter(1)):
