@@ -175,35 +175,11 @@ def velocity_Sramek(variable, radius, options, verbose=False):
     and a, c are injected as length N-2 for calculating the tridiagonal matrix.
     """
     dr = radius[1] - radius[0]
-    try:
-        s = options['sign']
-    except KeyError:
-        s = -1.
-        if verbose:
-            print("s (sign of density difference) was not defined, please consider defining it for later. Default value is {}".format(s))
+    s = options['sign']
+    K0 = options['K0']
+    delta = options["delta"]
+    n = options["n"]
 
-    try:
-        K0 = options['K0']
-    except KeyError:
-        K0 = 1.
-        if verbose:
-            print(
-                "K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
-
-    try:
-        delta = options["delta"]
-    except KeyError:
-        delta = 1.
-        if verbose:
-            print("Delta (compaction length) was not defined, please consider defining it for later. Default value is {}".format(delta))
-
-    try:
-        n = options["n"]
-    except KeyError:
-        n = 2.
-        if verbose:
-            print("The value for n was not choose. Default is 2 (similar to Sramek)")
-        
     _inter = (K0 + 4. / 3. * variable) * (1. - variable) / variable
 
     if options["coordinates"] == "cartesian":
@@ -224,7 +200,6 @@ def velocity_Sramek(variable, radius, options, verbose=False):
             radius[1:-1]**2 / (radius[1:-1] + dr / 2)**2
         _c = _inter[1:] / dr**2 * variable[:-1] * variable[1:] * \
             radius[2:]**2 / (radius[1:-1] + dr / 2)**2
-        # TODO add a version if no time max (so no growth)
         _d = s * radius[1:-1] / options["Ric_adim"] *\
             (1 - np.sqrt(variable[:-1] * variable[1:])) *\
             (variable[:-1] * variable[1:])**(n/2.)
@@ -262,53 +237,14 @@ def velocity_Sumita(variable, radius, options, verbose=False):
     """
     dr = radius[1] - radius[0]  # assuming no variations of dr
 
-    try:
-        K0 = options['K0']
-    except KeyError:
-        K0 = 1.
-        if verbose:
-            print(
-                "K0 was not defined, please consider defining it for later. Default value is {}".format(K0))
-
-    try:
-        eta = options["eta"]
-    except KeyError:
-        eta = 1.
-        if verbose:
-            print(
-                "eta was not defined, please consider defining it for later. Default value is {}".format(eta))
-
-    try:
-        eta0 = options["eta0"]
-    except KeyError:
-        eta0 = 1.
-        if verbose:
-            print(
-                "eta0 was not defined, please consider defining it for later. Default value is {}".format(eta0))
-
-    try:
-        K = options["K"]
-    except KeyError:
-        K = 1.
-        if verbose:
-            print(
-                "K was not defined, please consider defining it for later. Default value is {}".format(K))
-
-    try:
-        grain = options["grain"]
-    except KeyError:
-        grain = 1
-        if verbose:
-            print(
-                "grain was not defined, please consider defining it for later. Default value is {}".format(grain))
-
-    try:
-        sign = options["sign"]
-    except KeyError:
-        sign = -1.
-        if verbose:
-            print(
-                "sign was not defined, please consider defining it for later. Default value is {}".format(sign))
+    K0 = options['K0']
+    eta = options["eta"]
+    eta0 = options["eta0"]
+    K = options["K"]
+    grain = options["grain"]
+    sign = options["sign"]
+    sign = -1.
+        
     if options["coordinates"] == "cartesian":
         _a = - ((1. / (dr**2.)) * ((1. - variable[0:-1])**2.)
                 * (4. / (3. * variable[0:-1])) * (eta / eta0))
@@ -328,7 +264,6 @@ def velocity_Sumita(variable, radius, options, verbose=False):
                 * (1 / ((radius[0:-2]) + (dr / 2))**2) * (((radius[1:-1])**2 / dr**2)))
         _c = -((4 * (1 - variable[1:])**2) / (3 * variable[1:])) * (eta / eta0) \
             * (1 / ((radius[1:-1]) + (dr / 2))**2) * (((radius[2:])**2 / dr**2))
-         # TODO add a version if no time max (so no growth)
         _d = - sign / options["Ric_adim"] * \
             ((1. - np.sqrt(variable[1:] * variable[0:-1])) * (radius[1:-1]))
 
