@@ -192,7 +192,7 @@ def run_growth_random(n=2, Nr=20, Nc=20):
 
 
 
-def run_supercooling(Nr=5, Nc=5, N_r0=10):
+def run_all_supercooling(Nr=7, Nc=8, N_r0=20):
 
     logradius = np.linspace(-3, 3, Nr)
     exp= 0.5
@@ -211,7 +211,7 @@ def run_supercooling(Nr=5, Nc=5, N_r0=10):
                     if r>900: N_max = 15000
                     elif r> 200.: N_max = 5000
                 options = param_supercooling(r, exp, coeff, r0.item(), n=n, basefolder="./supercooling/", R_init=5e-3, N_max=N_max)
-                run(options)
+                run_supercooling(options)
 
 
 
@@ -230,4 +230,4 @@ if __name__ == "__main__":
     #if args.verbose:
     #    print("verbosity turned on")
 
-    run_growth_random(2)
+    run_all_supercooling()
