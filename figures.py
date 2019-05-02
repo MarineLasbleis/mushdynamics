@@ -29,6 +29,25 @@ def find_folder():
         print("Folder for output: {}.".format(folder))
     return folder
 
+def extract_files(subfolder):
+        list_files = os.listdir(subfolder)
+        timesteps = {}
+        for file in list_files:
+            if file[-14:] == "statistics.txt":
+                file_stat = subfolder + "/" + file
+            elif file[-9:] == ".timestep":
+                _name = subfolder + "/" + file
+                _time = figures.find_float(file)
+                timesteps[_name] = _time
+            elif file[-5:] == ".yaml":
+                with open(subfolder + "/" + file, 'r') as stream:
+                    try:
+                        param = yaml.safe_load(stream)
+                        #print(param)
+                    except yaml.YAMLError as exc:
+                        print(exc)
+        return file_stat, param, timesteps
+from operator import itemgetter
 
 def fig_stat(filename, save=False, output="", print_all=True, print_list=[]):
     data = pd.read_csv(filename, sep=" ", index_col=False)
@@ -353,12 +372,15 @@ def diagram(df, ylim=[-2, 2.5], xlim=[-4, 3]):
     #delta = np.log(np.array(df["delta"].values).astype(float)*np.array(df["Ric_adim"].values).astype(float))/np.log(10.)
     phi = np.array(df["sum_phi"].values).astype(float) # 
     #phi = np.log(np.array(df["sum_phi"].values).astype(float))/np.log(10.)
-    fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 4])
+    
+    fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 3])
     cmap = plt.cm.magma
     cntr1 = ax[0].tricontourf(x, y, delta, levels=np.linspace(-2, 7, 30),  cmap=cmap)
     cntr2 = ax[1].tricontourf(x, y, phi, levels=np.linspace(0, 0.4, 30),  cmap=cmap)
     cbar1 = plt.colorbar(cntr1, ax=ax[0], ticks=np.linspace(-2, 7, 10))
+    cbar1.ax.set_ylabel("$\ln_{10}\delta_{top}$")
     cbar2 = plt.colorbar(cntr2, ax=ax[1], ticks=[0., 0.1, 0.2, 0.3, 0.4])
+    cbar2.ax.set_ylabel("$<\phi>$")
     ax[0].set_title("Thickness of upper layer")
     ax[1].set_title("Average porosity")
     ax[0].set_xlabel("$\dot{R}_{\text{ic}}$")
