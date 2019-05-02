@@ -16,7 +16,7 @@ class Compaction():
     def __init__(self, calcul_velocity, **options):
         self.options = options
         self.verify_parameters()
-        print(self.options)
+        #print(self.options)
         self.print_param()
         self.iter_max = 100000000
         self.calcul_velocity = calcul_velocity
@@ -174,8 +174,13 @@ def verify_parameters(options):
     # calculate the missing Ric_adim, time_max, coeff velocity
 
     # ce serait plus elegant de faire autrement...
-    if options["coeff_velocity"] ==0.:
-        return options
+    try:
+        if options["no_growth"] ==1:
+            options["coeff_velocity"] =0
+            return options
+    except KeyError:
+        pass
+        
 
     if "Ric_adim" in options and "time_max" in options and "coeff_velocity" in options:
         print("Ric_adim, time_max and coeff_velocity should not be given together as options. Coeff_velocity overwritten by the system.")
@@ -217,9 +222,9 @@ def print_param(options):
 
 def plot_growth():
     # we need to provide some options, but the only ones we will use are the growth history's ones!
-    def options(r, t_max, exp):
-        coeff = r/(t_max**exp)
-        print(coeff)
+    
+    def options_2(r, t_max, exp):
+        #t_max = (r/coeff)**(1/exp)
         #t_max **exp = r/coeff
         #t_max = (r/coeff)**(1/exp)
         opt = {     'output': " ",
@@ -227,24 +232,30 @@ def plot_growth():
                     'coordinates': "spherical",
                     "growth_rate_exponent": exp,
                     'time_max': t_max,
-                    'coeff_velocity': coeff, 
+                    #'coeff_velocity': coeff, 
                     'N_init':4,
-                    "R_init": 1., 
+                    "R_init": .1, 
                     "phi_init": 0., 
                     "phi_0": 0., 
                     "dt_print": 0.,
-                    "BC": ""
+                    "BC": "",
+                    'sign' :-1,
+                    'K0': 1.,
+                    'delta':1.,
+                    'n':2,
+                    'Ric_adim':r
                     }
         return opt
 
+    Ric, tau_ic = 10., 1.
 
-    Model_t1 = Compaction(mush.velocity_Sramek, **options(10., 1., 1.))
-    Model_t05 = Compaction(mush.velocity_Sramek, **options(10., 1., 0.5))
-    Model_t03 = Compaction(mush.velocity_Sramek, **options(10., 1., 1./3.))
+    Model_t1 = Compaction(mush.velocity_Sramek, **options_2(Ric, tau_ic, 1.))
+    Model_t05 = Compaction(mush.velocity_Sramek, **options_2(Ric, tau_ic, 0.5))
+    Model_t03 = Compaction(mush.velocity_Sramek, **options_2(Ric, tau_ic, 1./3.))
 
-    opt = options(10., 1., 1./2)
+    opt = options_2(Ric, tau_ic, 1./2)
     opt["t0_supercooling"] = 1e-3
-    opt["r0_supercooling"] = 7.
+    opt["r0_supercooling"] = 0.7*Ric
     Model_supercooling = Compaction_Supercooling(mush.velocity_Sramek, **opt)
 
     models = [Model_t1, Model_t05, Model_t03] # , Model_supercooling]
@@ -262,7 +273,7 @@ def plot_growth():
             growth[i] = mod.growth_rate(t)
         ax[0].plot(time, radius, lines[j], label=labels[j])
         ax[1].plot(time, growth, lines[j], label=labels[j])
-
+        print(mod.growth_rate(tmax))
     mod = Model_supercooling
     tmax = mod.time_max
     time = np.linspace(0, tmax, 100)
@@ -271,13 +282,14 @@ def plot_growth():
     for i, t in enumerate(time):
             radius[i] = mod.radius(t)
             growth[i] = mod.growth_rate(t)
+            
     ax[0].plot(time+mod.options["Dt_supercooling"], radius, "-.", label="Delayed nucleation")
     ax[1].plot(time+mod.options["Dt_supercooling"], growth, "-.", label="Delayed nucleation")
     #self.options["Dt_supercooling"] 
 
-    ax[1].set_ylim([0,15])
-    ax[0].set_ylim([0,10])
-    ax[0].set_xlim([0,1])
+    ax[1].set_ylim([0,1.5*Ric/tau_ic])
+    ax[0].set_ylim([0,Ric])
+    ax[0].set_xlim([0,tau_ic])
     ax[0].legend()
     ax[1].legend()
 
