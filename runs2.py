@@ -95,7 +95,7 @@ def param_growth(r, exp, coeff, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max
 def param_no_growth(R, t_max, N_time, n=2, N=2000, output="output/"):
     coeff = 0. # no growth
     options = {'advection': "FLS",
-                'n': 2,
+                'n': n,
                 'delta': 1.,
                 'eta': 1.,
                 'psi0': 1.,
@@ -147,33 +147,34 @@ def param_supercooling(r, exp, coeff, r0_supercooling, n=2, N_fig=20, basefolder
     return options
 
 
-def run_no_growth():
-    Ric = 10**(np.linspace(0, 1, 3))
+def run_no_growth(n=3):
+    #Ric = 10**(np.linspace(-1, 2, 3))
+    Ric = np.array([100.])
     for radius in Ric:
-        output = "output_{:.2e}".format(radius)
-        options = param_no_growth(radius, 2e3, 50, N=10000, output=output)
+        output = "no_growth_n3/output_{:.2e}".format(radius)
+        options = param_no_growth(radius.item(), 1e3, 10, N=5000, output=output, n=n)
         run(options)
 
 
 def run_growth():
-    radius = 10**np.linspace(-1, 2, 1)# [100., 200., 300.]
-    exponents = [1., 1.]
-    coefficients = [1., 1.] #10**np.linspace(-2, 2, 5)#[1.]
+    radius = 10**np.array([-0.5]) #10**np.linspace(1., 3, 5 )# [100., 200., 300.]
+    exponents = [0.5]
+    coefficients = 10**np.linspace(2, 0, 5)#[1.]
 
     for r in radius:
         for exp in exponents:
             for coeff in coefficients:
-                options = param_growth(r.item(), exp, coeff, basefolder="./test_param/", R_init=5e-3, N_max=2000)
+                options = param_growth(r.item(), exp, coeff.item(), basefolder="./diag_n3_exp05/", R_init=5e-3, N_max=8000)
                 run(options)
 
 
-def run_growth_random(n=2, Nr=20, Nc=20):
+def run_growth_random(n=3, Nr=20, Nc=9):
     random.seed()
-    logradius = np.linspace(-3, 3, Nr)# [100., 200., 300.]
-    dr = np.abs(np.diff(logradius)[0])
+    logradius = np.array([2.75])# np.linspace(-3, 3, Nr)# [100., 200., 300.]
+    dr = (0.5) #np.abs(np.diff(logradius)[0])
     print(logradius)
-    exp= 1.
-    logcoefficients = np.linspace(3, -4, Nc)#[1.]
+    exp= 0.5
+    logcoefficients = np.linspace(2, -2, Nc)#[1.]
     dc = np.abs(np.diff(logcoefficients)[0])
 
     for logr in logradius:
@@ -187,17 +188,17 @@ def run_growth_random(n=2, Nr=20, Nc=20):
             if coeff < 1.:
                 if r>900: N_max = 15000
                 elif r> 200.: N_max = 5000
-            options = param_growth(r.item(), exp, coeff.item(), n=n, basefolder="./diag_random_n{}/".format(n), R_init=5e-3, N_max=N_max)
+            options = param_growth(r.item(), exp, coeff.item(), n=n, basefolder="./diag_random_n{}_exp05/".format(n), R_init=5e-3, N_max=N_max)
             run(options)
 
 
 
-def run_all_supercooling(Nr=7, Nc=8, N_r0=20):
+def run_all_supercooling(Nr=1, Nc=9, N_r0=45):
 
-    logradius = np.linspace(-3, 3, Nr)
+    logradius = np.linspace(1., 1., Nr)
     exp= 0.5
-    logcoefficients = np.linspace(3, -4, Nc)#[1.]
-    list_r0 = np.linspace(10, 100, N_r0, endpoint=False)
+    logcoefficients = np.array([]) #np.linspace(0, -2, Nc)#[1.]
+    list_r0 = np.linspace(48, 10, N_r0)
     n = 3
 
     for logr in logradius:
@@ -210,7 +211,7 @@ def run_all_supercooling(Nr=7, Nc=8, N_r0=20):
                 if coeff < 1.:
                     if r>900: N_max = 15000
                     elif r> 200.: N_max = 5000
-                options = param_supercooling(r, exp, coeff, r0.item(), n=n, basefolder="./supercooling/", R_init=5e-3, N_max=N_max)
+                options = param_supercooling(r, exp, coeff, r0.item(), n=n, basefolder="./supercooling_4/", R_init=5e-3, N_max=N_max)
                 run_supercooling(options)
 
 
@@ -230,4 +231,4 @@ if __name__ == "__main__":
     #if args.verbose:
     #    print("verbosity turned on")
 
-    run_all_supercooling()
+    run_growth_random()
