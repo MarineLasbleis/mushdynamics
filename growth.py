@@ -145,67 +145,6 @@ class Compaction_Supercooling(Compaction):
         return growth_rate
 
 
-def compaction_column_growth(calcul_velocity, **options):
-    """ Calcul_Velocity is a function (velocity_Sramek or velocity_Sumita) """
-
-    options = verify_parameters(options)
-
-    time = options["t_init"]
-    R_init =  options["R_init"]
-    N = options["N_init"]
-    psi0 = 1 - options["phi_init"]
-
-    R = np.linspace(0, R_init, N + 1)
-    dr = R[1] - R[0]
-    psi = psi0 * np.ones(N)
-    dt_print = options["dt_print"]
-    time_p = time
-    time_max = options["time_max"]
-    it = 0
-    iter_max = 100000000
-
-    velocity = calcul_velocity(1 - psi, R, options)
-    v_m = np.amax(np.abs(velocity))
-    dt = min(0.5 * dr / (v_m), 0.5)
-    dt = min(dt, dr/growth_rate(time, options))
-
-    stat_file = output_folder + options["filename"]+'_statistics.txt'
-    with open(stat_file, 'w') as f:
-        delta = data_analysis.thickness_boundary_layer(1-psi, R)
-        f.write("iteration_number time radius radius_size sum_phi r_dot velocity_top max_velocity RMS_velocity thickness_boundary\n")
-        f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), data_analysis.average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), data_analysis.average(velocity, R[1:-1], options), delta , data_analysis.porosity_compacted_region(1-psi, R, delta, options)))
-
-    while time < time_max and it < iter_max:
-        # for it in range(0,10000):
-        it = it + 1
-        # print(it)
-        time = time + dt
-        time_p = time_p + dt
-        if R[-1]+dr < radius(time, options):
-            psi, R = append_radius(psi, R, options)
-        velocity = calcul_velocity(1 - psi, R, options)
-        psi = mush.update(velocity, psi, dt, R, options)
-        v_m = np.amax(np.abs(velocity))
-        dt = min(0.5, 0.05 * dr / (v_m))
-        dt = min(dt, 0.05*dr/growth_rate(time, options))
-
-        stat = False
-        if it > 1e3:
-            if it%100==0:
-                stat = True
-        else:
-            stat = True
-        if stat:
-            with open(stat_file, 'a') as f:
-                f.write('{:d} {:.4e} {:.4e} {:d} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e} {:.4e}\n'.format(it, time, R[-1], len(R), data_analysis.average(1-psi, R[1:], options), growth_rate(time, options), velocity[-1], np.max(velocity), data_analysis.average(velocity, R[1:-1], options), data_analysis.thickness_boundary_layer(1-psi, R)))
-
-        if time_p > dt_print:
-        # if it % 100 == 0:
-            data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
-            data = pd.DataFrame(data)
-            mush.output(time, data, fig=False, file=True, output_folder=output_folder, ax=[])
-            time_p = time_p - dt_print
-
 
 def radius(time, options):
     """ Radius of the IC, as function of time. """
