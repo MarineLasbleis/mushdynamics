@@ -37,7 +37,7 @@ def extract_files(subfolder):
                 file_stat = subfolder + "/" + file
             elif file[-9:] == ".timestep":
                 _name = subfolder + "/" + file
-                _time = figures.find_float(file)
+                _time = find_float(file)
                 timesteps[_name] = _time
             elif file[-5:] == ".yaml":
                 with open(subfolder + "/" + file, 'r') as stream:
@@ -47,7 +47,7 @@ def extract_files(subfolder):
                     except yaml.YAMLError as exc:
                         print(exc)
         return file_stat, param, timesteps
-from operator import itemgetter
+
 
 def fig_stat(filename, save=False, output="", print_all=True, print_list=[]):
     data = pd.read_csv(filename, sep=" ", index_col=False)
@@ -134,7 +134,7 @@ def all_lines(output_folder, save=False):
     else: plt.show()
 
 
-def all_figures(folder):
+def all_figures(folder, verbose=True):
     # figure with statistics
     list_files = os.listdir(folder)
     timesteps = {}
@@ -152,7 +152,7 @@ def all_figures(folder):
             options = yaml.safe_load(stream)
         except yaml.YAMLError as exc:
             print(exc)
-    print("Figures with global statistics: {}".format(file_stat))
+    if verbose: print("Figures with global statistics: {}".format(file_stat))
     fig_stat(file_stat, save=True)
     # preparation for the figure
     fig, ax = plt.subplots(3,1,figsize=[5,3]) #fig with lines
@@ -182,7 +182,7 @@ def all_figures(folder):
     #print(Z.shape)
 
     for i, (name, time) in enumerate(sorted(timesteps.items(), key = itemgetter(1))):
-        print(name, time)
+        if verbose:  print(name, time)
         # single figure
         # make_figure(name, save=True, output="", max_r=options["Ric_adim"])
         # figure with all timesteps
@@ -328,11 +328,11 @@ def fig_porosity(folder_main):
 
 
 def diagram_data(folder_main, output="data.csv"):
-    columns = ["Ric_adim", "coeff_velocity", "exp", "sum_phi", "delta"]
+    columns = ["Ric_adim", "tau_ic", "exp", "sum_phi", "delta"]
     df = pd.DataFrame(columns=columns)
 
-    def add_value(df, ric, coeff, exp, phi, delta, remarks=""):
-        df_add = pd.DataFrame({"Ric_adim":[ric], "coeff_velocity":[coeff], "exp":[exp], "sum_phi":[phi], "delta":[delta]})
+    def add_value(df, ric, tau, exp, phi, delta, remarks=""):
+        df_add = pd.DataFrame({"Ric_adim":[ric], "tau_ic":[tau], "exp":[exp], "sum_phi":[phi], "delta":[delta]})
         df = df.append(df_add)
         return df
 
@@ -358,14 +358,16 @@ def diagram_data(folder_main, output="data.csv"):
             #    remarks = ""
             if data["thickness_boundary"].iloc[-1] < 1e-12:
                 print("no boundary for R {}, dot_R {}: folder {}".format(param["Ric_adim"], param['coeff_velocity'], folder_main + "/" +subfolder_name))
-            df = add_value(df, param["Ric_adim"], param['coeff_velocity'], param['growth_rate_exponent'], 
+            df = add_value(df, param["Ric_adim"], param['time_max'], param['growth_rate_exponent'], 
                         data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1])
         else: print("oups, not a folder: {}".format(folder_main + "/" + subfolder_name))
     df.to_csv(folder_main+output)
     return df
 
 def diagram(df, ylim=[-2, 2.5], xlim=[-4, 3]):
-    x = np.log(np.array(df["coeff_velocity"].values).astype(float))/np.log(10.) # growth rate
+    df["dot_r"] = df["Ric_adim"]/df["tau_ic"]*df["exp"]
+    x = np.log(np.array(df["dot_r"].values).astype(float))/np.log(10.)
+    #x = np.log(np.array(df["coeff_velocity"].values).astype(float))/np.log(10.) # growth rate
     y = np.log(np.array(df["Ric_adim"].values).astype(float))/np.log(10.) # radius IC
     #delta = np.array(df["delta"].values).astype(float) # 
     delta = np.log(np.array(df["delta"].values).astype(float))/np.log(10.)
@@ -375,17 +377,17 @@ def diagram(df, ylim=[-2, 2.5], xlim=[-4, 3]):
     
     fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 3])
     cmap = plt.cm.magma
-    cntr1 = ax[0].tricontourf(x, y, delta, levels=np.linspace(-2, 7, 30),  cmap=cmap)
+    cntr1 = ax[0].tricontourf(x, y, delta, levels=np.linspace(-2, 5, 30),  cmap=cmap)
     cntr2 = ax[1].tricontourf(x, y, phi, levels=np.linspace(0, 0.4, 30),  cmap=cmap)
-    cbar1 = plt.colorbar(cntr1, ax=ax[0], ticks=np.linspace(-2, 7, 10))
+    cbar1 = plt.colorbar(cntr1, ax=ax[0], ticks=np.linspace(-2, 5, 8))
     cbar1.ax.set_ylabel("$\ln_{10}\delta_{top}$")
     cbar2 = plt.colorbar(cntr2, ax=ax[1], ticks=[0., 0.1, 0.2, 0.3, 0.4])
-    cbar2.ax.set_ylabel("$<\phi>$")
+    cbar2.ax.set_ylabel(r"$<\phi>$")
     ax[0].set_title("Thickness of upper layer")
     ax[1].set_title("Average porosity")
-    ax[0].set_xlabel("$\dot{R}_{\text{ic}}$")
-    ax[0].set_ylabel("$R_{\text{ic}}$")
-    ax[1].set_xlabel("$\dot{R}_{\text{ic}}$")
+    ax[0].set_xlabel(r"$\dot{R}_{{ic}}( \tau_{{ic}})$")
+    ax[0].set_ylabel(r"$R_{{ic}}$")
+    ax[1].set_xlabel(r"$\dot{R}_{{ic}}( \tau_{{ic}})$")
     ax[0].set_ylim(ylim)
     ax[0].set_xlim(xlim)
 
