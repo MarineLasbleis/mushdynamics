@@ -153,8 +153,8 @@ def run_no_growth(n=3):
     #Ric = 10**(np.linspace(-1, 2, 3))
     Ric = np.array([10.])
     for radius in Ric:
-        output = "no_growth_n3/output_{:.2e}".format(radius)
-        options = param_no_growth(radius.item(), 1e3, 100, N=5000, output=output, n=n)
+        output = "output_cartesian_{:.2e}".format(radius)
+        options = param_no_growth(radius.item(), 1e3, 10, N=5000, output=output, n=n)
         run(options)
 
 
@@ -233,4 +233,4 @@ if __name__ == "__main__":
     #if args.verbose:
     #    print("verbosity turned on")
 
-    run_growth()
+    run_no_growth()
