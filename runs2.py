@@ -67,7 +67,7 @@ def default_yaml():
 def modify_param(options, new_options):
     return {**options, **new_options}
 
-def param_growth(r, exp, coeff, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
+def param_growth(r, exp, coeff, n=3, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
     t_max = (r/coeff)**(1/exp)
     dt = t_max/N_fig
     folder_name = basefolder+"/exp_{:.2e}_coeff_{:.2e}_radius_{:.2e}".format(exp, coeff, r)
@@ -115,7 +115,9 @@ def param_no_growth(R, t_max, N_time, n=2, N=2000, output="output/"):
                 "R_init": R,
                 "N_init": N,
                 "t_init": 0.,
-                "Ric_adim": R}
+                "Ric_adim": R, 
+                "no_growth": 1}
+
     return options
 
 def param_supercooling(r, exp, coeff, r0_supercooling, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
@@ -149,22 +151,22 @@ def param_supercooling(r, exp, coeff, r0_supercooling, n=2, N_fig=20, basefolder
 
 def run_no_growth(n=3):
     #Ric = 10**(np.linspace(-1, 2, 3))
-    Ric = np.array([100.])
+    Ric = np.array([10.])
     for radius in Ric:
         output = "no_growth_n3/output_{:.2e}".format(radius)
-        options = param_no_growth(radius.item(), 1e3, 10, N=5000, output=output, n=n)
+        options = param_no_growth(radius.item(), 1e3, 100, N=5000, output=output, n=n)
         run(options)
 
 
 def run_growth():
-    radius = 10**np.array([-0.5]) #10**np.linspace(1., 3, 5 )# [100., 200., 300.]
+    radius = 10**np.array([0.]) #10**np.linspace(1., 3, 5 )# [100., 200., 300.]
     exponents = [0.5]
-    coefficients = 10**np.linspace(2, 0, 5)#[1.]
+    coefficients = 10**np.array([-1.5]) #np.linspace(2,1, 4, endpoint=False)#10**np.linspace(2, 0, 5)#[1.]
 
     for r in radius:
         for exp in exponents:
             for coeff in coefficients:
-                options = param_growth(r.item(), exp, coeff.item(), basefolder="./diag_n3_exp05/", R_init=5e-3, N_max=8000)
+                options = param_growth(r.item(), exp, coeff.item(), basefolder="./lotsoffigs", R_init=5e-3, N_max=5000, N_fig=200)
                 run(options)
 
 
@@ -193,12 +195,12 @@ def run_growth_random(n=3, Nr=20, Nc=9):
 
 
 
-def run_all_supercooling(Nr=1, Nc=9, N_r0=45):
+def run_all_supercooling(Nr=1, Nc=4, N_r0=19):
 
-    logradius = np.linspace(1., 1., Nr)
+    logradius = np.array([2])# np.linspace(1., 1., Nr)
     exp= 0.5
-    logcoefficients = np.array([]) #np.linspace(0, -2, Nc)#[1.]
-    list_r0 = np.linspace(48, 10, N_r0)
+    logcoefficients = np.array([0.])#np.linspace(2, 1, Nc, endpoint=False)#[1.]
+    list_r0 = np.array([30, 60, 90])#np.linspace(80, 5, N_r0, endpoint=False)
     n = 3
 
     for logr in logradius:
@@ -207,11 +209,11 @@ def run_all_supercooling(Nr=1, Nc=9, N_r0=45):
                 print(logr, logcoeff, r0, type(logr.item()))
                 r = 10**(logr.item())
                 coeff = 10**(logcoeff.item())
-                N_max = 2000
+                N_max = 3000
                 if coeff < 1.:
                     if r>900: N_max = 15000
                     elif r> 200.: N_max = 5000
-                options = param_supercooling(r, exp, coeff, r0.item(), n=n, basefolder="./supercooling_4/", R_init=5e-3, N_max=N_max)
+                options = param_supercooling(r, exp, coeff, r0.item(), n=n, basefolder="./supercooling_lotsoffigs/", R_init=5e-3, N_max=N_max, N_fig=200)
                 run_supercooling(options)
 
 
@@ -231,4 +233,4 @@ if __name__ == "__main__":
     #if args.verbose:
     #    print("verbosity turned on")
 
-    run_growth_random()
+    run_growth()
