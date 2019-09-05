@@ -27,6 +27,8 @@ And finally, to install mushdynamics, while in the folder:
 python setup.py install
 ```
 
+To be able to use git with the jupyter notebook, we use [jupytext](https://github.com/mwouts/jupytext).
+
 ## Tests
 
 There is no unit test implemented yet. But there are one script with a list of small programs to visually test if the solvers are doing correct things and to compare the advection solvers. See tests.py . 
