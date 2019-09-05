@@ -14,11 +14,13 @@ To be able to run the notebooks, please install jupyter notebook
 
 For a complete installation through anaconda:
 
-'''
->> conda create -n name_env python=3.6
->> conda activate name_env
->> conda install numpy scipy pandas matplotlib pyyaml jupyter
-'''
+```
+conda create -n name_env python=3.6
+
+conda activate name_env
+
+conda install numpy scipy pandas matplotlib pyyaml jupyter
+```
 
 ## Tests
 
