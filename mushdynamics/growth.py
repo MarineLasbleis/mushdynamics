@@ -221,7 +221,7 @@ def print_param(options):
     with open(param_file, 'w') as f:
         yaml.dump(options, f) # write parameter file with all input parameters
 
-def plot_growth():
+def plot_growth(fig_size=[5, 4]):
     # we need to provide some options, but the only ones we will use are the growth history's ones!
     
     def options_2(r, t_max, exp):
@@ -263,7 +263,7 @@ def plot_growth():
     labels = ["Linear growth", "$r \sim t^{1/2}$"]
     lines = ["-", ":"]
 
-    fig, ax = plt.subplots(2, 1, figsize=[5, 4], sharex=True)
+    fig, ax = plt.subplots(2, 1, figsize=fig_size, sharex=True)
     for j, mod in enumerate(models): 
         tmax = mod.time_max
         time = np.linspace(0, tmax, 100)
