@@ -222,4 +222,150 @@ ax[0, 0].text(-0.2, 1.10, r"\textbf{C.}", transform=ax[0, 0].transAxes, fontsize
 ax[0, 1].text(-0.2, 1.10, r"\textbf{D.}", transform=ax[0, 1].transAxes, fontsize=11,
             verticalalignment='top')
 
+# %% [markdown]
+# ## Figure 3: supercooling
+#
+# ### Average porosity as function of growth rate, radius and delay in nucleation (panel [A])
+#
+# For the same reason than previously, we only provide the final values for this panel. 
+
+# %%
+supercooling = pd.read_csv("./data/supercooling.csv")
+print("Columns in the dataframe: {}".format(diag_linear.columns.values))
+
+
+# %%
+def select_unique(dataframe):
+    values = dataframe.unique()
+    keep_values = np.abs(np.diff(values))>1e-12
+    keep_values = np.insert(keep_values,0,True)
+    return values[keep_values]
+
+radii = [1., 10., 100.]#select_unique(df["Ric_adim"])
+fig2, ax2 = plt.subplots(1, len(radii),figsize=[10, 3], sharey=True)
+
+
+for i_fig, radius in enumerate(radii):
+    values = supercooling[np.abs(supercooling["Ric_adim"]-radius)<1e-12]
+    values = values.dropna()
+    r_dot = select_unique(values["r_dot"])
+    min_phi = np.zeros_like(r_dot)
+    
+    for i, growth_rate in enumerate(r_dot): 
+        values_dot = values[np.abs(values["r_dot"]-growth_rate)<1e-12]
+        min_phi[i] = min(values_dot["sum_phi"])
+        values.loc[np.abs(values["r_dot"]-growth_rate)<1e-12, "min_phi"] = min_phi[i]
+
+    sc_fig2 = ax2[i_fig].tricontourf((values["r0_supercooling"]/values["Ric_adim"])**2, np.log10(values['r_dot']), values["sum_phi"], levels=50, vmin=0, vmax=0.4, cmap=plt.cm.get_cmap("viridis"))
+
+    sc2_fig2 = ax2[i_fig].tricontour((values["r0_supercooling"]/values["Ric_adim"])**2, np.log10(values['r_dot']), values["sum_phi"], levels=[0.05, 0.1, 0.2, 0.3, 0.4], colors="w")
+    fmt = {}
+    strs = ["0.05", "0.1", "0.2", "0.3", "0.4"]
+    for l, s in zip(sc2_fig2.levels, strs):
+        fmt[l] = s
+    ax2[i_fig].clabel(sc2_fig2, sc2_fig2.levels[::], fmt=fmt, fontsize=10, inline=True)
+
+    sc3_fig2 = ax2[i_fig].tricontour((values["r0_supercooling"]/values["Ric_adim"])**2, np.log10(values['r_dot']), values["sum_phi"]-values["min_phi"], levels=[0.05, 0.1, 0.15], colors="k")    
+    fmt = {}
+    strs = ["0.05", "0.1", "0.15"]
+    for l, s in zip(sc3_fig2.levels, strs):
+        fmt[l] = s
+
+    
+    ax2[i_fig].clabel(sc3_fig2, sc3_fig2.levels[::], fmt=fmt, fontsize=10, inline=True)
+    ax2[i_fig].set_ylim([-4,1])
+    ax2[i_fig].set_ylim([-4,1])
+    ax2[i_fig].set_ylabel(r"$\ln_{{10}} \dot R_{ic}$")
+    ax2[i_fig].set_xlabel(r"$t_0$ supercooling/ $\tau_{ic}$")
+    ax2[i_fig].set_title(r"$\delta$: {:.2f}$R_{{ic}}$".format(1/radius))
+    
+    # white stars for special cases to be printed in other panels
+    time = [0.3, 0.6]
+    dot_R = -2*np.ones_like(time)
+    ax2[i_fig].scatter(time, dot_R, c="w", marker="*")
+    
+    
+ax2[0].text(-0.3, 1.10, r"\textbf{A.}", transform=ax2[0].transAxes, fontsize=11,
+            verticalalignment='top')
+
+cbar2 = fig2.colorbar(sc_fig2, ax=ax2.ravel().tolist(), ticks=[0., 0.1, 0.2, 0.3, 0.4])
+cbar2.ax.set_ylabel("$<\phi>$")
+
+# %% [markdown]
+# ### Examples of growth history corresonding to the white stars in previous panel (panel [B])
+
+# %%
+list_subfolder_R1 = ["./data/supercooling/exp_5.00e-01_coeff_1.41e-01_radius_1.00e+00_r0_54.77225575051661",
+                     "./data/supercooling/exp_5.00e-01_coeff_1.41e-01_radius_1.00e+00_r0_77.45966692414834"]
+
+list_subfolder_R10 = ["./data/supercooling/exp_5.00e-01_coeff_4.47e-01_radius_1.00e+01_r0_54.77225575051661",
+                     "./data/supercooling/exp_5.00e-01_coeff_4.47e-01_radius_1.00e+01_r0_77.45966692414834"]
+    
+list_subfolder_R100 = ["./data/supercooling/exp_5.00e-01_coeff_1.41e+00_radius_1.00e+02_r0_54.77225575051661",
+                      "./data/supercooling/exp_5.00e-01_coeff_1.41e+00_radius_1.00e+02_r0_77.45966692414834"]
+
+# %%
+fig, ax =plt.subplots(2, 3, figsize=[10, 3], sharex=True, sharey=True)
+
+for i_f, folder_R1 in enumerate(list_subfolder_R1):
+    
+    for j_f, folder in enumerate([folder_R1, list_subfolder_R10[i_f], list_subfolder_R100[i_f]]):
+        file_stat, param, timesteps = extract_files(folder)
+        name_max = max(timesteps.items(), key=itemgetter(1))[0]
+        data = pd.read_csv(name_max, sep=" ")
+        dr = data["radius"][1]-data["radius"][0]
+        Radius = np.array(data["radius"].values)+ dr / 2.
+        try: 
+            supercooling = param["Dt_supercooling"]
+            param["dot_r"] = param["Ric_adim"]/param["tic"]*param["growth_rate_exponent"]
+        except: 
+            supercooling = 0.
+            param["dot_r"] = param["Ric_adim"]/param["time_max"]*param["growth_rate_exponent"]
+
+        Time = supercooling+ np.array(sorted(timesteps.values()))
+        rayon = np.zeros_like(Time)
+        X, Y = np.meshgrid(Time, Radius)
+        Z = 0.4*np.ones_like(X)
+
+        for i, (name, time) in enumerate(sorted(timesteps.items(), key = itemgetter(1))):
+            data = pd.read_csv(name, sep=" ")
+            dr = data["radius"][1]-data["radius"][0]
+            Porosity = np.array(data["porosity"].values)
+            N_r = len(Porosity)
+            Z[:N_r, i] = Porosity
+            rayon[i] = data["radius"].iloc[-1]+dr/2
+
+        X = X/param["tic"]
+        Y = Y/param["Ric_adim"]
+        levels = np.linspace(0, 0.4, 41)
+        sc = ax[i_f, j_f].contourf(X, Y, Z, levels=levels, vmin=0, vmax = 0.4, cmap=plt.cm.get_cmap("pink"))
+
+        ax[i_f, j_f].set_xlim([0., 1.])
+        ax[i_f, j_f].set_ylim([0., 1.])
+
+        ax[i_f, j_f].plot(np.append([Time[0]], Time)/param["tic"], np.append([0], rayon)/param["Ric_adim"], "--k")
+        t = np.linspace(0, Time[-1], 100)
+        ax[i_f, j_f].plot(t/param["tic"], rayon[-1]*np.sqrt(t/Time[-1])/param["Ric_adim"], 'k')
+
+        # legend
+        textstr = ((
+                        r"$R_{{ic}}$={:.0f}".format(param["Ric_adim"])))
+        props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+        ax[i_f, j_f].text(0.05, 0.90, textstr, transform=ax[i_f, j_f].transAxes, fontsize=9,
+            verticalalignment='top', bbox=props)
+
+ax[0, 0].set_ylabel("Radius/$R_{{ic}}$")
+ax[1, 0].set_ylabel("Radius/$R_{ic}$")
+
+ax[1, 0].set_xlabel(r"Time/$\tau_{{ic}}$")
+ax[1, 1].set_xlabel(r"Time/$\tau_{{ic}}$")
+ax[1, 2].set_xlabel(r"Time/$\tau_{{ic}}$")
+
+cb = fig.colorbar(sc, ticks=[0., 0.1, 0.2, 0.3, 0.4], ax=ax.ravel().tolist())
+cb.set_label("$\phi$")
+
+
+ax[0, 0].text(-0.3, 1.10, r"\textbf{B.}", transform=ax[0,0].transAxes, fontsize=11,
+            verticalalignment='top')
+
 # %%
