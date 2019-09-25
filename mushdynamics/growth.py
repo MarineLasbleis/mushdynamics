@@ -17,7 +17,6 @@ class Compaction():
     def __init__(self, calcul_velocity, **options):
         self.options = options
         self.verify_parameters()
-        #print(self.options)
         self.print_param()
         self.iter_max = 100000000
         self.calcul_velocity = calcul_velocity
@@ -35,7 +34,9 @@ class Compaction():
             self.time_p += self.dt
             self.one_step()
             self.write_stat()
-            self.write_profile()
+            if self.time_p > self.dt_print:
+                self.write_profile()
+        self.write_profile() # write the end state of the run
 
     def initialisation(self):
         self.it = 0
@@ -93,12 +94,10 @@ class Compaction():
                                                 data_analysis.porosity_compacted_region(1-self.psi, self.R[1:], delta, self.options)))
 
     def write_profile(self):
-        if self.time_p > self.dt_print:
-            # if it % 100 == 0:
-            data = {"radius": pd.Series(self.R), 'porosity': pd.Series(1-self.psi), 'velocity': pd.Series(self.velocity)}
-            data = pd.DataFrame(data)
-            mush.output(self.time, data, fig=False, file=True, output_folder=self.output_folder, ax=[])
-            self.time_p += -self.dt_print
+        data = {"radius": pd.Series(self.R), 'porosity': pd.Series(1-self.psi), 'velocity': pd.Series(self.velocity)}
+        data = pd.DataFrame(data)
+        mush.output(self.time, data, fig=False, file=True, output_folder=self.output_folder, ax=[])
+        self.time_p += -self.dt_print
 
     def radius(self, time):
         return radius(time, self.options)
