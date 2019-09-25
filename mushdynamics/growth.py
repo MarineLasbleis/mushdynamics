@@ -118,8 +118,6 @@ class Compaction_Supercooling(Compaction):
 
     def verify_parameters(self):
         self.options = verify_parameters(self.options)
-        #self.options["r0_supercooling"] = self.options["Ric_adim"]/self.options["time_max"]**self.options["growth_rate_exponent"]\
-        #                                    *(self.options["t0_supercooling"]+self.options["Dt_supercooling"])**self.options["growth_rate_exponent"]
         self.options["Dt_supercooling"] = (self.options["r0_supercooling"]/self.options["Ric_adim"])**(1./self.options["growth_rate_exponent"])\
                                             *self.options["time_max"] - self.options["t0_supercooling"]
         print("Dt supercooling {}".format(self.options["Dt_supercooling"] ))
@@ -140,8 +138,6 @@ class Compaction_Supercooling(Compaction):
         else:
             growth_rate = self.options["Ric_adim"]/self.options["tic"]**self.options["growth_rate_exponent"]\
                                             *(time+self.options["Dt_supercooling"])**(self.options["growth_rate_exponent"]-1)* self.options["growth_rate_exponent"]
-            #growth_rate = self.options["Ric_adim"]/self.options["tic"]**self.options["growth_rate_exponent"]\
-            #                                *self.options["growth_rate_exponent"]*(time)**(self.options["growth_rate_exponent"]-1)
         return growth_rate
 
 
@@ -155,8 +151,6 @@ def growth_rate(time, options):
 
     Correspond to d(radius)/dt
     """
-    #return options["Ric_adim"]/options["tic"]**options["growth_rate_exponent"]\
-    #                                        *options["growth_rate_exponent"]*(time)**(options["growth_rate_exponent"]-1)
     if options["coeff_velocity"] == 0.:
         return 0.
     else:
@@ -224,15 +218,11 @@ def plot_growth(fig_size=[5, 4]):
     # we need to provide some options, but the only ones we will use are the growth history's ones!
     
     def options_2(r, t_max, exp):
-        #t_max = (r/coeff)**(1/exp)
-        #t_max **exp = r/coeff
-        #t_max = (r/coeff)**(1/exp)
         opt = {     'output': " ",
                     'filename': "",
                     'coordinates': "spherical",
                     "growth_rate_exponent": exp,
                     'time_max': t_max,
-                    #'coeff_velocity': coeff, 
                     'N_init':4,
                     "R_init": .1, 
                     "phi_init": 0., 
@@ -251,7 +241,6 @@ def plot_growth(fig_size=[5, 4]):
 
     Model_t1 = Compaction(mush.velocity_Sramek, **options_2(Ric, tau_ic, 1.))
     Model_t05 = Compaction(mush.velocity_Sramek, **options_2(Ric, tau_ic, 0.5))
-    #Model_t03 = Compaction(mush.velocity_Sramek, **options_2(Ric, tau_ic, 1./3.))
 
     opt = options_2(Ric, tau_ic, 1./2)
     opt["t0_supercooling"] = 1e-3
@@ -285,7 +274,6 @@ def plot_growth(fig_size=[5, 4]):
             
     ax[0].plot(time+mod.options["Dt_supercooling"], radius, "-.", label="Delayed nucleation")
     ax[1].plot(time+mod.options["Dt_supercooling"], growth, "-.", label="Delayed nucleation")
-    #self.options["Dt_supercooling"] 
 
     ax[1].set_ylim([0,1.5*Ric/tau_ic])
     ax[0].set_ylim([0,Ric])

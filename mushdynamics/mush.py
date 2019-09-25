@@ -10,7 +10,6 @@ Boundary conditions are specified to either study
 import numpy as np
 import os
 import pandas as pd
-# import scipy as sc
 import matplotlib.pyplot as plt
 
 from . import tdma
@@ -26,10 +25,6 @@ def schema():
  V0          V1          V2               |    V_i-1  |    V_i    |                       |    V_N-1  |     V_N   \n\
       phi0        phi1                  phi_i-1     phi_i      phi_i+1                phi_N-1      phi_N         \n\
             DP0         DP1                  DP_i-1                                           DP_N-1           \n")
-
-
-# Nr = 10 #number of points in space
-# Nt = 10 #number of points in time
 
 
 def fluxlimiterscheme(velocity, variable, dr, options):
@@ -341,7 +336,7 @@ def output(time, panda_frame, fig=False, file=False, output_folder="", ax=[]):
     file: True for output a file
     output_folder: name of the folder for the output
     """
-    # verifiy if folder exist
+    # verify if folder exist
     if not os.path.isdir(output_folder):
          os.makedirs(output_folder)
 
@@ -354,17 +349,4 @@ def output(time, panda_frame, fig=False, file=False, output_folder="", ax=[]):
         ax[1].plot(panda_frame["velocity"], panda_frame["radius"] + dr)
     if file:
         file = output_folder+"/output_{:6.8f}.timestep".format(time)
-        #_data = {"radius": pd.Series(R), 'porosity': pd.Series(1-psi), 'velocity': pd.Series(velocity)}
-        #data = pd.DataFrame(_data)
         panda_frame.to_csv(file, sep=" ")
-
-
-
-
-
-if __name__ == '__main__':
-
-    all_figures("compaction/")
-
-    pass
-    # plt.savefig("sumita_phi03.pdf")
