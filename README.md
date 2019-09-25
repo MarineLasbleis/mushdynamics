@@ -3,6 +3,7 @@
 
 ## Overview
 
+This is a python package to help solve the dynamics of a mush in a 1D setup, either in a cartesian layer (infinite in X and Y) or a sphere (with only dependences in radius). The system solves for the velocity of the matrix and advects the porosity. 
 
 ## Requirements and installation
 
