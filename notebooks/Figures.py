@@ -343,6 +343,7 @@ for i_f, folder_R1 in enumerate(list_subfolder_R1):
         ax[i_f, j_f].set_xlim([0., 1.])
         ax[i_f, j_f].set_ylim([0., 1.])
 
+        # growth scenario lines (black lines)
         ax[i_f, j_f].plot(np.append([Time[0]], Time)/param["tic"], np.append([0], rayon)/param["Ric_adim"], "--k")
         t = np.linspace(0, Time[-1], 100)
         ax[i_f, j_f].plot(t/param["tic"], rayon[-1]*np.sqrt(t/Time[-1])/param["Ric_adim"], 'k')
@@ -363,7 +364,6 @@ ax[1, 2].set_xlabel(r"Time/$\tau_{{ic}}$")
 
 cb = fig.colorbar(sc, ticks=[0., 0.1, 0.2, 0.3, 0.4], ax=ax.ravel().tolist())
 cb.set_label("$\phi$")
-
 
 ax[0, 0].text(-0.3, 1.10, r"\textbf{B.}", transform=ax[0,0].transAxes, fontsize=11,
             verticalalignment='top')
