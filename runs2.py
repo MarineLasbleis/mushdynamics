@@ -57,7 +57,6 @@ def default_yaml():
                 'filename': 'IC_Sramek',
                 'time_max': t_max,
                 'dt_print': dt,
-                'coeff_velocity': 2.,
                 'output': "compaction/",
                 "R_init": 0.001,
                 "N_init": 5,
@@ -67,10 +66,9 @@ def default_yaml():
 def modify_param(options, new_options):
     return {**options, **new_options}
 
-def param_growth(r, exp, coeff, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
-    t_max = (r/coeff)**(1/exp)
+def param_growth(r, exp, t_max, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
     dt = t_max/N_fig
-    folder_name = basefolder+"/exp_{:.2e}_coeff_{:.2e}_radius_{:.2e}".format(exp, coeff, r)
+    folder_name = basefolder+"/exp_{:.2e}_t_max_{:.2e}_radius_{:.2e}".format(exp, t_max, r)
     options = {'advection': "FLS",
                 'n': n,
                 'delta': 1.,
@@ -86,10 +84,10 @@ def param_growth(r, exp, coeff, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max
                 'filename': 'IC',
                 'time_max': t_max,
                 'dt_print': dt,
-                'coeff_velocity': coeff,
                 'output': folder_name,
                 "R_init": R_init*r,
-                "N_init": max(5, int(N_max*R_init))}
+                "N_init": max(5, int(N_max*R_init)),
+                "Ric_adim": r}
     return options
 
 def param_no_growth(R, t_max, N_time, n=2, N=2000, output="output/"):
@@ -118,11 +116,11 @@ def param_no_growth(R, t_max, N_time, n=2, N=2000, output="output/"):
                 "Ric_adim": R}
     return options
 
-def param_supercooling(r, exp, coeff, r0_supercooling, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
-    t_max = (r/coeff)**(1/exp)
+def param_supercooling(r, exp, t_max, r0_supercooling, n=2, N_fig=20, basefolder="", R_init=1e-3, N_max=5000):
+    #t_max = (r/coeff)**(1/exp)
     dt = t_max/N_fig
     # r0 is the percentage of radius, not the actual radius!
-    folder_name = basefolder+"/exp_{:.2e}_coeff_{:.2e}_radius_{:.2e}_r0_{}".format(exp, coeff, r, r0_supercooling)
+    folder_name = basefolder+"/exp_{:.2e}_t_max_{:.2e}_radius_{:.2e}_r0_{}".format(exp, t_max, r, r0_supercooling)
     options = {'advection': "FLS",
                 'n': n,
                 'delta': 1.,
@@ -138,10 +136,10 @@ def param_supercooling(r, exp, coeff, r0_supercooling, n=2, N_fig=20, basefolder
                 'filename': 'IC',
                 'time_max': t_max,
                 'dt_print': dt,
-                'coeff_velocity': coeff,
                 'output': folder_name,
                 "R_init": R_init*r,
-                "N_init": max(5, int(N_max*R_init))}
+                "N_init": max(5, int(N_max*R_init)),
+                "Ric_adim": r}
     options["t0_supercooling"] = 1e-3*t_max
     options["r0_supercooling"] = r0_supercooling/100.*r     # r0 is the percentage of radius, not the actual radius!
     return options
@@ -159,12 +157,12 @@ def run_no_growth(n=3):
 def run_growth():
     radius = 10**np.array([-0.5]) #10**np.linspace(1., 3, 5 )# [100., 200., 300.]
     exponents = [0.5]
-    coefficients = 10**np.linspace(2, 0, 5)#[1.]
+    times = 10**np.linspace(2, 0, 5)#[1.]
 
     for r in radius:
         for exp in exponents:
-            for coeff in coefficients:
-                options = param_growth(r.item(), exp, coeff.item(), basefolder="./diag_n3_exp05/", R_init=5e-3, N_max=8000)
+            for time in times:
+                options = param_growth(r.item(), exp, time.item(), basefolder="./diag_n3_exp05/", R_init=5e-3, N_max=8000)
                 run(options)
 
 

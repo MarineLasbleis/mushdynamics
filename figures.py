@@ -328,11 +328,11 @@ def fig_porosity(folder_main):
 
 
 def diagram_data(folder_main, output="data.csv"):
-    columns = ["Ric_adim", "tau_ic", "exp", "sum_phi", "delta"]
+    columns = ["Ric_adim", "tau_ic", "exp", "sum_phi", "delta", "Nmax", "folder", "remarks"]
     df = pd.DataFrame(columns=columns)
 
-    def add_value(df, ric, tau, exp, phi, delta, remarks=""):
-        df_add = pd.DataFrame({"Ric_adim":[ric], "tau_ic":[tau], "exp":[exp], "sum_phi":[phi], "delta":[delta]})
+    def add_value(df, ric, tau, exp, phi, delta, Nmax, folder="", remarks=""):
+        df_add = pd.DataFrame({"Ric_adim":[ric], "tau_ic":[tau], "exp":[exp], "sum_phi":[phi], "delta":[delta], "Nmax": Nmax,  "folder":folder, "remarks": remarks})
         df = df.append(df_add)
         return df
 
@@ -358,8 +358,12 @@ def diagram_data(folder_main, output="data.csv"):
             #    remarks = ""
             if data["thickness_boundary"].iloc[-1] < 1e-12:
                 print("no boundary for R {}, dot_R {}: folder {}".format(param["Ric_adim"], param['coeff_velocity'], folder_main + "/" +subfolder_name))
-            df = add_value(df, param["Ric_adim"], param['time_max'], param['growth_rate_exponent'], 
-                        data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1])
+            elif np.abs(data["radius"].iloc[-1] -param["Ric_adim"])/param["Ric_adim"]>1e-2:
+                print("Run not finished for R {}, dot_R {}: folder {}".format(param["Ric_adim"], param['coeff_velocity'], folder_main + "/" +subfolder_name))
+                print(data["radius"].iloc[-1], param["Ric_adim"])
+            else: df = add_value(df, param["Ric_adim"], param['time_max'], param['growth_rate_exponent'], 
+                                 data["sum_phi"].iloc[-1], data["thickness_boundary"].iloc[-1], 
+                                 data["radius_size"].iloc[-1], folder=subfolder_name)
         else: print("oups, not a folder: {}".format(folder_main + "/" + subfolder_name))
     df.to_csv(folder_main+output)
     return df
@@ -375,7 +379,7 @@ def diagram(df, ylim=[-2, 2.5], xlim=[-4, 3]):
     phi = np.array(df["sum_phi"].values).astype(float) # 
     #phi = np.log(np.array(df["sum_phi"].values).astype(float))/np.log(10.)
     
-    fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[8, 3])
+    fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[10, 3])
     cmap = plt.cm.magma
     cntr1 = ax[0].tricontourf(x, y, delta, levels=np.linspace(-2, 5, 30),  cmap=cmap)
     cntr2 = ax[1].tricontourf(x, y, phi, levels=np.linspace(0, 0.4, 30),  cmap=cmap)
@@ -385,11 +389,12 @@ def diagram(df, ylim=[-2, 2.5], xlim=[-4, 3]):
     cbar2.ax.set_ylabel(r"$<\phi>$")
     ax[0].set_title("Thickness of upper layer")
     ax[1].set_title("Average porosity")
-    ax[0].set_xlabel(r"$\dot{R}_{{ic}}( \tau_{{ic}})$")
-    ax[0].set_ylabel(r"$R_{{ic}}$")
-    ax[1].set_xlabel(r"$\dot{R}_{{ic}}( \tau_{{ic}})$")
+    ax[0].set_xlabel(r"$\ln_{10}\dot{R}_{{ic}}( \tau_{{ic}})$")
+    ax[0].set_ylabel(r"$\ln_{10}R_{{ic}}$")
+    ax[1].set_xlabel(r"$\ln_{10}\dot{R}_{{ic}}( \tau_{{ic}})$")
     ax[0].set_ylim(ylim)
     ax[0].set_xlim(xlim)
+    return fig, ax
 
 def fig_porosity_thickness(folder_main):
     columns = ["Ric_adim", "coeff_velocity", "exp", "sum_phi", "delta", "remarks"]

@@ -247,22 +247,22 @@ def plot_growth():
                     }
         return opt
 
-    Ric, tau_ic = 10., 1.
+    Ric, tau_ic = 1., 1.
 
     Model_t1 = Compaction(mush.velocity_Sramek, **options_2(Ric, tau_ic, 1.))
     Model_t05 = Compaction(mush.velocity_Sramek, **options_2(Ric, tau_ic, 0.5))
-    Model_t03 = Compaction(mush.velocity_Sramek, **options_2(Ric, tau_ic, 1./3.))
+    #Model_t03 = Compaction(mush.velocity_Sramek, **options_2(Ric, tau_ic, 1./3.))
 
     opt = options_2(Ric, tau_ic, 1./2)
     opt["t0_supercooling"] = 1e-3
     opt["r0_supercooling"] = 0.7*Ric
     Model_supercooling = Compaction_Supercooling(mush.velocity_Sramek, **opt)
 
-    models = [Model_t1, Model_t05, Model_t03] # , Model_supercooling]
-    labels = ["Linear growth", "$r \sim t^{1/2}$", "$r \sim t^{1/3}$"]
-    lines = ["-", ":", "--"]
+    models = [Model_t1, Model_t05] # , Model_supercooling]
+    labels = ["Linear growth", "$r \sim t^{1/2}$"]
+    lines = ["-", ":"]
 
-    fig, ax = plt.subplots(2, 1, figsize=[6, 5], sharex=True)
+    fig, ax = plt.subplots(2, 1, figsize=[5, 4], sharex=True)
     for j, mod in enumerate(models): 
         tmax = mod.time_max
         time = np.linspace(0, tmax, 100)
@@ -290,12 +290,12 @@ def plot_growth():
     ax[1].set_ylim([0,1.5*Ric/tau_ic])
     ax[0].set_ylim([0,Ric])
     ax[0].set_xlim([0,tau_ic])
-    ax[0].legend()
-    ax[1].legend()
+    ax[0].legend(fontsize=9)
+    ax[1].legend(fontsize=9)
 
-    ax[1].set_xlabel("Time")
-    ax[0].set_ylabel("Radius")
-    ax[1].set_ylabel("Growth rate")
+    ax[1].set_xlabel(r"Time/$\tau _{ic}$")
+    ax[0].set_ylabel(r"Radius$/R_{ic}$")
+    ax[1].set_ylabel(r"Growth rate$/(R_{ic}/\tau _{ic})$")
     plt.savefig("growth.pdf")
     plt.show()
 
