@@ -138,6 +138,7 @@ def all_figures(folder, verbose=True):
     # figure with statistics
     list_files = os.listdir(folder)
     timesteps = {}
+    n = 0
     for file in list_files:
         if file[-14:] == "statistics.txt":
             file_stat = folder + "/" + file
@@ -145,6 +146,7 @@ def all_figures(folder, verbose=True):
             _name = folder + "/" + file
             _time = find_float(file)
             timesteps[_name] = _time
+            n += 1
         elif file[-5:] == ".yaml":
             parameter_file = folder + "/" + file
     with open(parameter_file, 'r') as stream:
@@ -154,6 +156,7 @@ def all_figures(folder, verbose=True):
             print(exc)
     if verbose: print("Figures with global statistics: {}".format(file_stat))
     fig_stat(file_stat, save=True)
+
     # preparation for the figure
     fig, ax = plt.subplots(3,1,figsize=[5,3]) #fig with lines
     fig2, ax2 = plt.subplots() # fig with contourf
@@ -193,43 +196,63 @@ def all_figures(folder, verbose=True):
         #print(N_r)
         Z[:N_r, i] = Porosity
         dr = data["radius"][1]-data["radius"][0]
-        #i += 1
-        if i%n_i ==0:
-            ax[0].plot(data["radius"] + dr / 2., data["porosity"], color=colors[i], label=time)
-            ax[1].plot(data["radius"] + dr, data["velocity"], color=colors[i], label=time)
-            r2v = data["radius"]**2 * data["velocity"]
-            pressure = 1/data["porosity"]/data["radius"]**2 * r2v.diff()
-            ax[2].plot(data["radius"] + dr, pressure, color=colors[i], label=time)
+        Radius = np.array(data["radius"].values)+ dr / 2.
+        #print(Radius)
+        Time = np.array(sorted(timesteps.values()))
+        #print((Time))
+        X, Y = np.meshgrid(Time, Radius)
+        Z = np.ones_like(X)
+        #print(Z.shape)
 
-            #print(data["radius"].iloc[-1])
-            #print(data["radius"]/data["radius"].iloc[-1])
-            max_porosity = data["porosity"].max()
-            min_porosity = data["porosity"].min()
-            ax3[0].plot((data["radius"]+ dr / 2.)-(data["radius"].iloc[-1]+ dr / 2.), (data["porosity"]), color=colors[i], label=time)
-            ax3[1].plot((data["radius"]+ dr / 2.)-(data["radius"].iloc[-1]+ dr / 2.), data["velocity"], color=colors[i], label=time)
-            ax3[2].plot((data["radius"]+ dr / 2.)-(data["radius"].iloc[-1]+ dr / 2.), pressure, color=colors[i], label=time)
+        for i, (name, time) in enumerate(sorted(timesteps.items(), key = itemgetter(1))):
+            print(name, time)
+            # single figure
+            # make_figure(name, save=True, output="", max_r=options["Ric_adim"])
+            # figure with all timesteps
+            data = pd.read_csv(name, sep=" ")
 
-            #ax2.scatter(i*np.ones(data.shape[0]), data["radius"] + dr / 2., c=data["porosity"], cmap=plt.cm.viridis)
-        
-    levels = np.linspace(0, 0.4, 100) # [0., 0.1, 0.2, 0.3, 0.4]
-    sc = ax2.contourf(X, Y, Z, levels=levels, extend="max")
-    sc2 = ax2.contour(X, Y, Z>=0.4, 1,colors='k')
-    cbar = plt.colorbar(sc, ax =ax2)
-    cbar.set_label("Porosity")
-    cbar.set_clim([0., 0.4])
-    #plt.figure(fig.number)
-    #plt.savefig(folder+"/all_figs.pdf")
-    #ax[0].set_xlim([0,10])
-    #ax[0].set_ylim([0,0.4])
-    ax[0].set_xlabel("Radius")
-    ax[0].set_ylabel("Porosity")
-    plt.figure(fig2.number)
-    plt.savefig(folder+"/all_figs_contourf.pdf")
-    plt.figure(fig.number)
-    plt.tight_layout()
-    plt.savefig(folder+"/all_figs_lines.pdf")
-    plt.figure(fig3.number)
-    plt.savefig(folder+"/all_figs_lines_xaxis_2.pdf")
+            Porosity = np.array(data["porosity"].values)
+            N_r = len(Porosity)
+            #print(N_r)
+            Z[:N_r, i] = Porosity
+            dr = data["radius"][1]-data["radius"][0]
+            #i += 1
+            if i%n_i ==0:
+                ax[0].plot(data["radius"] + dr / 2., data["porosity"], color=colors[i], label=time)
+                ax[1].plot(data["radius"] + dr, data["velocity"], color=colors[i], label=time)
+                r2v = data["radius"]**2 * data["velocity"]
+                pressure = 1/data["porosity"]/data["radius"]**2 * r2v.diff()
+                ax[2].plot(data["radius"] + dr, pressure, color=colors[i], label=time)
+
+                #print(data["radius"].iloc[-1])
+                #print(data["radius"]/data["radius"].iloc[-1])
+                max_porosity = data["porosity"].max()
+                min_porosity = data["porosity"].min()
+                ax3[0].plot((data["radius"]+ dr / 2.)-(data["radius"].iloc[-1]+ dr / 2.), (data["porosity"]), color=colors[i], label=time)
+                ax3[1].plot((data["radius"]+ dr / 2.)-(data["radius"].iloc[-1]+ dr / 2.), data["velocity"], color=colors[i], label=time)
+                ax3[2].plot((data["radius"]+ dr / 2.)-(data["radius"].iloc[-1]+ dr / 2.), pressure, color=colors[i], label=time)
+
+                #ax2.scatter(i*np.ones(data.shape[0]), data["radius"] + dr / 2., c=data["porosity"], cmap=plt.cm.viridis)
+            
+        levels = np.linspace(0, 0.4, 100) # [0., 0.1, 0.2, 0.3, 0.4]
+        sc = ax2.contourf(X, Y, Z, levels=levels, extend="max")
+        sc2 = ax2.contour(X, Y, Z>=0.4, 1,colors='k')
+        cbar = plt.colorbar(sc, ax =ax2)
+        cbar.set_label("Porosity")
+        cbar.set_clim([0., 0.4])
+        #plt.figure(fig.number)
+        #plt.savefig(folder+"/all_figs.pdf")
+        #ax[0].set_xlim([0,10])
+        #ax[0].set_ylim([0,0.4])
+        ax[0].set_xlabel("Radius")
+        ax[0].set_ylabel("Porosity")
+        plt.figure(fig2.number)
+        plt.savefig(folder+"/all_figs_contourf.pdf")
+        plt.figure(fig.number)
+        plt.tight_layout()
+        plt.savefig(folder+"/all_figs_lines.pdf")
+        plt.figure(fig3.number)
+        plt.savefig(folder+"/all_figs_lines_xaxis_2.pdf")
 
 
 
@@ -693,7 +716,7 @@ def fig_5profiles(folder_base):
 
 if __name__ == "__main__":
 
-    folder = "/home/marine/ownCloud/Research/Projets/mush_projet/data_paper/test_supercooling/"
+    folder = "/home/marine/ownCloud/Research/Projets/mush_projet/data_paper/supercooling/"
     #folder = "/home/marine/ownCloud/Research/Projets/output_mush/low_Vg"
     # all_figures(folder+"/exp_1.00_coeff_1.00_radius_0.01/")
     
