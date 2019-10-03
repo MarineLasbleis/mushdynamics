@@ -1,4 +1,4 @@
-""" Series of runs using yaml file as input """
+""" Script to run several numerical simulations """
 
 
 import sys
