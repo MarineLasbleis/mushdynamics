@@ -78,23 +78,23 @@ def diagram(df, ylim=[-2, 2.5], xlim=[-4, 3], N=50):
     
     x = np.log10(np.array(df["dot_r"].values).astype(float))
     y = np.log10(np.array(df["Ric_adim"].values).astype(float)) # radius IC
-    delta = np.log10(np.array(df["delta"].values).astype(float))
+    delta = np.log10(np.array(df["delta"].values).astype(float)/np.array(df["Ric_adim"].values).astype(float))
     phi = np.array(df["sum_phi"].values).astype(float) # 
     phir = np.array(df["phi_r"].values).astype(float) # 
     
     fig, ax = plt.subplots(1, 2, sharex=True, sharey=True, figsize=[10, 3])
     cmap = plt.cm.magma
-    cntr1 = ax[0].tricontourf(x, y, delta, levels=np.linspace(-2, 5, N),  cmap=cmap)
+    cntr1 = ax[0].tricontourf(x, y, delta, levels=np.linspace(-4, 4, N),  cmap=cmap)
     cntr2 = ax[1].tricontourf(x, y, phi, levels=np.linspace(0, 0.4, N),  cmap=cmap)
-    cbar1 = plt.colorbar(cntr1, ax=ax[0], ticks=np.linspace(-2, 5, 8))
-    cbar1.ax.set_ylabel("$\ln_{10}\delta_{top}$")
+    cbar1 = plt.colorbar(cntr1, ax=ax[0], ticks=np.linspace(-4, 4, 9))
+    cbar1.ax.set_ylabel("$\ln_{10}\delta_{ul}/\dot{R}_{{ic}}( \tau_{{ic}})$")
     cbar2 = plt.colorbar(cntr2, ax=ax[1], ticks=[0., 0.1, 0.2, 0.3, 0.4])
     cbar2.ax.set_ylabel(r"$<\phi>$")
     ax[0].set_title("Thickness of upper layer")
     ax[1].set_title("Average porosity")
-    ax[0].set_xlabel(r"$\ln_{10}\dot{R}_{{ic}}( \tau_{{ic}})$")
-    ax[0].set_ylabel(r"$\ln_{10}R_{{ic}}$")
-    ax[1].set_xlabel(r"$\ln_{10}\dot{R}_{{ic}}( \tau_{{ic}})$")
+    ax[0].set_xlabel(r"$\ln_{10}\dot{R}_{{ic}}( \tau_{{ic}})/V_D$")
+    ax[0].set_ylabel(r"$\ln_{10}R_{{ic}}/\delta$")
+    ax[1].set_xlabel(r"$\ln_{10}\dot{R}_{{ic}}( \tau_{{ic}})/V_D$")
     ax[0].set_ylim(ylim)
     ax[0].set_xlim(xlim)
     return fig, ax
@@ -107,12 +107,14 @@ fig, ax = diagram(diag_linear, ylim=[-1, 3], xlim=[-3.1, 1])
 R = [2, 2, 2, 0]
 dot_R = [-3, -2, -1, -2]
 
-for i, text in enumerate(["A", "B"]):
+for i, text in enumerate(["a", "b"]):
     
     ax[i].tick_params(direction="out", top=True, right=True)
     ax[i].scatter(dot_R, R, c="w", marker="*")
     ax[i].text(-0.1, 1.10, r"\textbf{"+text+".}", transform=ax[i].transAxes, fontsize=11,
                 verticalalignment='top')
+    
+plt.savefig("Diagram_n3_exp1.pdf")
 
 # %% [markdown]
 # ### Examples of growth history with linear and $r\propto\sqrt{t}$ growth scenarios (panels [C] and [D])
@@ -178,8 +180,8 @@ def figure_lineaire(folder, ax3, fig3):
     ax3.plot(Time, rayon, 'k')
     cb.set_label("$\phi$")
     textstr = '\n'.join((
-                    r"$R=${:.0f}".format(param["Ric_adim"]),
-                    r"$\dot R=${:.0e}".format(param["dot_r"])))
+                    r"$R_{{ic}}=${:.0f}".format(param["Ric_adim"]),
+                    r"$\dot R_{{ic}}=${:.0e}".format(param["dot_r"])))
     
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     ax3.text(0.05, 0.90, textstr, transform=ax3.transAxes, fontsize=9,
@@ -209,18 +211,19 @@ for i, folder in enumerate(folders):
     figure_lineaire(base+folder, ax[i, 0], fig)
     figure_lineaire(base+folders_05[i], ax[i, 1], fig)
     
-    
-    ax[i, 0].set_ylabel("Radius")
+    ax[i, 0].set_ylabel("Radius$/\delta$")
 
 ax[-1, 0].set_xlabel("Time")
 ax[-1, 1].set_xlabel("Time")
 ax[0, 0].set_title("Linear growth")
 ax[0, 1].set_title(r"$r\propto\sqrt{t}$ growth")
 
-ax[0, 0].text(-0.2, 1.10, r"\textbf{C.}", transform=ax[0, 0].transAxes, fontsize=11,
+ax[0, 0].text(-0.2, 1.10, r"\textbf{c.}", transform=ax[0, 0].transAxes, fontsize=11,
             verticalalignment='top')
-ax[0, 1].text(-0.2, 1.10, r"\textbf{D.}", transform=ax[0, 1].transAxes, fontsize=11,
+ax[0, 1].text(-0.2, 1.10, r"\textbf{d.}", transform=ax[0, 1].transAxes, fontsize=11,
             verticalalignment='top')
+
+plt.savefig("different_growth.pdf")
 
 # %% [markdown]
 # ## Figure 3: supercooling
@@ -275,7 +278,7 @@ for i_fig, radius in enumerate(radii):
     ax2[i_fig].clabel(sc3_fig2, sc3_fig2.levels[::], fmt=fmt, fontsize=10, inline=True)
     ax2[i_fig].set_ylim([-4,1])
     ax2[i_fig].set_ylim([-4,1])
-    ax2[i_fig].set_ylabel(r"$\ln_{{10}} \dot R_{ic}$")
+    ax2[i_fig].set_ylabel(r"$\ln_{{10}} \dot R_{ic}/V_D$")
     ax2[i_fig].set_xlabel(r"$t_0$ supercooling/ $\tau_{ic}$")
     ax2[i_fig].set_title(r"$\delta$: {:.2f}$R_{{ic}}$".format(1/radius))
     
@@ -285,11 +288,13 @@ for i_fig, radius in enumerate(radii):
     ax2[i_fig].scatter(time, dot_R, c="w", marker="*")
     
     
-ax2[0].text(-0.3, 1.10, r"\textbf{A.}", transform=ax2[0].transAxes, fontsize=11,
+ax2[0].text(-0.3, 1.10, r"\textbf{a.}", transform=ax2[0].transAxes, fontsize=11,
             verticalalignment='top')
 
 cbar2 = fig2.colorbar(sc_fig2, ax=ax2.ravel().tolist(), ticks=[0., 0.1, 0.2, 0.3, 0.4])
 cbar2.ax.set_ylabel("$<\phi>$")
+
+plt.savefig("supercooling_time.pdf")
 
 # %% [markdown]
 # ### Examples of growth history corresonding to the white stars in previous panel (panel [B])
@@ -350,7 +355,7 @@ for i_f, folder_R1 in enumerate(list_subfolder_R1):
 
         # legend
         textstr = ((
-                        r"$R_{{ic}}$={:.0f}".format(param["Ric_adim"])))
+                        r"$\delta$: {:.2f}$R_{{ic}}$".format(1/param["Ric_adim"])))
         props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
         ax[i_f, j_f].text(0.05, 0.90, textstr, transform=ax[i_f, j_f].transAxes, fontsize=9,
             verticalalignment='top', bbox=props)
@@ -365,7 +370,7 @@ ax[1, 2].set_xlabel(r"Time/$\tau_{{ic}}$")
 cb = fig.colorbar(sc, ticks=[0., 0.1, 0.2, 0.3, 0.4], ax=ax.ravel().tolist())
 cb.set_label("$\phi$")
 
-ax[0, 0].text(-0.3, 1.10, r"\textbf{B.}", transform=ax[0,0].transAxes, fontsize=11,
+ax[0, 0].text(-0.3, 1.10, r"\textbf{b.}", transform=ax[0,0].transAxes, fontsize=11,
             verticalalignment='top')
 
-# %%
+plt.savefig("profiles_supercooling.pdf")
