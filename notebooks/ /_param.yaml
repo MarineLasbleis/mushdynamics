@@ -1,0 +1,22 @@
+BC: ''
+Dt_supercooling: 0.48899999999999993
+K0: 1.0
+N_init: 4
+R_init: 0.1
+Ric_adim: 1.0
+coeff_velocity: 1.0
+coordinates: spherical
+delta: 1.0
+dt_print: 0.0
+filename: ''
+growth_rate_exponent: 0.5
+n: 2
+output: ' '
+phi_0: 0.0
+phi_init: 0.0
+r0_supercooling: 0.7
+sign: -1
+t0_supercooling: 0.001
+t_init: 0.010000000000000002
+tic: 1.0
+time_max: 0.5110000000000001
