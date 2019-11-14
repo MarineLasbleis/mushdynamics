@@ -1,3 +1,8 @@
+
+
+[![DOI](https://zenodo.org/badge/206503062.svg)](https://zenodo.org/badge/latestdoi/206503062)
+
+
 # Dynamics of mush
 
 
