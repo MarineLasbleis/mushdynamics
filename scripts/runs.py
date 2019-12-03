@@ -7,8 +7,8 @@ import yaml
 import numpy as np
 import numpy.random as random
 
-import mush
-import growth
+from mushdynamics import mush
+from mushdynamics import growth
 
 
 
@@ -155,14 +155,19 @@ def run_no_growth(n=3):
 
 
 def run_growth():
-    radius = 10**np.array([-0.5]) #10**np.linspace(1., 3, 5 )# [100., 200., 300.]
+    radius = 10**np.array([3.0])# 10**np.array([0.]) #10**np.linspace(1., 3, 5 )# [100., 200., 300.]
     exponents = [0.5]
-    times = 10**np.linspace(2, 0, 5)#[1.]
-
+    dot_r = 10**np.array([-3.0])
+    dot_r = 10**np.array([-4.0])# np.sqrt(radius*dot_r/exponents)  #np.linspace(2,1, 4, endpoint=False)#10**np.linspace(2, 0, 5)#[1.]
+    coefficients = np.sqrt(radius*dot_r/exponents)
+    folder = "./scalinglaw"
+    print(folder)
     for r in radius:
         for exp in exponents:
-            for time in times:
-                options = param_growth(r.item(), exp, time.item(), basefolder="./diag_n3_exp05/", R_init=5e-3, N_max=8000)
+            for coeff in coefficients:
+                options = param_growth(r.item(), exp, coeff.item(), basefolder=folder, R_init=5e-3, N_max=20000, N_fig=1, n=3)
+                # options["phi_init"] = 0.2
+                # options["psiN"] = 0.8
                 run(options)
 
 
@@ -229,4 +234,4 @@ if __name__ == "__main__":
     #if args.verbose:
     #    print("verbosity turned on")
 
-    run_growth_random()
+    run_growth()
